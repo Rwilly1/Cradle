@@ -69,6 +69,7 @@ let draggedBall = null;
 let ballVelocities = [];
 let recentlyDraggedBall = null;
 let textEnabled = true;
+let greyBlendAmount = 0;
 
 const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
 
@@ -299,8 +300,27 @@ Events.on(engine, 'collisionStart', function(event) {
     });
 });
 
+function blendColors(color1, color2, amount) {
+    const r1 = parseInt(color1.slice(1, 3), 16);
+    const g1 = parseInt(color1.slice(3, 5), 16);
+    const b1 = parseInt(color1.slice(5, 7), 16);
+    
+    const r2 = parseInt(color2.slice(1, 3), 16);
+    const g2 = parseInt(color2.slice(3, 5), 16);
+    const b2 = parseInt(color2.slice(5, 7), 16);
+    
+    const r = Math.round(r1 + (r2 - r1) * amount);
+    const g = Math.round(g1 + (g2 - g1) * amount);
+    const b = Math.round(b1 + (b2 - b1) * amount);
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 Events.on(render, 'afterRender', function() {
     const context = render.context;
+    
+    const targetGreyBlend = textEnabled ? 0 : 1;
+    greyBlendAmount += (targetGreyBlend - greyBlendAmount) * 0.05;
     
     balls.forEach((ball, index) => {
         const velocity = ball.velocity;
@@ -418,6 +438,19 @@ Events.on(render, 'afterRender', function() {
         context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
         context.fillStyle = ballColors[index];
         context.fill();
+        
+        // Layer grey on top at 65% opacity
+        if (greyBlendAmount > 0) {
+            context.beginPath();
+            context.arc(0, 0, radius, 0, 2 * Math.PI);
+            context.fillStyle = `rgba(59, 52, 50, ${greyBlendAmount * 0.65})`;
+            context.fill();
+            
+            context.beginPath();
+            context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
+            context.fillStyle = `rgba(89, 83, 80, ${greyBlendAmount * 0.65})`;
+            context.fill();
+        }
         
         context.save();
         context.beginPath();
