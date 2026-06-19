@@ -429,28 +429,18 @@ Events.on(render, 'afterRender', function() {
         context.translate(pos.x, pos.y);
         context.rotate(ball.angle);
         
+        const blendedOutline = blendColors(ballOutlineColors[index], '#3b3432', greyBlendAmount);
+        const blendedColor = blendColors(ballColors[index], '#928179', greyBlendAmount);
+        
         context.beginPath();
         context.arc(0, 0, radius, 0, 2 * Math.PI);
-        context.fillStyle = ballOutlineColors[index];
+        context.fillStyle = blendedOutline;
         context.fill();
         
         context.beginPath();
         context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
-        context.fillStyle = ballColors[index];
+        context.fillStyle = blendedColor;
         context.fill();
-        
-        // Layer grey on top at 65% opacity
-        if (greyBlendAmount > 0) {
-            context.beginPath();
-            context.arc(0, 0, radius, 0, 2 * Math.PI);
-            context.fillStyle = `rgba(59, 52, 50, ${greyBlendAmount * 0.65})`;
-            context.fill();
-            
-            context.beginPath();
-            context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
-            context.fillStyle = `rgba(89, 83, 80, ${greyBlendAmount * 0.65})`;
-            context.fill();
-        }
         
         context.save();
         context.beginPath();
