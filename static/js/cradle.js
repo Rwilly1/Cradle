@@ -67,6 +67,8 @@ let ballHighlights = [];
 let textOpacities = [];
 let draggedBall = null;
 let ballVelocities = [];
+let recentlyDraggedBall = null;
+let textEnabled = true;
 
 const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
 
@@ -151,6 +153,8 @@ for (let i = 0; i < nameText.length; i++) {
     letter.char = char;
     letter.fontSize = fontSize;
     letter.hasFallen = false;
+    letter.originalX = currentX + charWidth / 2;
+    letter.originalY = nameY;
     
     letterBodies.push(letter);
     currentX += charWidth + letterSpacing * 0.1;
@@ -177,15 +181,39 @@ let isDragging = false;
 
 Events.on(mouseConstraint, 'startdrag', function(event) {
     isDragging = true;
-    draggedBall = event.body;
+    if (balls.includes(event.body)) {
+        draggedBall = event.body;
+        recentlyDraggedBall = null;
+    }
 });
 
 Events.on(mouseConstraint, 'enddrag', function(event) {
     isDragging = false;
+    if (balls.includes(event.body)) {
+        const velocity = event.body.velocity;
+        const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+        if (speed > 0.5) {
+            recentlyDraggedBall = event.body;
+        }
+    }
     draggedBall = null;
 });
 
 let hoveredText = null;
+
+window.addEventListener('mouseup', function() {
+    if (isDragging) {
+        isDragging = false;
+        if (draggedBall && balls.includes(draggedBall)) {
+            const velocity = draggedBall.velocity;
+            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            if (speed > 0.5) {
+                recentlyDraggedBall = draggedBall;
+            }
+        }
+        draggedBall = null;
+    }
+});
 
 render.canvas.addEventListener('mousemove', function(event) {
     const rect = render.canvas.getBoundingClientRect();
@@ -194,6 +222,10 @@ render.canvas.addEventListener('mousemove', function(event) {
     
     mousePosition.x = (event.clientX - rect.left) * scaleX / (window.devicePixelRatio || 2);
     mousePosition.y = (event.clientY - rect.top) * scaleY / (window.devicePixelRatio || 2);
+    
+    if (!isDragging && mouseConstraint.body === null) {
+        draggedBall = null;
+    }
     
     hoveredBall = null;
     hoveredText = null;
@@ -240,6 +272,30 @@ Events.on(engine, 'collisionStart', function(event) {
                 }
             }
         });
+        
+        if (balls.includes(bodyA) && balls.includes(bodyB)) {
+            const indexA = balls.indexOf(bodyA);
+            const indexB = balls.indexOf(bodyB);
+            
+            // Check if recentlyDraggedBall hit its adjacent neighbor (one position closer to center)
+            if (recentlyDraggedBall === bodyA) {
+                // Ball A is the dragged ball
+                // Left side (0,1,2): should hit ball to the right (index+1)
+                // Right side (3,4,5): should hit ball to the left (index-1)
+                const shouldClear = (indexA < 3 && indexB === indexA + 1) || 
+                                   (indexA >= 3 && indexB === indexA - 1);
+                if (shouldClear) {
+                    recentlyDraggedBall = null;
+                }
+            } else if (recentlyDraggedBall === bodyB) {
+                // Ball B is the dragged ball
+                const shouldClear = (indexB < 3 && indexA === indexB + 1) || 
+                                   (indexB >= 3 && indexA === indexB - 1);
+                if (shouldClear) {
+                    recentlyDraggedBall = null;
+                }
+            }
+        }
     });
 });
 
@@ -252,15 +308,19 @@ Events.on(render, 'afterRender', function() {
         const isMoving = speed > 0.5;
         
         let targetOpacity = 0;
-        if (!isMoving) {
+        
+        if (textEnabled) {
             if (draggedBall === ball) {
                 targetOpacity = 1.0;
-            } else if (hoveredText === ball) {
+            } else if (recentlyDraggedBall === ball) {
                 targetOpacity = 1.0;
-            } else if (hoveredBall === ball) {
+            } else if (!isMoving && hoveredText === ball) {
+                targetOpacity = 1.0;
+            } else if (!isMoving && hoveredBall === ball) {
                 targetOpacity = 0.5;
             }
         }
+        
         textOpacities[index] += (targetOpacity - textOpacities[index]) * 0.15;
         const pos = ball.position;
         const dx = mousePosition.x - pos.x;
@@ -456,4 +516,44 @@ gsap.from('#canvas-container', {
     scale: 0.95,
     opacity: 0,
     ease: 'power3.out'
+});
+
+const textToggle = document.getElementById('text-toggle');
+textToggle.addEventListener('change', function() {
+    textEnabled = this.checked;
+    if (!textEnabled) {
+        recentlyDraggedBall = null;
+    } else {
+        // When turning text back ON, reset any fallen letters
+        letterBodies.forEach((letter) => {
+            if (letter.hasFallen) {
+                // Use stored original position
+                const originalX = letter.originalX;
+                const originalY = letter.originalY;
+                
+                // Position letter at top of screen
+                Matter.Body.setPosition(letter, { x: originalX, y: -100 });
+                Matter.Body.setVelocity(letter, { x: 0, y: 0 });
+                Matter.Body.setAngularVelocity(letter, 0);
+                Matter.Body.setAngle(letter, 0);
+                
+                // Animate it dropping back to original position
+                gsap.to(letter.position, {
+                    y: originalY,
+                    duration: 0.8,
+                    ease: 'bounce.out',
+                    onUpdate: function() {
+                        Matter.Body.setPosition(letter, { x: originalX, y: letter.position.y });
+                    },
+                    onComplete: function() {
+                        // Make it static again and reset hasFallen after animation completes
+                        Matter.Body.setStatic(letter, true);
+                        Matter.Body.setPosition(letter, { x: originalX, y: originalY });
+                        Matter.Body.setAngle(letter, 0);
+                        letter.hasFallen = false;
+                    }
+                });
+            }
+        });
+    }
 });

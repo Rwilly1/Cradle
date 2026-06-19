@@ -76,6 +76,68 @@ body {
     z-index: 2;
 }
 
+.toggle-container {
+    position: absolute;
+    bottom: 0.625%;
+    left: 26.625%;
+    z-index: 10;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(59, 52, 50, 0.8);
+    border-radius: 25px;
+    transition: background-color 0.3s ease;
+    border: 2px solid rgba(59, 52, 50, 0.8);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 17px;
+    width: 17px;
+    left: 50%;
+    bottom: 2px;
+    margin-left: -8.5px;
+    background-color: #4d4746;
+    border-radius: 50%;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: rgba(59, 52, 50, 0.8);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(-12.5px);
+}
+
+.toggle-switch input:not(:checked) + .toggle-slider:before {
+    transform: translateX(12.5px);
+}
+
+.toggle-switch:hover .toggle-slider {
+    opacity: 0.9;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
