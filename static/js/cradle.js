@@ -67,7 +67,8 @@ let ballHighlights = [];
 let textOpacities = [];
 let draggedBall = null;
 let ballVelocities = [];
-let recentlyDraggedBall = null;
+let activeBall = null;
+let activeBallDirection = null;
 let textEnabled = true;
 let greyBlendAmounts = [0, 0, 0, 0, 0, 0];
 let greyBlendTargets = [0, 0, 0, 0, 0, 0];
@@ -210,8 +211,8 @@ let isDragging = false;
 Events.on(mouseConstraint, 'startdrag', function(event) {
     isDragging = true;
     if (balls.includes(event.body)) {
-        // Only allow dragging if no ball is currently in "recently dragged" state
-        if (!recentlyDraggedBall) {
+        // Only allow dragging if no ball is currently active
+        if (!activeBall) {
             draggedBall = event.body;
         }
     }
@@ -219,12 +220,11 @@ Events.on(mouseConstraint, 'startdrag', function(event) {
 
 Events.on(mouseConstraint, 'enddrag', function(event) {
     isDragging = false;
-    if (balls.includes(event.body)) {
+    if (balls.includes(event.body) && draggedBall === event.body) {
         const velocity = event.body.velocity;
-        const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-        if (speed > 0.5) {
-            recentlyDraggedBall = event.body;
-        }
+        activeBall = event.body;
+        // Track horizontal direction: positive = right, negative = left
+        activeBallDirection = velocity.x > 0 ? 'right' : 'left';
     }
     draggedBall = null;
 });
@@ -236,10 +236,9 @@ window.addEventListener('mouseup', function() {
         isDragging = false;
         if (draggedBall && balls.includes(draggedBall)) {
             const velocity = draggedBall.velocity;
-            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-            if (speed > 0.5) {
-                recentlyDraggedBall = draggedBall;
-            }
+            activeBall = draggedBall;
+            // Track horizontal direction: positive = right, negative = left
+            activeBallDirection = velocity.x > 0 ? 'right' : 'left';
         }
         draggedBall = null;
     }
@@ -265,8 +264,8 @@ render.canvas.addEventListener('mousemove', function(event) {
         const dy = mousePosition.y - pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        // Only show grab cursor if no ball is currently in recently dragged state
-        if (dist <= ballRadius && !recentlyDraggedBall) {
+        // Only show grab cursor if no ball is currently active
+        if (dist <= ballRadius && !activeBall) {
             canGrab = true;
         }
     });
@@ -290,26 +289,65 @@ Events.on(engine, 'collisionStart', function(event) {
             }
         });
         
-        if (balls.includes(bodyA) && balls.includes(bodyB)) {
+        if (balls.includes(bodyA) && balls.includes(bodyB) && activeBall) {
             const indexA = balls.indexOf(bodyA);
             const indexB = balls.indexOf(bodyB);
+            const activeIndex = balls.indexOf(activeBall);
             
-            // Check if recentlyDraggedBall hit its adjacent neighbor (one position closer to center)
-            if (recentlyDraggedBall === bodyA) {
-                // Ball A is the dragged ball
-                // Left side (0,1,2): should hit ball to the right (index+1)
-                // Right side (3,4,5): should hit ball to the left (index-1)
-                const shouldClear = (indexA < 3 && indexB === indexA + 1) || 
-                                   (indexA >= 3 && indexB === indexA - 1);
-                if (shouldClear) {
-                    recentlyDraggedBall = null;
+            // Check if activeBall hit the correct ball
+            if (activeBall === bodyA) {
+                let shouldClear = false;
+                
+                // Ball 0: always clears on any collision
+                if (indexA === 0) {
+                    shouldClear = true;
                 }
-            } else if (recentlyDraggedBall === bodyB) {
-                // Ball B is the dragged ball
-                const shouldClear = (indexB < 3 && indexA === indexB + 1) || 
-                                   (indexB >= 3 && indexA === indexB - 1);
+                // Ball 5: always clears on any collision
+                else if (indexA === 5) {
+                    shouldClear = true;
+                }
+                // Balls 1-4: clear when hitting the ball on the opposite side of pull direction
+                else if (indexA >= 1 && indexA <= 4) {
+                    // Pulled left → hits ball on right (opposite side)
+                    if (activeBallDirection === 'left' && indexB === indexA + 1) {
+                        shouldClear = true;
+                    }
+                    // Pulled right → hits ball on left (opposite side)
+                    else if (activeBallDirection === 'right' && indexB === indexA - 1) {
+                        shouldClear = true;
+                    }
+                }
+                
                 if (shouldClear) {
-                    recentlyDraggedBall = null;
+                    activeBall = null;
+                    activeBallDirection = null;
+                }
+            } else if (activeBall === bodyB) {
+                let shouldClear = false;
+                
+                // Ball 0: always clears on any collision
+                if (indexB === 0) {
+                    shouldClear = true;
+                }
+                // Ball 5: always clears on any collision
+                else if (indexB === 5) {
+                    shouldClear = true;
+                }
+                // Balls 1-4: clear when hitting the ball on the opposite side of pull direction
+                else if (indexB >= 1 && indexB <= 4) {
+                    // Pulled left → hits ball on right (opposite side)
+                    if (activeBallDirection === 'left' && indexA === indexB + 1) {
+                        shouldClear = true;
+                    }
+                    // Pulled right → hits ball on left (opposite side)
+                    else if (activeBallDirection === 'right' && indexA === indexB - 1) {
+                        shouldClear = true;
+                    }
+                }
+                
+                if (shouldClear) {
+                    activeBall = null;
+                    activeBallDirection = null;
                 }
             }
         }
@@ -344,8 +382,8 @@ Events.on(render, 'afterRender', function() {
         let targetOpacity = 0;
         
         if (textEnabled) {
-            // Only show text for dragged or recently dragged ball
-            if (draggedBall === ball || recentlyDraggedBall === ball) {
+            // Show text for dragged ball or active ball
+            if (draggedBall === ball || activeBall === ball) {
                 targetOpacity = 1.0;
             }
         }
@@ -555,7 +593,7 @@ textToggle.addEventListener('change', function() {
     textEnabled = this.checked;
     
     if (!textEnabled) {
-        recentlyDraggedBall = null;
+        activeBall = null;
         // Animate to grey from left to right
         greyBlendTargets.forEach((_, index) => {
             gsap.to(greyBlendTargets, {
