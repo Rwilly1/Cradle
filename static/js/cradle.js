@@ -69,7 +69,8 @@ let draggedBall = null;
 let ballVelocities = [];
 let recentlyDraggedBall = null;
 let textEnabled = true;
-let greyBlendAmount = 0;
+let greyBlendAmounts = [0, 0, 0, 0, 0, 0];
+let greyBlendTargets = [0, 0, 0, 0, 0, 0];
 
 const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
 
@@ -143,9 +144,10 @@ for (let i = 0; i < nameText.length; i++) {
     const charHeight = fontSize;
     
     const letter = Bodies.rectangle(currentX + charWidth / 2, nameY, charWidth, charHeight, {
-        isStatic: true,
+        isStatic: false,
         friction: 0.3,
         restitution: 0.6,
+        isSensor: true,
         render: {
             visible: false
         }
@@ -157,11 +159,36 @@ for (let i = 0; i < nameText.length; i++) {
     letter.originalX = currentX + charWidth / 2;
     letter.originalY = nameY;
     
+    // Start letters at top of screen for initial animation
+    Matter.Body.setPosition(letter, { x: letter.originalX, y: -100 });
+    
     letterBodies.push(letter);
     currentX += charWidth + letterSpacing * 0.1;
 }
 
 Composite.add(world, letterBodies);
+
+// Animate all letters falling in on page load
+letterBodies.forEach((letter) => {
+    gsap.to(letter.position, {
+        y: letter.originalY,
+        duration: 0.8,
+        delay: 0.3,
+        ease: 'bounce.out',
+        onUpdate: function() {
+            Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.position.y });
+        },
+        onComplete: function() {
+            // Make letter static and remove sensor property after animation
+            letter.isSensor = false;
+            Matter.Body.setStatic(letter, true);
+            Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.originalY });
+            Matter.Body.setVelocity(letter, { x: 0, y: 0 });
+            Matter.Body.setAngularVelocity(letter, 0);
+            Matter.Body.setAngle(letter, 0);
+        }
+    });
+});
 
 const mouse = Mouse.create(render.canvas);
 const mouseConstraint = MouseConstraint.create(engine, {
@@ -183,8 +210,10 @@ let isDragging = false;
 Events.on(mouseConstraint, 'startdrag', function(event) {
     isDragging = true;
     if (balls.includes(event.body)) {
-        draggedBall = event.body;
-        recentlyDraggedBall = null;
+        // Only allow dragging if no ball is currently in "recently dragged" state
+        if (!recentlyDraggedBall) {
+            draggedBall = event.body;
+        }
     }
 });
 
@@ -228,34 +257,21 @@ render.canvas.addEventListener('mousemove', function(event) {
         draggedBall = null;
     }
     
-    hoveredBall = null;
-    hoveredText = null;
-    
+    // Check for cursor change only
+    let canGrab = false;
     balls.forEach(ball => {
         const pos = ball.position;
         const dx = mousePosition.x - pos.x;
         const dy = mousePosition.y - pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        const velocity = ball.velocity;
-        const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-        const isMoving = speed > 0.5;
-        
-        if (dist <= ballRadius && !isMoving) {
-            hoveredBall = ball;
-            
-            const textRadius = ballRadius * 0.5;
-            if (dist <= textRadius) {
-                hoveredText = ball;
-            }
-            
-            canvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+        // Only show grab cursor if no ball is currently in recently dragged state
+        if (dist <= ballRadius && !recentlyDraggedBall) {
+            canGrab = true;
         }
     });
     
-    if (!hoveredBall) {
-        canvas.style.cursor = 'default';
-    }
+    canvas.style.cursor = canGrab ? (isDragging ? 'grabbing' : 'grab') : 'default';
 }, false);
 
 Events.on(engine, 'collisionStart', function(event) {
@@ -319,10 +335,8 @@ function blendColors(color1, color2, amount) {
 Events.on(render, 'afterRender', function() {
     const context = render.context;
     
-    const targetGreyBlend = textEnabled ? 0 : 1;
-    greyBlendAmount += (targetGreyBlend - greyBlendAmount) * 0.05;
-    
     balls.forEach((ball, index) => {
+        greyBlendAmounts[index] = greyBlendTargets[index];
         const velocity = ball.velocity;
         const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
         const isMoving = speed > 0.5;
@@ -330,14 +344,9 @@ Events.on(render, 'afterRender', function() {
         let targetOpacity = 0;
         
         if (textEnabled) {
-            if (draggedBall === ball) {
+            // Only show text for dragged or recently dragged ball
+            if (draggedBall === ball || recentlyDraggedBall === ball) {
                 targetOpacity = 1.0;
-            } else if (recentlyDraggedBall === ball) {
-                targetOpacity = 1.0;
-            } else if (!isMoving && hoveredText === ball) {
-                targetOpacity = 1.0;
-            } else if (!isMoving && hoveredBall === ball) {
-                targetOpacity = 0.5;
             }
         }
         
@@ -429,8 +438,8 @@ Events.on(render, 'afterRender', function() {
         context.translate(pos.x, pos.y);
         context.rotate(ball.angle);
         
-        const blendedOutline = blendColors(ballOutlineColors[index], '#3b3432', greyBlendAmount);
-        const blendedColor = blendColors(ballColors[index], '#928179', greyBlendAmount);
+        const blendedOutline = blendColors(ballOutlineColors[index], '#3b3432', greyBlendAmounts[index]);
+        const blendedColor = blendColors(ballColors[index], '#928179', greyBlendAmounts[index]);
         
         context.beginPath();
         context.arc(0, 0, radius, 0, 2 * Math.PI);
@@ -544,9 +553,28 @@ gsap.from('#canvas-container', {
 const textToggle = document.getElementById('text-toggle');
 textToggle.addEventListener('change', function() {
     textEnabled = this.checked;
+    
     if (!textEnabled) {
         recentlyDraggedBall = null;
+        // Animate to grey from left to right
+        greyBlendTargets.forEach((_, index) => {
+            gsap.to(greyBlendTargets, {
+                [index]: 1,
+                duration: 0.8,
+                delay: index * 0.15,
+                ease: 'power2.inOut'
+            });
+        });
     } else {
+        // Animate to color from right to left
+        greyBlendTargets.forEach((_, index) => {
+            gsap.to(greyBlendTargets, {
+                [index]: 0,
+                duration: 0.8,
+                delay: (greyBlendTargets.length - 1 - index) * 0.15,
+                ease: 'power2.inOut'
+            });
+        });
         // When turning text back ON, reset any fallen letters
         letterBodies.forEach((letter) => {
             if (letter.hasFallen) {
