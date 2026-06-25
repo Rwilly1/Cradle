@@ -327,7 +327,9 @@ function closePopup() {
     if (!currentPopup) return;
     
     // Slide out in opposite direction from where it came in
-    const xEnd = currentPopupDirection === 'left' ? '-100%' : '100%';
+    // If it came from left (direction='left'), slide out to right (100%)
+    // If it came from right (direction='right'), slide out to left (-100%)
+    const xEnd = currentPopupDirection === 'left' ? '100%' : '-100%';
     
     gsap.to(currentPopup, {
         x: xEnd,
