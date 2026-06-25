@@ -21,6 +21,65 @@
             </div>
         </div>
     </div>
+
+    <!-- Popups -->
+    <div id="popup-0" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content">
+            <div class="popup-profile">
+                <img src="{{ url_for('static', filename='about.jpg') }}" alt="Profile Picture" class="popup-profile-img">
+            </div>
+            <div class="popup-text">
+                <p>I believe creativity is only as powerful as one's ability to implement it. With over two years of UX research experience, I turn ideas into products people can actually use through software engineering and human-centered design.</p>
+                <div class="popup-social">
+                    <a href="https://www.linkedin.com/in/remington-williams/" target="_blank" rel="noopener noreferrer" class="social-icon linkedin">
+                        <img src="{{ url_for('static', filename='linked.svg') }}" alt="LinkedIn">
+                    </a>
+                    <a href="mailto:remi@remingtonwilliams.com" class="social-icon email">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.035l-9.517 7.713-9.518-7.713zm5.694 7.188l3.824 3.099 3.83-3.104 5.612 6.817h-18.779l5.513-6.812zm9.208-1.264l4.616-3.741v9.348l-4.616-5.607z"/></svg>
+                    </a>
+                    <a href="https://www.instagram.com/remingtonwilliams_/" target="_blank" rel="noopener noreferrer" class="social-icon instagram">
+                        <img src="{{ url_for('static', filename='instalogo.png') }}" alt="Instagram">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup-1" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content popup-placeholder">
+            <!-- Professional Experience content will go here -->
+        </div>
+    </div>
+
+    <div id="popup-2" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content popup-placeholder">
+            <!-- Art & Design Portfolio content will go here -->
+        </div>
+    </div>
+
+    <div id="popup-3" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content popup-placeholder">
+            <!-- Academic Projects content will go here -->
+        </div>
+    </div>
+
+    <div id="popup-4" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content popup-placeholder">
+            <!-- Technical Skills content will go here -->
+        </div>
+    </div>
+
+    <div id="popup-5" class="popup">
+        <button class="popup-close">X</button>
+        <div class="popup-content popup-placeholder">
+            <!-- Contact Info content will go here -->
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='js/cradle.js') }}"></script>
 </body>
 </html>

@@ -62,6 +62,7 @@ const constraints = [];
 const letterBodies = [];
 
 let hoveredBall = null;
+let hoveredText = null;
 let mousePosition = { x: width / 2, y: height / 2 };
 let ballHighlights = [];
 let textOpacities = [];
@@ -72,6 +73,8 @@ let activeBallDirection = null;
 let textEnabled = true;
 let greyBlendAmounts = [0, 0, 0, 0, 0, 0];
 let greyBlendTargets = [0, 0, 0, 0, 0, 0];
+let currentPopup = null;
+let popupOpen = false;
 
 const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
 
@@ -211,34 +214,34 @@ let isDragging = false;
 Events.on(mouseConstraint, 'startdrag', function(event) {
     isDragging = true;
     if (balls.includes(event.body)) {
-        // Only allow dragging if no ball is currently active
-        if (!activeBall) {
+        // Select ball on grab if text is enabled and no popup is open
+        if (textEnabled && !popupOpen) {
             draggedBall = event.body;
+            activeBall = event.body;
+            console.log('SELECTED: Ball', balls.indexOf(event.body));
         }
     }
 });
 
 Events.on(mouseConstraint, 'enddrag', function(event) {
     isDragging = false;
-    if (balls.includes(event.body) && draggedBall === event.body) {
+    if (balls.includes(event.body) && draggedBall === event.body && activeBall === event.body) {
         const velocity = event.body.velocity;
-        activeBall = event.body;
-        // Track horizontal direction: positive = right, negative = left
-        activeBallDirection = velocity.x > 0 ? 'right' : 'left';
+        // Track pull direction (will swipe opposite direction)
+        activeBallDirection = velocity.x > 0 ? 'left' : 'right'; // Opposite!
+        console.log('RELEASED: Ball', balls.indexOf(event.body), 'pull direction:', velocity.x > 0 ? 'right' : 'left', '→ swipe:', activeBallDirection);
     }
     draggedBall = null;
 });
 
-let hoveredText = null;
-
 window.addEventListener('mouseup', function() {
     if (isDragging) {
         isDragging = false;
-        if (draggedBall && balls.includes(draggedBall)) {
+        if (draggedBall && balls.includes(draggedBall) && activeBall === draggedBall) {
             const velocity = draggedBall.velocity;
-            activeBall = draggedBall;
-            // Track horizontal direction: positive = right, negative = left
-            activeBallDirection = velocity.x > 0 ? 'right' : 'left';
+            // Track pull direction (will swipe opposite direction)
+            activeBallDirection = velocity.x > 0 ? 'left' : 'right'; // Opposite!
+            console.log('RELEASED (mouseup): Ball', balls.indexOf(draggedBall), 'pull direction:', velocity.x > 0 ? 'right' : 'left', '→ swipe:', activeBallDirection);
         }
         draggedBall = null;
     }
@@ -256,7 +259,11 @@ render.canvas.addEventListener('mousemove', function(event) {
         draggedBall = null;
     }
     
-    // Check for cursor change only
+    // Reset hover states
+    hoveredBall = null;
+    hoveredText = null;
+    
+    // Check for hover and cursor
     let canGrab = false;
     balls.forEach(ball => {
         const pos = ball.position;
@@ -264,14 +271,76 @@ render.canvas.addEventListener('mousemove', function(event) {
         const dy = mousePosition.y - pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        // Only show grab cursor if no ball is currently active
-        if (dist <= ballRadius && !activeBall) {
-            canGrab = true;
+        const velocity = ball.velocity;
+        const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+        const isMoving = speed > 0.5;
+        
+        if (dist <= ballRadius && !isMoving) {
+            hoveredBall = ball;
+            
+            // Check if hovering over text area (smaller radius)
+            const textRadius = ballRadius * 0.5;
+            if (dist <= textRadius) {
+                hoveredText = ball;
+            }
+            
+            // Only show grab cursor if no ball is currently active
+            if (!activeBall) {
+                canGrab = true;
+            }
         }
     });
     
     canvas.style.cursor = canGrab ? (isDragging ? 'grabbing' : 'grab') : 'default';
 }, false);
+
+function openPopup(ballIndex, direction) {
+    if (!textEnabled || popupOpen) return;
+    
+    popupOpen = true;
+    const popup = document.getElementById(`popup-${ballIndex}`);
+    currentPopup = popup;
+    
+    popup.classList.add('active');
+    
+    // Determine animation direction based on ball pull direction
+    // Pulled left → swipe right, Pulled right → swipe left
+    const xStart = direction === 'left' ? '-100%' : '100%';
+    
+    gsap.fromTo(popup, 
+        { 
+            x: xStart,
+            opacity: 0 
+        },
+        { 
+            x: '0%',
+            opacity: 1,
+            duration: 0.6,
+            ease: 'power2.out'
+        }
+    );
+}
+
+function closePopup() {
+    if (!currentPopup) return;
+    
+    gsap.to(currentPopup, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in',
+        onComplete: () => {
+            currentPopup.classList.remove('active');
+            gsap.set(currentPopup, { x: '0%' });
+            currentPopup = null;
+            popupOpen = false;
+        }
+    });
+}
+
+// Add event listeners to all close buttons
+document.querySelectorAll('.popup-close').forEach((btn, index) => {
+    btn.addEventListener('click', closePopup);
+});
 
 Events.on(engine, 'collisionStart', function(event) {
     const pairs = event.pairs;
@@ -297,55 +366,71 @@ Events.on(engine, 'collisionStart', function(event) {
             // Check if activeBall hit the correct ball
             if (activeBall === bodyA) {
                 let shouldClear = false;
+                let shouldOpenPopup = false;
                 
                 // Ball 0: always clears on any collision
                 if (indexA === 0) {
                     shouldClear = true;
+                    shouldOpenPopup = true;
                 }
                 // Ball 5: always clears on any collision
                 else if (indexA === 5) {
                     shouldClear = true;
+                    shouldOpenPopup = true;
                 }
                 // Balls 1-4: clear when hitting the ball on the opposite side of pull direction
                 else if (indexA >= 1 && indexA <= 4) {
                     // Pulled left → hits ball on right (opposite side)
                     if (activeBallDirection === 'left' && indexB === indexA + 1) {
                         shouldClear = true;
+                        shouldOpenPopup = true;
                     }
                     // Pulled right → hits ball on left (opposite side)
                     else if (activeBallDirection === 'right' && indexB === indexA - 1) {
                         shouldClear = true;
+                        shouldOpenPopup = true;
                     }
                 }
                 
                 if (shouldClear) {
+                    if (shouldOpenPopup) {
+                        openPopup(indexA, activeBallDirection);
+                    }
                     activeBall = null;
                     activeBallDirection = null;
                 }
             } else if (activeBall === bodyB) {
                 let shouldClear = false;
+                let shouldOpenPopup = false;
                 
                 // Ball 0: always clears on any collision
                 if (indexB === 0) {
                     shouldClear = true;
+                    shouldOpenPopup = true;
                 }
                 // Ball 5: always clears on any collision
                 else if (indexB === 5) {
                     shouldClear = true;
+                    shouldOpenPopup = true;
                 }
                 // Balls 1-4: clear when hitting the ball on the opposite side of pull direction
                 else if (indexB >= 1 && indexB <= 4) {
                     // Pulled left → hits ball on right (opposite side)
                     if (activeBallDirection === 'left' && indexA === indexB + 1) {
                         shouldClear = true;
+                        shouldOpenPopup = true;
                     }
                     // Pulled right → hits ball on left (opposite side)
                     else if (activeBallDirection === 'right' && indexA === indexB - 1) {
                         shouldClear = true;
+                        shouldOpenPopup = true;
                     }
                 }
                 
                 if (shouldClear) {
+                    if (shouldOpenPopup) {
+                        openPopup(indexB, activeBallDirection);
+                    }
                     activeBall = null;
                     activeBallDirection = null;
                 }
@@ -382,9 +467,13 @@ Events.on(render, 'afterRender', function() {
         let targetOpacity = 0;
         
         if (textEnabled) {
-            // Show text for dragged ball or active ball
-            if (draggedBall === ball || activeBall === ball) {
+            // 100% opacity: dragging, active ball, or hovering over text
+            if (draggedBall === ball || activeBall === ball || hoveredText === ball) {
                 targetOpacity = 1.0;
+            }
+            // 50% opacity: hovering over ball (but not text area)
+            else if (hoveredBall === ball && !isMoving) {
+                targetOpacity = 0.5;
             }
         }
         
