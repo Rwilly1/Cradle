@@ -75,6 +75,7 @@ let greyBlendAmounts = [0, 0, 0, 0, 0, 0];
 let greyBlendTargets = [0, 0, 0, 0, 0, 0];
 let currentPopup = null;
 let popupOpen = false;
+let currentPopupDirection = null;
 
 const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
 
@@ -300,6 +301,7 @@ function openPopup(ballIndex, direction) {
     popupOpen = true;
     const popup = document.getElementById(`popup-${ballIndex}`);
     currentPopup = popup;
+    currentPopupDirection = direction; // Store direction for closing
     
     popup.classList.add('active');
     
@@ -324,14 +326,19 @@ function openPopup(ballIndex, direction) {
 function closePopup() {
     if (!currentPopup) return;
     
+    // Slide out in opposite direction from where it came in
+    const xEnd = currentPopupDirection === 'left' ? '-100%' : '100%';
+    
     gsap.to(currentPopup, {
+        x: xEnd,
         opacity: 0,
-        duration: 0.3,
+        duration: 0.5,
         ease: 'power2.in',
         onComplete: () => {
             currentPopup.classList.remove('active');
             gsap.set(currentPopup, { x: '0%' });
             currentPopup = null;
+            currentPopupDirection = null;
             popupOpen = false;
         }
     });
@@ -565,17 +572,14 @@ Events.on(render, 'afterRender', function() {
         context.translate(pos.x, pos.y);
         context.rotate(ball.angle);
         
-        const blendedOutline = blendColors(ballOutlineColors[index], '#3b3432', greyBlendAmounts[index]);
-        const blendedColor = blendColors(ballColors[index], '#928179', greyBlendAmounts[index]);
-        
         context.beginPath();
         context.arc(0, 0, radius, 0, 2 * Math.PI);
-        context.fillStyle = blendedOutline;
+        context.fillStyle = ballOutlineColors[index];
         context.fill();
         
         context.beginPath();
         context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
-        context.fillStyle = blendedColor;
+        context.fillStyle = ballColors[index];
         context.fill();
         
         context.save();
@@ -677,30 +681,28 @@ gsap.from('#canvas-container', {
     ease: 'power3.out'
 });
 
+const invertOverlay = document.querySelector('.invert-overlay');
 const textToggle = document.getElementById('text-toggle');
+
 textToggle.addEventListener('change', function() {
     textEnabled = this.checked;
     
     if (!textEnabled) {
         activeBall = null;
-        // Animate to grey from left to right
-        greyBlendTargets.forEach((_, index) => {
-            gsap.to(greyBlendTargets, {
-                [index]: 1,
-                duration: 0.8,
-                delay: index * 0.15,
-                ease: 'power2.inOut'
-            });
+        // Sweep from left to right
+        gsap.to(invertOverlay, {
+            opacity: 1,
+            clipPath: 'inset(0 0% 0 0)',
+            duration: 1.2,
+            ease: 'power2.inOut'
         });
     } else {
-        // Animate to color from right to left
-        greyBlendTargets.forEach((_, index) => {
-            gsap.to(greyBlendTargets, {
-                [index]: 0,
-                duration: 0.8,
-                delay: (greyBlendTargets.length - 1 - index) * 0.15,
-                ease: 'power2.inOut'
-            });
+        // Sweep from right to left
+        gsap.to(invertOverlay, {
+            opacity: 1,
+            clipPath: 'inset(0 100% 0 0)',
+            duration: 1.2,
+            ease: 'power2.inOut'
         });
         // When turning text back ON, reset any fallen letters
         letterBodies.forEach((letter) => {

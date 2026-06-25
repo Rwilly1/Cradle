@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
 </head>
 <body>
+    <div class="invert-overlay"></div>
     <div class="container">
         <div id="canvas-container">
             <canvas id="newtons-cradle"></canvas>
@@ -30,7 +31,7 @@
                 <img src="{{ url_for('static', filename='about.jpg') }}" alt="Profile Picture" class="popup-profile-img">
             </div>
             <div class="popup-text">
-                <p>I believe creativity is only as powerful as one's ability to implement it. With over two years of UX research experience, I turn ideas into products people can actually use through software engineering and human-centered design.</p>
+                <p>I believe creativity is only as powerful as one's ability to implement it. With over two years of UX research experience, I turn ideas into practical products people can actually use through software engineering and human-centered design.</p>
                 <div class="popup-social">
                     <a href="https://www.linkedin.com/in/remington-williams/" target="_blank" rel="noopener noreferrer" class="social-icon linkedin">
                         <img src="{{ url_for('static', filename='linked.svg') }}" alt="LinkedIn">
