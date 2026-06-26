@@ -295,10 +295,13 @@ render.canvas.addEventListener('mousemove', function(event) {
     canvas.style.cursor = canGrab ? (isDragging ? 'grabbing' : 'grab') : 'default';
 }, false);
 
+let currentPopupIndex = 0;
+
 function openPopup(ballIndex, direction) {
     if (!textEnabled || popupOpen) return;
     
     popupOpen = true;
+    currentPopupIndex = ballIndex;
     const popup = document.getElementById(`popup-${ballIndex}`);
     currentPopup = popup;
     currentPopupDirection = direction; // Store direction for closing
@@ -319,9 +322,194 @@ function openPopup(ballIndex, direction) {
             x: '0%',
             opacity: 1,
             duration: 0.6,
-            ease: 'power2.out'
+            ease: 'power2.out',
+            onComplete: () => {
+                enablePopupSwipe();
+            }
         }
     );
+}
+
+function navigateToPopup(newIndex, swipeDirection) {
+    if (!currentPopup) return;
+    
+    const oldPopup = currentPopup;
+    const newPopup = document.getElementById(`popup-${newIndex}`);
+    
+    // Slide in new popup immediately (overlapping transition)
+    const xIn = swipeDirection === 'left' ? '100%' : '-100%';
+    newPopup.classList.add('active');
+    currentPopup = newPopup;
+    currentPopupIndex = newIndex;
+    
+    gsap.fromTo(newPopup,
+        { x: xIn, opacity: 1 },
+        { 
+            x: '0%', 
+            opacity: 1, 
+            duration: 0.5, 
+            ease: 'power2.inOut',
+            onComplete: () => {
+                isNavigating = false;
+                enablePopupSwipe();
+            }
+        }
+    );
+    
+    // Slide out old popup (happens simultaneously)
+    const xOut = swipeDirection === 'left' ? '-100%' : '100%';
+    gsap.to(oldPopup, {
+        x: xOut,
+        opacity: 1,
+        duration: 0.5,
+        ease: 'power2.inOut',
+        onComplete: () => {
+            oldPopup.classList.remove('active');
+            gsap.set(oldPopup, { x: '0%' });
+        }
+    });
+}
+
+let popupDraggable = null;
+let isNavigating = false;
+
+function enablePopupSwipe() {
+    if (popupDraggable) {
+        popupDraggable.kill();
+    }
+    
+    const popupContent = currentPopup.querySelector('.popup-content');
+    let scrollAccumulator = 0;
+    const scrollThreshold = 100;
+    
+    // Intercept wheel/scroll events
+    const wheelHandler = (e) => {
+        e.preventDefault();
+        
+        // Don't navigate if already animating
+        if (isNavigating) return;
+        
+        // Accumulate vertical scroll
+        scrollAccumulator += e.deltaY;
+        
+        if (Math.abs(scrollAccumulator) > scrollThreshold) {
+            isNavigating = true;
+            
+            if (scrollAccumulator > 0) {
+                // Scrolled down → navigate right (next popup)
+                const nextIndex = (currentPopupIndex + 1) % 6;
+                navigateToPopup(nextIndex, 'left');
+            } else {
+                // Scrolled up → navigate left (previous popup)
+                const prevIndex = (currentPopupIndex - 1 + 6) % 6;
+                navigateToPopup(prevIndex, 'right');
+            }
+            scrollAccumulator = 0;
+        }
+    };
+    
+    popupContent.addEventListener('wheel', wheelHandler, { passive: false });
+    
+    // Arrow key navigation
+    const keyHandler = (e) => {
+        if (isNavigating) return;
+        
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            isNavigating = true;
+            const prevIndex = (currentPopupIndex - 1 + 6) % 6;
+            navigateToPopup(prevIndex, 'right');
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            isNavigating = true;
+            const nextIndex = (currentPopupIndex + 1) % 6;
+            navigateToPopup(nextIndex, 'left');
+        }
+    };
+    
+    document.addEventListener('keydown', keyHandler);
+    
+    // Also support touch swipe with adjacent popup visible
+    let adjacentPopup = null;
+    
+    popupDraggable = Draggable.create(currentPopup, {
+        type: 'x',
+        trigger: popupContent,
+        bounds: { minX: -window.innerWidth, maxX: window.innerWidth },
+        onDrag: function() {
+            const dragDistance = this.x;
+            
+            // Show adjacent popup based on drag direction
+            if (dragDistance > 0) {
+                // Dragging right → show previous popup on left
+                const prevIndex = (currentPopupIndex - 1 + 6) % 6;
+                if (!adjacentPopup || adjacentPopup.id !== `popup-${prevIndex}`) {
+                    if (adjacentPopup) adjacentPopup.classList.remove('active');
+                    adjacentPopup = document.getElementById(`popup-${prevIndex}`);
+                    adjacentPopup.classList.add('active');
+                    gsap.set(adjacentPopup, { x: '-100%', opacity: 1 });
+                }
+                gsap.set(adjacentPopup, { x: dragDistance - window.innerWidth });
+            } else if (dragDistance < 0) {
+                // Dragging left → show next popup on right
+                const nextIndex = (currentPopupIndex + 1) % 6;
+                if (!adjacentPopup || adjacentPopup.id !== `popup-${nextIndex}`) {
+                    if (adjacentPopup) adjacentPopup.classList.remove('active');
+                    adjacentPopup = document.getElementById(`popup-${nextIndex}`);
+                    adjacentPopup.classList.add('active');
+                    gsap.set(adjacentPopup, { x: '100%', opacity: 1 });
+                }
+                gsap.set(adjacentPopup, { x: dragDistance + window.innerWidth });
+            }
+        },
+        onDragEnd: function() {
+            const dragDistance = this.x;
+            const threshold = 100;
+            
+            if (Math.abs(dragDistance) > threshold) {
+                if (dragDistance < 0) {
+                    // Swiped left → complete transition to next popup
+                    const nextIndex = (currentPopupIndex + 1) % 6;
+                    const oldPopup = currentPopup;
+                    currentPopup = adjacentPopup;
+                    currentPopupIndex = nextIndex;
+                    
+                    gsap.to(oldPopup, { x: -window.innerWidth, duration: 0.3, ease: 'power2.out', onComplete: () => {
+                        oldPopup.classList.remove('active');
+                        gsap.set(oldPopup, { x: '0%' });
+                    }});
+                    gsap.to(currentPopup, { x: 0, duration: 0.3, ease: 'power2.out', onComplete: () => {
+                        isNavigating = false;
+                        enablePopupSwipe();
+                    }});
+                } else {
+                    // Swiped right → complete transition to previous popup
+                    const prevIndex = (currentPopupIndex - 1 + 6) % 6;
+                    const oldPopup = currentPopup;
+                    currentPopup = adjacentPopup;
+                    currentPopupIndex = prevIndex;
+                    
+                    gsap.to(oldPopup, { x: window.innerWidth, duration: 0.3, ease: 'power2.out', onComplete: () => {
+                        oldPopup.classList.remove('active');
+                        gsap.set(oldPopup, { x: '0%' });
+                    }});
+                    gsap.to(currentPopup, { x: 0, duration: 0.3, ease: 'power2.out', onComplete: () => {
+                        isNavigating = false;
+                        enablePopupSwipe();
+                    }});
+                }
+                adjacentPopup = null;
+            } else {
+                // Snap back
+                gsap.to(currentPopup, { x: 0, duration: 0.3, ease: 'power2.out' });
+                if (adjacentPopup) {
+                    adjacentPopup.classList.remove('active');
+                    gsap.set(adjacentPopup, { x: '0%' });
+                    adjacentPopup = null;
+                }
+            }
+        }
+    })[0];
 }
 
 function closePopup() {
