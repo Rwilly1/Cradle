@@ -305,9 +305,10 @@ function openPopup(ballIndex, direction) {
     
     popup.classList.add('active');
     
-    // Determine animation direction based on ball pull direction
-    // Pulled left → swipe right, Pulled right → swipe left
-    const xStart = direction === 'left' ? '-100%' : '100%';
+    // Newton's Cradle physics: pull left → enters from right, pull right → enters from left
+    // Pull left (direction='left') → enters from right (100%)
+    // Pull right (direction='right') → enters from left (-100%)
+    const xStart = direction === 'left' ? '100%' : '-100%';
     
     gsap.fromTo(popup, 
         { 
@@ -326,10 +327,10 @@ function openPopup(ballIndex, direction) {
 function closePopup() {
     if (!currentPopup) return;
     
-    // Slide out in opposite direction from where it came in
-    // If it came from left (direction='left'), slide out to right (100%)
-    // If it came from right (direction='right'), slide out to left (-100%)
-    const xEnd = currentPopupDirection === 'left' ? '100%' : '-100%';
+    // Exit in the direction the ball was pulled (Newton's Cradle physics)
+    // Pull left (direction='left') → exits left (-100%)
+    // Pull right (direction='right') → exits right (100%)
+    const xEnd = currentPopupDirection === 'left' ? '-100%' : '100%';
     
     gsap.to(currentPopup, {
         x: xEnd,
