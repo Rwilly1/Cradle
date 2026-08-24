@@ -20,70 +20,108 @@
                     <span class="toggle-slider"></span>
                 </label>
             </div>
+            <nav class="popup-nav">
+                <button class="nav-label" data-popup="0">About</button>
+                <button class="nav-label" data-popup="1">Prinsys</button>
+                <button class="nav-label" data-popup="2">Encrypted Chat</button>
+                <button class="nav-label" data-popup="3">Algorithmic Crafting</button>
+                <button class="nav-label" data-popup="4">Isanding NYC</button>
+                <button class="nav-label" data-popup="5">Contact</button>
+            </nav>
         </div>
     </div>
 
     <!-- Popups -->
-    <div id="popup-0" class="popup">
-        <button class="popup-close">X</button>
-        <div class="popup-content">
-            <div class="popup-profile">
-                <img src="{{ url_for('static', filename='about.jpg') }}" alt="Profile Picture" class="popup-profile-img">
+    <div id="popup-0" class="popup" data-bg-color="#7a0000">
+        <div class="popup-box">
+            <button class="popup-close">X</button>
+            <div class="popup-main">
+                <h1>The Art of Implementation</h1>
+                <p>I believe creativity is only as powerful as one's ability to execute it. My work began with physical materials, from print-making to resin sculpture. Making art taught me to prototype, experiment, and iterate. The medium changed, but my curiosity didn't.<br><br>Software engineering expanded the possibilities of what I could build. Understanding the constraints of technology has made me a better designer. Solving the problems that stand between an idea and its implementation is where real innovation begins. Bringing these two worlds together has shaped how I approach technology beyond traditional screens.</p>
             </div>
-            <div class="popup-text">
-                <p>I believe creativity is only as powerful as one's ability to implement it. With over two years of UX research experience, I turn ideas into practical products people can actually use through software engineering and human-centered design.</p>
-                <div class="popup-social">
-                    <a href="https://www.linkedin.com/in/remington-williams/" target="_blank" rel="noopener noreferrer" class="social-icon linkedin">
-                        <img src="{{ url_for('static', filename='linked.svg') }}" alt="LinkedIn">
-                    </a>
-                    <a href="mailto:remi@remingtonwilliams.com" class="social-icon email">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.035l-9.517 7.713-9.518-7.713zm5.694 7.188l3.824 3.099 3.83-3.104 5.612 6.817h-18.779l5.513-6.812zm9.208-1.264l4.616-3.741v9.348l-4.616-5.607z"/></svg>
-                    </a>
-                    <a href="https://www.instagram.com/remingtonwilliams_/" target="_blank" rel="noopener noreferrer" class="social-icon instagram">
-                        <img src="{{ url_for('static', filename='instalogo.png') }}" alt="Instagram">
-                    </a>
+            <div class="stacked-footer">
+                <div class="stack-layer stack-layer-3"></div>
+                <div class="stack-layer stack-layer-2"></div>
+                <div class="stack-layer stack-layer-1"></div>
+                <div class="footer-content">
+                    <div class="tech-section">
+                        <h3>Tech Stack</h3>
+                        <p>Python · JavaScript · SQL · React · Vue.js · Flask · Snowflake · Pandas · Tableau</p>
+                    </div>
+                    <div class="tech-section">
+                        <h3>Creative Tools</h3>
+                        <p>Adobe Creative Suite · Figma · Unity XR · qGAF · Houdini · Blender · Three.js</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="popup-1" class="popup">
+    <div id="popup-1" class="popup" data-bg-color="#cc4e00">
         <button class="popup-close">X</button>
-        <div class="popup-content popup-placeholder">
-            <h2>Professional Experience</h2>
-            <p>This is a placeholder for professional experience content. Test the slide animations!</p>
+        <div class="popup-content popup-project">
+            <div class="project-image">
+                <img src="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro (1).png') }}" alt="Prinsys">
+            </div>
+            <div class="project-text">
+                <h2>Prinsys</h2>
+                <h3>Subtitle goes here</h3>
+                <p>Description paragraph for Prinsys project goes here. This will contain details about the project.</p>
+            </div>
         </div>
     </div>
 
-    <div id="popup-2" class="popup">
+    <div id="popup-2" class="popup" data-bg-color="#cca300">
         <button class="popup-close">X</button>
-        <div class="popup-content popup-placeholder">
-            <h2>Art & Design Portfolio</h2>
-            <p>This is a placeholder for art and design portfolio content. Test the slide animations!</p>
+        <div class="popup-content popup-project">
+            <div class="project-image">
+                <div class="placeholder-image">Encrypted Chat Image</div>
+            </div>
+            <div class="project-text">
+                <h2>Encrypted Chat</h2>
+                <h3>Subtitle goes here</h3>
+                <p>Description paragraph for Encrypted Chat project goes here. This will contain details about the project.</p>
+            </div>
         </div>
     </div>
 
-    <div id="popup-3" class="popup">
+    <div id="popup-3" class="popup" data-bg-color="#457a00">
         <button class="popup-close">X</button>
-        <div class="popup-content popup-placeholder">
-            <h2>Academic Projects</h2>
-            <p>This is a placeholder for academic projects content. Test the slide animations!</p>
+        <div class="popup-content popup-project">
+            <div class="project-image">
+                <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/DoubleCoinVectorColored.png') }}" alt="Algorithmic Crafting">
+            </div>
+            <div class="project-text">
+                <h2>Algorithmic Crafting</h2>
+                <h3>Subtitle goes here</h3>
+                <p>Description paragraph for Algorithmic Crafting project goes here. This will contain details about the project.</p>
+            </div>
         </div>
     </div>
 
-    <div id="popup-4" class="popup">
+    <div id="popup-4" class="popup" data-bg-color="#004e7a">
         <button class="popup-close">X</button>
-        <div class="popup-content popup-placeholder">
-            <h2>Technical Skills</h2>
-            <p>This is a placeholder for technical skills content. Test the slide animations!</p>
+        <div class="popup-content popup-project">
+            <div class="project-image">
+                <div class="placeholder-image">Isanding NYC Image</div>
+            </div>
+            <div class="project-text">
+                <h2>Isanding NYC</h2>
+                <h3>Subtitle goes here</h3>
+                <p>Description paragraph for Isanding NYC project goes here. This will contain details about the project.</p>
+            </div>
         </div>
     </div>
 
-    <div id="popup-5" class="popup">
+    <div id="popup-5" class="popup" data-bg-color="#401268">
         <button class="popup-close">X</button>
-        <div class="popup-content popup-placeholder">
-            <h2>Contact Info</h2>
-            <p>This is a placeholder for contact information content. Test the slide animations!</p>
+        <div class="popup-content popup-contact">
+            <h2>Contact</h2>
+            <p>Get in touch with me for collaborations, opportunities, or just to say hello.</p>
+            <div class="contact-info">
+                <p>Email: remi@remingtonwilliams.com</p>
+                <p>LinkedIn: linkedin.com/in/remington-williams</p>
+            </div>
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/cradle.js') }}"></script>

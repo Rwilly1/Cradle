@@ -297,6 +297,17 @@ render.canvas.addEventListener('mousemove', function(event) {
 
 let currentPopupIndex = 0;
 
+function updateNavLabels() {
+    const navLabels = document.querySelectorAll('.nav-label');
+    navLabels.forEach((label, index) => {
+        if (index === currentPopupIndex) {
+            label.classList.add('active');
+        } else {
+            label.classList.remove('active');
+        }
+    });
+}
+
 function openPopup(ballIndex, direction) {
     if (!textEnabled || popupOpen) return;
     
@@ -306,7 +317,15 @@ function openPopup(ballIndex, direction) {
     currentPopup = popup;
     currentPopupDirection = direction; // Store direction for closing
     
+    // Apply background color from data attribute to popup-box
+    const bgColor = popup.getAttribute('data-bg-color');
+    const popupBox = popup.querySelector('.popup-box');
+    if (bgColor && popupBox) {
+        popupBox.style.backgroundColor = bgColor;
+    }
+    
     popup.classList.add('active');
+    updateNavLabels();
     
     // Newton's Cradle physics: pull left → enters from right, pull right → enters from left
     // Pull left (direction='left') → enters from right (100%)
@@ -336,11 +355,19 @@ function navigateToPopup(newIndex, swipeDirection) {
     const oldPopup = currentPopup;
     const newPopup = document.getElementById(`popup-${newIndex}`);
     
+    // Apply background color from data attribute to popup-box
+    const bgColor = newPopup.getAttribute('data-bg-color');
+    const popupBox = newPopup.querySelector('.popup-box');
+    if (bgColor && popupBox) {
+        popupBox.style.backgroundColor = bgColor;
+    }
+    
     // Slide in new popup immediately (overlapping transition)
     const xIn = swipeDirection === 'left' ? '100%' : '-100%';
     newPopup.classList.add('active');
     currentPopup = newPopup;
     currentPopupIndex = newIndex;
+    updateNavLabels();
     
     gsap.fromTo(newPopup,
         { x: xIn, opacity: 1 },
@@ -534,6 +561,11 @@ function closePopup() {
             currentPopup = null;
             currentPopupDirection = null;
             popupOpen = false;
+            
+            // Clear nav label active states
+            document.querySelectorAll('.nav-label').forEach(label => {
+                label.classList.remove('active');
+            });
         }
     });
 }
@@ -541,6 +573,24 @@ function closePopup() {
 // Add event listeners to all close buttons
 document.querySelectorAll('.popup-close').forEach((btn, index) => {
     btn.addEventListener('click', closePopup);
+});
+
+// Add event listeners to navigation labels
+document.querySelectorAll('.nav-label').forEach((label) => {
+    label.addEventListener('click', function() {
+        if (!textEnabled) return;
+        
+        const popupIndex = parseInt(this.getAttribute('data-popup'));
+        
+        if (popupOpen && currentPopupIndex !== popupIndex) {
+            // Navigate to different popup
+            const direction = popupIndex > currentPopupIndex ? 'left' : 'right';
+            navigateToPopup(popupIndex, direction);
+        } else if (!popupOpen) {
+            // Open popup (default to slide from right)
+            openPopup(popupIndex, 'right');
+        }
+    });
 });
 
 Events.on(engine, 'collisionStart', function(event) {
@@ -668,14 +718,8 @@ Events.on(render, 'afterRender', function() {
         let targetOpacity = 0;
         
         if (textEnabled) {
-            // 100% opacity: dragging, active ball, or hovering over text
-            if (draggedBall === ball || activeBall === ball || hoveredText === ball) {
-                targetOpacity = 1.0;
-            }
-            // 50% opacity: hovering over ball (but not text area)
-            else if (hoveredBall === ball && !isMoving) {
-                targetOpacity = 0.5;
-            }
+            // Disable all text rendering
+            targetOpacity = 0;
         }
         
         textOpacities[index] += (targetOpacity - textOpacities[index]) * 0.15;
