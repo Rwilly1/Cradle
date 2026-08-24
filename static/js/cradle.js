@@ -382,29 +382,32 @@ function enablePopupSwipe() {
     let scrollAccumulator = 0;
     const scrollThreshold = 100;
     
-    // Intercept wheel/scroll events
+    // Intercept wheel/scroll events for horizontal navigation
     const wheelHandler = (e) => {
-        e.preventDefault();
-        
-        // Don't navigate if already animating
-        if (isNavigating) return;
-        
-        // Accumulate vertical scroll
-        scrollAccumulator += e.deltaY;
-        
-        if (Math.abs(scrollAccumulator) > scrollThreshold) {
-            isNavigating = true;
+        // Only intercept horizontal scroll (trackpad left/right swipe)
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            e.preventDefault();
             
-            if (scrollAccumulator > 0) {
-                // Scrolled down → navigate right (next popup)
-                const nextIndex = (currentPopupIndex + 1) % 6;
-                navigateToPopup(nextIndex, 'left');
-            } else {
-                // Scrolled up → navigate left (previous popup)
-                const prevIndex = (currentPopupIndex - 1 + 6) % 6;
-                navigateToPopup(prevIndex, 'right');
+            // Don't navigate if already animating
+            if (isNavigating) return;
+            
+            // Accumulate horizontal scroll
+            scrollAccumulator += e.deltaX;
+            
+            if (Math.abs(scrollAccumulator) > scrollThreshold) {
+                isNavigating = true;
+                
+                if (scrollAccumulator > 0) {
+                    // Scrolled right → navigate to next popup
+                    const nextIndex = (currentPopupIndex + 1) % 6;
+                    navigateToPopup(nextIndex, 'left');
+                } else {
+                    // Scrolled left → navigate to previous popup
+                    const prevIndex = (currentPopupIndex - 1 + 6) % 6;
+                    navigateToPopup(prevIndex, 'right');
+                }
+                scrollAccumulator = 0;
             }
-            scrollAccumulator = 0;
         }
     };
     
