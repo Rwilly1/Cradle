@@ -102,7 +102,7 @@ html {
     transform: translateX(-50%);
     display: flex;
     gap: 2rem;
-    z-index: 3;
+    z-index: 1100;
 }
 
 .nav-label {
@@ -221,6 +221,7 @@ html {
     align-items: flex-start;
     justify-content: center;
     padding-top: calc(15vh + 96px);
+    pointer-events: none;
 }
 
 .popup.active {
@@ -230,6 +231,7 @@ html {
 .popup-box {
     width: 48%;
     max-width: 665px;
+    height: 280px;
     background-color: inherit;
     border-radius: 24px;
     padding: 14px 28px 0px 28px;
@@ -237,6 +239,8 @@ html {
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     margin-top: 48px;
+    overflow: hidden;
+    pointer-events: auto;
 }
 
 .popup-close {
@@ -462,24 +466,25 @@ html {
 /* Project popup layout */
 .popup-project {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 60px;
-    padding: 80px;
+    align-items: stretch;
+    gap: 20px;
+    height: calc(100% - 14px);
+    padding-top: 0px;
 }
 
 .project-image {
     flex-shrink: 0;
-    width: 400px;
-    height: 400px;
+    width: 45%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: rgba(242, 240, 239, 0.2);
+    border-radius: 12px;
 }
 
 .project-image img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 90%;
+    max-height: 90%;
     object-fit: contain;
 }
 
@@ -487,60 +492,67 @@ html {
     width: 100%;
     height: 100%;
     background-color: rgba(242, 240, 239, 0.3);
-    border: 2px dashed #3b3430;
+    border: 2px dashed rgba(242, 240, 239, 0.5);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Museo Moderno', sans-serif;
-    color: #3b3430;
-    font-size: 18px;
+    color: #f2f0ef;
+    font-size: 14px;
+    font-weight: 300;
 }
 
 .project-text {
-    max-width: 500px;
-    color: #3b3430;
+    flex: 1;
+    color: #f2f0ef;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .project-text h2 {
-    font-size: 48px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+    color: #f2f0ef;
 }
 
 .project-text h3 {
-    font-size: 24px;
-    font-weight: 400;
-    margin-bottom: 20px;
-    opacity: 0.8;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 0px;
+    color: #f2f0ef;
 }
 
 .project-text p {
-    font-size: 18px;
-    line-height: 1.6;
+    font-size: 11px;
+    line-height: 1.38;
     font-weight: 300;
+    color: #f2f0ef;
+    text-align: justify;
 }
 
 /* Contact popup layout */
 .popup-contact {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px;
-    text-align: center;
-    color: #3b3430;
+    color: #f2f0ef;
 }
 
 .popup-contact h2 {
-    font-size: 48px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
+    color: #f2f0ef;
 }
 
 .popup-contact p {
-    font-size: 20px;
-    line-height: 1.6;
-    margin-bottom: 30px;
+    font-size: 11px;
+    line-height: 1.38;
+    margin-bottom: 7px;
+    font-weight: 300;
+    text-align: justify;
 }
 
 .contact-info {
@@ -548,8 +560,10 @@ html {
 }
 
 .contact-info p {
-    font-size: 18px;
-    margin: 10px 0;
+    font-size: 11px;
+    line-height: 1.38;
+    margin: 5px 0;
+    font-weight: 300;
 }
 
 @media (max-width: 1024px) {
