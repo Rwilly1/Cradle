@@ -582,13 +582,95 @@ document.querySelectorAll('.nav-label').forEach((label) => {
         
         const popupIndex = parseInt(this.getAttribute('data-popup'));
         
-        if (popupOpen && currentPopupIndex !== popupIndex) {
-            // Navigate to different popup
-            const direction = popupIndex > currentPopupIndex ? 'left' : 'right';
-            navigateToPopup(popupIndex, direction);
+        if (popupOpen && currentPopupIndex === popupIndex) {
+            // Clicking same nav - pull the ball again
+            const ball = balls[popupIndex];
+            const velocity = ball.velocity;
+            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            
+            if (speed < 0.5) {
+                // Ball is not in motion, apply velocity to pull it and all balls on that side
+                const pullDirection = popupIndex <= 2 ? 'left' : 'right';
+                const pullForce = pullDirection === 'left' ? -15 : 15;
+                
+                // Pull all balls from this one to the edge in the pull direction
+                if (pullDirection === 'left') {
+                    // Pull balls from popupIndex down to 0 (red)
+                    for (let i = 0; i <= popupIndex; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                } else {
+                    // Pull balls from popupIndex up to 5 (purple)
+                    for (let i = popupIndex; i < balls.length; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                }
+                activeBall = ball;
+                activeBallDirection = pullDirection;
+            }
+        } else if (popupOpen && currentPopupIndex !== popupIndex) {
+            // Navigate to different popup - pull the ball first
+            const ball = balls[popupIndex];
+            const velocity = ball.velocity;
+            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            
+            if (speed < 0.5) {
+                // Ball is not in motion, apply velocity to pull it and all balls on that side
+                const pullDirection = popupIndex <= 2 ? 'left' : 'right';
+                const pullForce = pullDirection === 'left' ? -15 : 15;
+                
+                // Pull all balls from this one to the edge in the pull direction
+                if (pullDirection === 'left') {
+                    // Pull balls from popupIndex down to 0 (red)
+                    for (let i = 0; i <= popupIndex; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                } else {
+                    // Pull balls from popupIndex up to 5 (purple)
+                    for (let i = popupIndex; i < balls.length; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                }
+                activeBall = ball;
+                activeBallDirection = pullDirection;
+                
+                // Switch popup immediately
+                const direction = popupIndex > currentPopupIndex ? 'left' : 'right';
+                navigateToPopup(popupIndex, direction);
+            } else {
+                // Ball is in motion, just switch popup
+                const direction = popupIndex > currentPopupIndex ? 'left' : 'right';
+                navigateToPopup(popupIndex, direction);
+            }
         } else if (!popupOpen) {
-            // Open popup (default to slide from right)
-            openPopup(popupIndex, 'right');
+            // Check if balls are in motion
+            const ball = balls[popupIndex];
+            const velocity = ball.velocity;
+            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            
+            if (speed < 0.5) {
+                // Ball is not in motion, apply velocity to pull it and all balls on that side
+                // Balls 0-2 (red, orange, yellow) pull left
+                // Balls 3-5 (green, blue, purple) pull right
+                const pullDirection = popupIndex <= 2 ? 'left' : 'right';
+                const pullForce = pullDirection === 'left' ? -15 : 15;
+                
+                // Pull all balls from this one to the edge in the pull direction
+                if (pullDirection === 'left') {
+                    // Pull balls from popupIndex down to 0 (red)
+                    for (let i = 0; i <= popupIndex; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                } else {
+                    // Pull balls from popupIndex up to 5 (purple)
+                    for (let i = popupIndex; i < balls.length; i++) {
+                        Matter.Body.setVelocity(balls[i], { x: pullForce, y: 0 });
+                    }
+                }
+                activeBall = ball;
+                activeBallDirection = pullDirection;
+                openPopup(popupIndex, pullDirection);
+            }
         }
     });
 });
