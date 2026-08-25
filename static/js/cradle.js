@@ -227,10 +227,12 @@ Events.on(mouseConstraint, 'startdrag', function(event) {
 Events.on(mouseConstraint, 'enddrag', function(event) {
     isDragging = false;
     if (balls.includes(event.body) && draggedBall === event.body && activeBall === event.body) {
-        const velocity = event.body.velocity;
-        // Track pull direction (will swipe opposite direction)
-        activeBallDirection = velocity.x > 0 ? 'left' : 'right'; // Opposite!
-        console.log('RELEASED: Ball', balls.indexOf(event.body), 'pull direction:', velocity.x > 0 ? 'right' : 'left', '→ swipe:', activeBallDirection);
+        const ballIndex = balls.indexOf(event.body);
+        // Use ball position to determine pull direction (same as nav clicks)
+        // Balls 0-2 (red, orange, yellow) pull left
+        // Balls 3-5 (green, blue, purple) pull right
+        activeBallDirection = ballIndex <= 2 ? 'left' : 'right';
+        console.log('RELEASED: Ball', ballIndex, 'pull direction:', activeBallDirection);
     }
     draggedBall = null;
 });
@@ -239,10 +241,12 @@ window.addEventListener('mouseup', function() {
     if (isDragging) {
         isDragging = false;
         if (draggedBall && balls.includes(draggedBall) && activeBall === draggedBall) {
-            const velocity = draggedBall.velocity;
-            // Track pull direction (will swipe opposite direction)
-            activeBallDirection = velocity.x > 0 ? 'left' : 'right'; // Opposite!
-            console.log('RELEASED (mouseup): Ball', balls.indexOf(draggedBall), 'pull direction:', velocity.x > 0 ? 'right' : 'left', '→ swipe:', activeBallDirection);
+            const ballIndex = balls.indexOf(draggedBall);
+            // Use ball position to determine pull direction (same as nav clicks)
+            // Balls 0-2 (red, orange, yellow) pull left
+            // Balls 3-5 (green, blue, purple) pull right
+            activeBallDirection = ballIndex <= 2 ? 'left' : 'right';
+            console.log('RELEASED (mouseup): Ball', ballIndex, 'pull direction:', activeBallDirection);
         }
         draggedBall = null;
     }
@@ -327,10 +331,10 @@ function openPopup(ballIndex, direction) {
     popup.classList.add('active');
     updateNavLabels();
     
-    // Newton's Cradle physics: pull left → enters from right, pull right → enters from left
-    // Pull left (direction='left') → enters from right (100%)
-    // Pull right (direction='right') → enters from left (-100%)
-    const xStart = direction === 'left' ? '100%' : '-100%';
+    // Popup enters from the same direction as the pull
+    // Pull left (direction='left') → enters from left (-100%)
+    // Pull right (direction='right') → enters from right (100%)
+    const xStart = direction === 'left' ? '-100%' : '100%';
     
     gsap.fromTo(popup, 
         { 
@@ -362,20 +366,30 @@ function navigateToPopup(newIndex, swipeDirection) {
         popupBox.style.backgroundColor = bgColor;
     }
     
-    // Slide in new popup immediately (overlapping transition)
-    const xIn = swipeDirection === 'left' ? '100%' : '-100%';
+    // Ball collision physics:
+    // New popup enters from its pull direction
+    // Old popup gets knocked out in the opposite direction (away from collision)
+    const newPullDirection = newIndex <= 2 ? 'left' : 'right';
+    
+    // New popup slides in from its pull direction
+    const xIn = newPullDirection === 'left' ? '-100%' : '100%';
+    
+    // Old popup exits in opposite direction (gets knocked away)
+    const xOut = newPullDirection === 'left' ? '100%' : '-100%';
+    
     newPopup.classList.add('active');
     currentPopup = newPopup;
     currentPopupIndex = newIndex;
     updateNavLabels();
     
+    // Animate both popups to collide in the middle
     gsap.fromTo(newPopup,
         { x: xIn, opacity: 1 },
         { 
             x: '0%', 
             opacity: 1, 
-            duration: 0.5, 
-            ease: 'power2.inOut',
+            duration: 0.4, 
+            ease: 'power1.out',
             onComplete: () => {
                 isNavigating = false;
                 enablePopupSwipe();
@@ -383,13 +397,12 @@ function navigateToPopup(newIndex, swipeDirection) {
         }
     );
     
-    // Slide out old popup (happens simultaneously)
-    const xOut = swipeDirection === 'left' ? '-100%' : '100%';
+    // Old popup moves to meet new popup (collision effect)
     gsap.to(oldPopup, {
         x: xOut,
         opacity: 1,
-        duration: 0.5,
-        ease: 'power2.inOut',
+        duration: 0.4,
+        ease: 'power1.in',
         onComplete: () => {
             oldPopup.classList.remove('active');
             gsap.set(oldPopup, { x: '0%' });
