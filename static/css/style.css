@@ -101,7 +101,7 @@ html {
     left: calc(50% + 36px);
     transform: translateX(-50%);
     display: flex;
-    gap: 2rem;
+    gap: 1.8rem;
     z-index: 1100;
 }
 
@@ -119,6 +119,7 @@ html {
 
 .nav-label:hover {
     opacity: 0.7;
+    font-weight: 500;
 }
 
 .nav-label.active {
@@ -246,7 +247,7 @@ html {
 .popup-close {
     position: absolute;
     top: 14px;
-    right: 28px;
+    right: 16px;
     width: 16px;
     height: 16px;
     border-radius: 50%;
@@ -534,8 +535,8 @@ html {
 
 .prinsys-image {
     transform: translateX(12px);
-    mask-image: linear-gradient(to right, black 60%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    mask-image: linear-gradient(to right, black 30%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
 }
 
 .algorithmic-image {
@@ -633,12 +634,27 @@ html {
 .contact-link {
     text-decoration: none;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.contact-link:hover .contact-label,
+.contact-link:hover .contact-value {
+    opacity: 1;
+    font-weight: 500;
+}
+
+.contact-info-row:hover .contact-label,
+.contact-info-row:hover .contact-value {
+    opacity: 1;
+    font-weight: 500;
 }
 
 .contact-label {
     font-size: 11px;
     font-weight: 300;
     color: #f2f0ef;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
 }
 
 .contact-value {
@@ -646,6 +662,8 @@ html {
     font-weight: 300;
     color: #f2f0ef;
     text-align: right;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
 }
 
 .contact-layer {

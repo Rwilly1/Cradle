@@ -344,8 +344,8 @@ function openPopup(ballIndex, direction) {
         { 
             x: '0%',
             opacity: 1,
-            duration: 0.6,
-            ease: 'power2.out',
+            duration: 2.5,
+            ease: 'elastic.out(1, 0.6)',
             onComplete: () => {
                 enablePopupSwipe();
             }
@@ -388,8 +388,8 @@ function navigateToPopup(newIndex, swipeDirection) {
         { 
             x: '0%', 
             opacity: 1, 
-            duration: 0.4, 
-            ease: 'power1.out',
+            duration: 2.5, 
+            ease: 'elastic.out(1, 0.6)',
             onComplete: () => {
                 isNavigating = false;
                 enablePopupSwipe();
