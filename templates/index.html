@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remington Williams</title>
+    <link rel="preload" as="image" href="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -25,7 +28,7 @@
                 <button class="nav-label" data-popup="1">Prinsys</button>
                 <button class="nav-label" data-popup="2">Encrypted Chat</button>
                 <button class="nav-label" data-popup="3">Algorithmic Crafting</button>
-                <button class="nav-label" data-popup="4">Isanding NYC</button>
+                <button class="nav-label" data-popup="4">Islanding NYC</button>
                 <button class="nav-label" data-popup="5">Contact</button>
             </nav>
         </div>
@@ -78,7 +81,7 @@
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
-                    <div class="placeholder-image">Project Image</div>
+                    <img src="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}" alt="Encrypted Chat" class="encrypted-image">
                 </div>
                 <div class="project-text">
                     <h2>Encrypted Chat</h2>
@@ -110,10 +113,17 @@
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
-                    <div class="placeholder-image">Project Image</div>
+                    <img src="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}" alt="Islanding NYC" class="islanding-image">
+                    <div id="islanding-video-overlay" class="islanding-video-overlay">
+                        <video class="islanding-video" src="{{ url_for('static', filename='Islanding/small_island.mp4') }}" loop playsinline preload="metadata" poster="https://img.youtube.com/vi/CjYmnk2FfLY/maxresdefault.jpg" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
+                        <div class="islanding-pause-overlay" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" class="islanding-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                            <svg viewBox="0 0 24 24" class="islanding-icon-play" aria-hidden="true" style="display:none"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
                 </div>
                 <div class="project-text">
-                    <h2>Isanding NYC</h2>
+                    <h2>Islanding NYC</h2>
                     <h3>3D Animation</h3>
                     <p>A comprehensive transit information system for New York City that provides real-time updates, route planning, and accessibility information. Designed to make urban navigation more intuitive and inclusive for all users.</p>
                 </div>

@@ -1070,3 +1070,40 @@ textToggle.addEventListener('change', function() {
         });
     }
 });
+
+// Islanding MP4 player
+(function() {
+    const popup = document.getElementById('popup-4');
+    const video = document.querySelector('.islanding-video');
+    const overlay = document.querySelector('.islanding-pause-overlay');
+    if (!popup || !video) return;
+
+    function updateOverlay() {
+        if (overlay) overlay.classList.toggle('paused', video.paused);
+    }
+
+    function toggleVideo() {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+
+    video.addEventListener('play', updateOverlay);
+    video.addEventListener('pause', updateOverlay);
+    video.addEventListener('click', toggleVideo);
+
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (popup.classList.contains('active')) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+        });
+    });
+    observer.observe(popup, { attributes: true, attributeFilter: ['class'] });
+})();
