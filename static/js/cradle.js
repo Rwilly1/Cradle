@@ -177,7 +177,7 @@ Composite.add(world, letterBodies);
 letterBodies.forEach((letter) => {
     gsap.to(letter.position, {
         y: letter.originalY,
-        duration: 0.8,
+        duration: 1,
         delay: 0.3,
         ease: 'bounce.out',
         onUpdate: function() {
@@ -1106,4 +1106,6 @@ textToggle.addEventListener('change', function() {
         });
     });
     observer.observe(popup, { attributes: true, attributeFilter: ['class'] });
+
+    updateOverlay();
 })();
