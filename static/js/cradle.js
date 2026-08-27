@@ -215,8 +215,8 @@ let isDragging = false;
 Events.on(mouseConstraint, 'startdrag', function(event) {
     isDragging = true;
     if (balls.includes(event.body)) {
-        // Select ball on grab if text is enabled and no popup is open
-        if (textEnabled && !popupOpen) {
+        // Select ball on grab if no popup is open
+        if (!popupOpen) {
             draggedBall = event.body;
             activeBall = event.body;
             console.log('SELECTED: Ball', balls.indexOf(event.body));
@@ -313,7 +313,7 @@ function updateNavLabels() {
 }
 
 function openPopup(ballIndex, direction) {
-    if (!textEnabled || popupOpen) return;
+    if (popupOpen) return;
     
     popupOpen = true;
     currentPopupIndex = ballIndex;
@@ -591,8 +591,6 @@ document.querySelectorAll('.popup-close').forEach((btn, index) => {
 // Add event listeners to navigation labels
 document.querySelectorAll('.nav-label').forEach((label) => {
     label.addEventListener('click', function() {
-        if (!textEnabled) return;
-        
         const popupIndex = parseInt(this.getAttribute('data-popup'));
         
         if (popupOpen && currentPopupIndex === popupIndex) {
@@ -1017,8 +1015,18 @@ gsap.from('#canvas-container', {
 const invertOverlay = document.querySelector('.invert-overlay');
 const textToggle = document.getElementById('text-toggle');
 
+// Create per-popup inner overlays that mirror the main dark-mode sweep
+// while leaving images/video above them untouched.
+document.querySelectorAll('.popup-box').forEach(box => {
+    const popupOverlay = document.createElement('div');
+    popupOverlay.className = 'popup-invert-overlay';
+    box.appendChild(popupOverlay);
+});
+const popupInverts = document.querySelectorAll('.popup-invert-overlay');
+
 textToggle.addEventListener('change', function() {
     textEnabled = this.checked;
+    document.body.classList.toggle('dark-mode', !textEnabled);
     
     if (!textEnabled) {
         activeBall = null;
@@ -1029,10 +1037,20 @@ textToggle.addEventListener('change', function() {
             duration: 1.2,
             ease: 'power2.inOut'
         });
+        gsap.to(popupInverts, {
+            clipPath: 'inset(0 0% 0 0)',
+            duration: 1.2,
+            ease: 'power2.inOut'
+        });
     } else {
         // Sweep from right to left
         gsap.to(invertOverlay, {
             opacity: 1,
+            clipPath: 'inset(0 100% 0 0)',
+            duration: 1.2,
+            ease: 'power2.inOut'
+        });
+        gsap.to(popupInverts, {
             clipPath: 'inset(0 100% 0 0)',
             duration: 1.2,
             ease: 'power2.inOut'

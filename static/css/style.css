@@ -216,7 +216,7 @@ html {
     width: 100%;
     height: 100%;
     background-color: transparent;
-    z-index: 1000;
+    z-index: 10001;
     display: none;
     opacity: 0;
     align-items: flex-start;
@@ -242,6 +242,27 @@ html {
     margin-top: 48px;
     overflow: hidden;
     pointer-events: auto;
+}
+
+.popup-invert-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f2f0ef;
+    mix-blend-mode: difference;
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+    pointer-events: none;
+    z-index: 1002;
+    border-radius: inherit;
+}
+
+.project-image,
+.algorithmic-knots {
+    position: relative;
+    z-index: 1003;
 }
 
 .popup-close {
