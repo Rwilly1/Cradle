@@ -960,7 +960,7 @@ html {
     
     #popup-0 .stacked-footer {
         position: relative;
-        margin-top: 0px;
+        margin-top: 15px;
         min-height: 200px;
         margin-left: -20px;
         margin-right: -20px;
@@ -984,7 +984,7 @@ html {
         bottom: 0px;
         left: 0;
         right: 0;
-        padding: 20px 20px 20px 20px;
+        padding: 20px;
         gap: 8px;
     }
     
@@ -1207,7 +1207,7 @@ html {
     
     #popup-5 .contact-content {
         height: 140px;
-        padding: 0 24px 0 24px;
+        padding: 0 20px 0 20px;
         display: flex;
         flex-direction: column;
         justify-content: space-evenly;
@@ -1215,7 +1215,7 @@ html {
     
     #popup-5 .contact-info-row {
         height: 32px;
-        padding: 0 12px;
+        padding: 0;
         display: flex;
         align-items: center;
     }
