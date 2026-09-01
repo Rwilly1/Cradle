@@ -555,6 +555,14 @@ html {
     object-fit: contain;
 }
 
+.project-image picture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
 .prinsys-image {
     transform: translateX(12px);
     mask-image: linear-gradient(to right, black 30%, transparent 100%);
@@ -734,7 +742,11 @@ html {
     min-height: 0;
 }
 
-.algorithmic-knots img {
+.algorithmic-knots .knots-square {
+    display: none;
+}
+
+.algorithmic-knots .knots-horizontal {
     width: 24%;
     height: auto;
     max-height: 140px;
@@ -851,5 +863,352 @@ html {
     .social-icon {
         width: 35px;
         height: 35px;
+    }
+}
+
+/* Mobile & Tablet Layout (≤1024px) */
+@media (max-width: 1024px) {
+    body {
+        overflow-y: auto;
+        overflow-x: hidden;
+        background-color: #f2f0ef;
+        padding: 0;
+    }
+    
+    /* Add mobile header */
+    body::before {
+        content: 'Remington Williams';
+        display: block;
+        font-family: 'Museo Moderno', sans-serif;
+        font-size: clamp(30px, 8.5vw, 50px);
+        font-weight: 600;
+        color: #3b3430;
+        text-align: left;
+        padding: 40px 36px 24px 36px;
+        background-color: #f2f0ef;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        white-space: nowrap;
+    }
+    
+    /* Hide desktop elements */
+    .container,
+    #canvas-container,
+    .toggle-container,
+    .popup-nav,
+    .invert-overlay {
+        display: none !important;
+    }
+    
+    /* Show popups as vertical scroll sections */
+    .popup {
+        position: relative;
+        display: block !important;
+        opacity: 1 !important;
+        width: 100%;
+        height: auto;
+        padding: 0 16px 16px 16px;
+        margin: 0;
+        pointer-events: auto;
+        z-index: 10;
+        background-color: #f2f0ef;
+    }
+    
+    .popup-box {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        border-radius: 24px;
+        padding: 16px 20px 0 20px;
+        margin: 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Hide close button on mobile */
+    .popup-close {
+        display: none;
+    }
+    
+    /* About section (red) */
+    #popup-0 .popup-box {
+        background-color: #7a0000;
+        padding-bottom: 0;
+    }
+    
+    #popup-0 .popup-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-top: 0px;
+        margin-bottom: 0;
+    }
+    
+    #popup-0 .popup-main h1 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+    
+    #popup-0 .popup-main p {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+    
+    #popup-0 .stacked-footer {
+        position: relative;
+        margin-top: 0px;
+        min-height: 200px;
+        margin-left: -20px;
+        margin-right: -20px;
+        margin-bottom: 0;
+    }
+    
+    #popup-0 .stack-layer-1 {
+        height: 160px;
+    }
+    
+    #popup-0 .stack-layer-2 {
+        height: 180px;
+    }
+    
+    #popup-0 .stack-layer-3 {
+        height: 200px;
+    }
+    
+    #popup-0 .footer-content {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+        padding: 20px 20px 20px 20px;
+        gap: 8px;
+    }
+    
+    #popup-0 .tech-section h3 {
+        font-size: 13px;
+        margin-bottom: 2px;
+        font-weight: 700;
+    }
+    
+    #popup-0 .tech-section p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 0;
+    }
+    
+    /* Project sections */
+    .popup-project {
+        flex-direction: column;
+        height: auto;
+        gap: 20px;
+        padding-top: 0px;
+    }
+    
+    .project-image {
+        width: 100%;
+        height: auto;
+        min-height: 300px;
+        order: 1;
+    }
+    
+    .project-text {
+        width: 100%;
+        order: 2;
+        padding-bottom: 24px;
+        margin-top: -12px;
+    }
+    
+    .popup-project .project-text h2 {
+        font-size: 22px;
+        margin-bottom: -2px;
+    }
+    
+    .popup-project .project-text h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    
+    .popup-project .project-text p {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    /* Prinsys (orange) - use vertical image */
+    #popup-1 .popup-box {
+        background-color: #cc4e00;
+    }
+    
+    #popup-1 .project-image {
+        min-height: 450px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -22px;
+        margin-bottom: -30px;
+    }
+    
+    #popup-1 .project-image img {
+        max-width: 200%;
+        max-height: 800px;
+        transform: none !important;
+        mask-image: none !important;
+        -webkit-mask-image: none !important;
+    }
+    
+    #popup-1 .project-image picture {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    /* Encrypted Chat (yellow) */
+    #popup-2 .popup-box {
+        background-color: #cca300;
+    }
+    
+    #popup-2 .project-image img {
+        max-width: 100% !important;
+        max-height: 400px !important;
+    }
+    
+    #popup-2 .project-text {
+        transform: none;
+    }
+    
+    /* Algorithmic Crafting (green) */
+    #popup-3 .popup-box {
+        background-color: #457a00;
+    }
+    
+    #popup-3 .algorithmic-layout {
+        flex-direction: column;
+        gap: 24px;
+    }
+    
+    #popup-3 .algorithmic-knots {
+        flex-wrap: wrap;
+        gap: 0;
+        min-height: auto;
+        justify-content: center;
+    }
+    
+    #popup-3 .algorithmic-knots .knots-square {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+    }
+    
+    #popup-3 .algorithmic-knots .knots-horizontal {
+        display: none;
+    }
+    
+    /* Islanding NYC (blue) */
+    #popup-4 .popup-box {
+        background-color: #004e7a;
+    }
+    
+    #popup-4 .project-image {
+        background-image: url('../Islanding/iPad_without.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    
+    #popup-4 .project-image img {
+        max-width: 100% !important;
+        max-height: 400px !important;
+        transform: none;
+        opacity: 0;
+    }
+    
+    #popup-4 .islanding-video-overlay {
+        width: 90%;
+        transform: translate(-50%, -50%);
+    }
+    
+    #popup-4 .islanding-pause-overlay {
+        opacity: 1;
+    }
+    
+    #popup-4 .islanding-pause-overlay .islanding-icon-play {
+        display: block;
+    }
+    
+    #popup-4 .islanding-pause-overlay .islanding-icon-pause {
+        display: none;
+    }
+    
+    /* Contact (purple) */
+    #popup-5 .popup-box {
+        background-color: #401268;
+        padding-bottom: 0;
+    }
+    
+    #popup-5 .popup-main {
+        padding-top: 0px;
+        margin-bottom: 24px;
+    }
+    
+    #popup-5 .popup-main h1 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+    
+    #popup-5 .popup-main p {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    #popup-5 .contact-footer {
+        position: relative;
+        left: 0;
+        right: 0;
+        height: 140px;
+        margin-left: -20px;
+        margin-right: -20px;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    
+    #popup-5 .contact-layer-1 {
+        height: 35px;
+    }
+    
+    #popup-5 .contact-layer-2 {
+        height: 70px;
+    }
+    
+    #popup-5 .contact-layer-3 {
+        height: 105px;
+    }
+    
+    #popup-5 .contact-layer-4 {
+        height: 140px;
+    }
+    
+    #popup-5 .contact-content {
+        height: 140px;
+        padding: 0 24px 0 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+    }
+    
+    #popup-5 .contact-info-row {
+        height: 32px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+    }
+    
+    #popup-5 .contact-label,
+    #popup-5 .contact-value {
+        font-size: 13px;
     }
 }

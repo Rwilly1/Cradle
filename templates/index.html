@@ -65,7 +65,10 @@
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
-                    <img src="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}" alt="Prinsys" class="prinsys-image">
+                    <picture>
+                        <source media="(max-width: 1024px)" srcset="{{ url_for('static', filename='Prinsys/vertical/iPhone 16 Pro.png') }}">
+                        <img src="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}" alt="Prinsys" class="prinsys-image">
+                    </picture>
                 </div>
                 <div class="project-text">
                     <h2>Prinsys</h2>
@@ -102,10 +105,11 @@
                     <p>A multi-year research study exploring how knots can be learned through a rule-based visual language. The work evolved from paper prototypes to digital puzzle interfaces and immersive XR experiments, combining prototyping with iterative user testing. I helped develop and evaluate systems that used modular rope segments to study shape grammar, spatial reasoning and computational thinking.  </p>
                 </div>
                 <div class="algorithmic-knots">
-                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot1.png') }}" alt="Knot 1">
-                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot2.png') }}" alt="Knot 2">
-                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot3.png') }}" alt="Knot 3">
-                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot4.png') }}" alt="Knot 4">
+                    <img src="{{ url_for('static', filename='Algorithmic_Craft/square/DoubleCoinVector4Square.png') }}" alt="Algorithmic Knots" class="knots-square">
+                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot1.png') }}" alt="Knot 1" class="knots-horizontal">
+                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot2.png') }}" alt="Knot 2" class="knots-horizontal">
+                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot3.png') }}" alt="Knot 3" class="knots-horizontal">
+                    <img src="{{ url_for('static', filename='Algorithmic_Craft/horizontal/knot4.png') }}" alt="Knot 4" class="knots-horizontal">
                 </div>
             </div>
         </div>
