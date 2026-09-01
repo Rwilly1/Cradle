@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remington Williams</title>
+    
+    <!-- Open Graph / Social Media Preview -->
+    <meta property="og:title" content="Remington Williams">
+    <meta property="og:description" content="Creative Technologist | Software Engineer | Human Centered Design, Research & Development">
+    <meta property="og:image" content="{{ url_for('static', filename='popup_preview.png', _external=True) }}">
+    <meta property="og:url" content="https://remingtonwilliams.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Remington Williams">
+    <meta name="twitter:description" content="Creative Technologist | Software Engineer | Human Centered Design, Research & Development">
+    <meta name="twitter:image" content="{{ url_for('static', filename='popup_preview.png', _external=True) }}">
+    
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}">
