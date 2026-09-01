@@ -878,18 +878,19 @@ html {
     /* Add mobile header */
     body::before {
         content: 'Remington Williams';
-        display: block;
+        display: block !important;
         font-family: 'Museo Moderno', sans-serif;
-        font-size: clamp(30px, 8.5vw, 50px);
+        font-size: clamp(30px, 8.5vw, 50px) !important;
         font-weight: 600;
         color: #3b3430;
-        text-align: left;
-        padding: 40px 36px 24px 36px;
+        text-align: center !important;
+        padding: 40px 0 24px 0 !important;
         background-color: #f2f0ef;
         position: sticky;
         top: 0;
         z-index: 1;
         white-space: nowrap;
+        width: 100%;
     }
     
     /* Hide desktop elements */
@@ -1047,8 +1048,8 @@ html {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: -22px;
-        margin-bottom: -30px;
+        margin-top: -28px;
+        margin-bottom: -38px;
     }
     
     #popup-1 .project-image img {
@@ -1114,29 +1115,41 @@ html {
     }
     
     #popup-4 .project-image {
-        background-image: url('../Islanding/iPad_without.png');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -38px;
+        margin-bottom: -38px;
     }
     
-    #popup-4 .project-image img {
-        max-width: 100% !important;
-        max-height: 400px !important;
-        transform: none;
-        opacity: 0;
+    #popup-4 .project-image .islanding-image {
+        max-width: 100%;
+        height: auto;
+        display: block;
     }
     
     #popup-4 .islanding-video-overlay {
-        width: 90%;
-        transform: translate(-50%, -50%);
+        width: 84%;
+        aspect-ratio: 4 / 3;
+        transform: translate(-50%, -48%);
+        top: 50%;
+        left: 50%;
     }
     
     #popup-4 .islanding-pause-overlay {
+        opacity: 0;
+    }
+    
+    #popup-4 .islanding-pause-overlay.paused {
         opacity: 1;
     }
     
     #popup-4 .islanding-pause-overlay .islanding-icon-play {
+        display: none;
+    }
+    
+    #popup-4 .islanding-pause-overlay.paused .islanding-icon-play {
         display: block;
     }
     

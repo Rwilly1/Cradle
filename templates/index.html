@@ -120,7 +120,10 @@
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
-                    <img src="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}" alt="Islanding NYC" class="islanding-image">
+                    <picture>
+                        <source media="(max-width: 1024px)" srcset="{{ url_for('static', filename='Islanding/iPad_without.png') }}">
+                        <img src="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}" alt="Islanding NYC" class="islanding-image">
+                    </picture>
                     <div id="islanding-video-overlay" class="islanding-video-overlay">
                         <video class="islanding-video" src="{{ url_for('static', filename='Islanding/small_island.mp4') }}" loop playsinline preload="metadata" poster="https://img.youtube.com/vi/CjYmnk2FfLY/maxresdefault.jpg" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
                         <div class="islanding-pause-overlay" aria-hidden="true">
