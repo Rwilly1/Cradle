@@ -69,17 +69,26 @@ git clone https://github.com/Rwilly1/Cradle.git
 cd Cradle
 ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Mac/Linux
+# On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Run the Flask development server:
+4. Run the Flask development server:
 ```bash
 python app.py
 ```
 
-4. Open your browser to `http://127.0.0.1:5000`
+5. Open your browser to `http://127.0.0.1:5000`
+
+**Note**: To deactivate the virtual environment when done, run `deactivate`
 
 ### Building for Production
 
