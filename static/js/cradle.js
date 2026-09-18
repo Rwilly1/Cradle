@@ -269,7 +269,16 @@ function clearScene() {
     ballVelocities.length = 0;
 }
 
-buildScene(width, height, true);
+// On the ≤1024px mobile/tablet layout, #canvas-container is display:none (see style.css),
+// so it measures 0x0 here at load. Building the scene at 0x0 created degenerate
+// zero-radius ball bodies that crashed Matter's collision system on every tick, and wrote
+// --ui-scale: 0 to the document root — a variable the mobile popup cards used to inherit
+// too, collapsing them to nothing. Skip the whole cradle scene while it's not visible;
+// the resize handler below starts it the first time the viewport actually shows it.
+let cradleActive = width > 0 && height > 0;
+if (cradleActive) {
+    buildScene(width, height, true);
+}
 
 const mouse = Mouse.create(render.canvas);
 const mouseConstraint = MouseConstraint.create(engine, {
@@ -1059,9 +1068,11 @@ Events.on(render, 'afterRender', function() {
     });
 });
 
-Render.run(render);
 const runner = Runner.create();
-Runner.run(runner, engine);
+if (cradleActive) {
+    Render.run(render);
+    Runner.run(runner, engine);
+}
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -1087,6 +1098,14 @@ window.addEventListener('resize', () => {
 
         clearScene();
         buildScene(newWidth, newHeight, false);
+
+        // First time the cradle becomes visible (e.g. resizing up past the 1024px
+        // mobile breakpoint, or rotating a tablet), start the render/physics loops.
+        if (!cradleActive) {
+            cradleActive = true;
+            Render.run(render);
+            Runner.run(runner, engine);
+        }
     }, 150);
 });
 

@@ -104,7 +104,17 @@ html {
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 1.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    row-gap: calc(0.6rem * var(--nav-scale, 1));
+    /* Every other dimension in this row (font-size, toggle switch) scales with
+       --nav-scale; this fixed gap didn't, so at smaller nav-scale the row's total width
+       stopped shrinking with everything else. Scaling it keeps the row proportional; the
+       wrap + max-width below are a hard backstop so it can never push past the viewport
+       edge even in some unanticipated case (browser zoom, a font-fallback metric, a
+       future longer label). */
+    column-gap: calc(1.8rem * var(--nav-scale, 1));
+    max-width: calc(100vw - 32px);
     z-index: 1100;
 }
 
@@ -183,26 +193,6 @@ html {
 
 .toggle-switch:hover .toggle-slider {
     opacity: 0.9;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-    
-    .title {
-        margin-bottom: 1rem;
-    }
-    
-    #canvas-container {
-        height: 400px;
-    }
-}
-
-@media (max-width: 480px) {
-    #canvas-container {
-        height: 300px;
-    }
 }
 
 /* Popup Styles */
@@ -869,8 +859,9 @@ html {
     }
 }
 
-/* Mobile & Tablet Layout (≤1024px) */
-@media (max-width: 1024px) {
+/* Mobile Layout (≤767px) — the cradle stays interactive down through tablet widths
+   (iPad Mini portrait is 768px); only phone-width viewports drop to this stacked layout. */
+@media (max-width: 767px) {
     body {
         overflow-y: auto;
         overflow-x: hidden;
@@ -928,6 +919,11 @@ html {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         display: flex;
         flex-direction: column;
+        /* Desktop sets transform: scale(--ui-scale) to match the cradle's width; that
+           variable is derived from the (hidden, zero-size) cradle canvas on mobile, so
+           it can compute to 0 and collapse this card. Mobile sizes itself with width/
+           padding above instead, so always ignore the desktop scale here. */
+        transform: none !important;
     }
     
     /* Hide close button on mobile */
