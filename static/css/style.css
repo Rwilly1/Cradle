@@ -867,6 +867,12 @@ html {
         overflow-x: hidden;
         background-color: #f2f0ef;
         padding: 0;
+        /* Every project-image margin/size below was hand-tuned per popup at the iPhone 16
+           Pro Max's 440px width. Rather than each using its own fixed px (which stops
+           being the same relative position at any other width), express them all as a
+           multiple of this one ratio so the whole card scales together — at exactly
+           440px it's identical to the original tuning, and it grows/shrinks from there. */
+        --mobile-scale: calc(100vw / 440px);
     }
     
     /* Add mobile header */
@@ -914,7 +920,7 @@ html {
         max-width: 100%;
         height: auto;
         border-radius: 24px;
-        padding: 16px 20px 0 20px;
+        padding: calc(16px * var(--mobile-scale, 1)) calc(20px * var(--mobile-scale, 1)) 0 calc(20px * var(--mobile-scale, 1));
         margin: 0;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         display: flex;
@@ -1002,15 +1008,22 @@ html {
     .popup-project {
         flex-direction: column;
         height: auto;
-        gap: 20px;
+        gap: calc(20px * var(--mobile-scale, 1));
         padding-top: 0px;
     }
-    
+
     .project-image {
         width: 100%;
         height: auto;
-        min-height: 300px;
+        min-height: calc(300px * var(--mobile-scale, 1));
         order: 1;
+        /* The desktop rule for this class centers a shorter image inside a taller
+           min-height box (align-items: center), which this mobile block never resets.
+           That let any leftover slack between min-height and the image's actual
+           rendered height split above *and* below it, breaking the margin-top math
+           below whenever an image didn't exactly fill min-height. Pin to the top so the
+           gap from the box edge is always exactly padding + margin-top, full stop. */
+        align-items: flex-start;
     }
     
     .project-text {
@@ -1042,17 +1055,17 @@ html {
     }
     
     #popup-1 .project-image {
-        min-height: 450px;
+        min-height: calc(450px * var(--mobile-scale, 1));
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        margin-top: -24px;
-        margin-bottom: -38px;
+        margin-top: calc(-24px * var(--mobile-scale, 1));
+        margin-bottom: calc(-38px * var(--mobile-scale, 1));
     }
-    
+
     #popup-1 .project-image img {
         max-width: 200%;
-        max-height: 800px;
+        max-height: calc(800px * var(--mobile-scale, 1));
         transform: none !important;
         mask-image: none !important;
         -webkit-mask-image: none !important;
@@ -1072,7 +1085,7 @@ html {
     
     #popup-2 .project-image img {
         max-width: 100% !important;
-        max-height: 400px !important;
+        max-height: calc(400px * var(--mobile-scale, 1)) !important;
     }
     
     #popup-2 .project-text {
@@ -1086,7 +1099,7 @@ html {
     
     #popup-3 .algorithmic-layout {
         flex-direction: column;
-        gap: 24px;
+        gap: calc(24px * var(--mobile-scale, 1));
     }
     
     #popup-3 .algorithmic-knots {
@@ -1094,12 +1107,15 @@ html {
         gap: 0;
         min-height: auto;
         justify-content: center;
+        /* See .project-image above — the desktop rule for this class also centers
+           vertically, which would otherwise reintroduce the same top-gap inconsistency. */
+        align-items: flex-start;
     }
     
     #popup-3 .algorithmic-knots .knots-square {
         display: block;
         width: 100%;
-        max-width: 400px;
+        max-width: calc(400px * var(--mobile-scale, 1));
         height: auto;
     }
     
@@ -1115,10 +1131,10 @@ html {
     #popup-4 .project-image {
         position: relative;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        margin-top: -38px;
-        margin-bottom: -38px;
+        margin-top: calc(-38px * var(--mobile-scale, 1));
+        margin-bottom: calc(-38px * var(--mobile-scale, 1));
     }
     
     #popup-4 .project-image .islanding-image {
