@@ -3,8 +3,8 @@ const { Engine, Render, Runner, Bodies, Composite, Constraint, Mouse, MouseConst
 const canvas = document.getElementById('newtons-cradle');
 const container = document.getElementById('canvas-container');
 
-const width = container.clientWidth;
-const height = container.clientHeight;
+let width = container.clientWidth;
+let height = container.clientHeight;
 
 const engine = Engine.create();
 const world = engine.world;
@@ -50,12 +50,17 @@ const ballLabels = [
     'Contact\nInfo'
 ];
 
-const ballRadius = height * 0.068;
-const stringLength = height * 0.62;
-const spacing = ballRadius * 2.02;
-const frameTop = height * 0.165;
-const stringStartOffset = height * 0.12;
-const centerX = width / 2;
+const FRAME_W = 1024.5, FRAME_H = 576; // static/Cradle/without.svg viewBox — keep in sync if that asset is ever redrawn
+
+// Mirrors CSS: background-size: contain; background-position: center bottom
+function getFrameRect(vw, vh) {
+    const scale = Math.min(vw / FRAME_W, vh / FRAME_H);
+    const w = FRAME_W * scale;
+    const h = FRAME_H * scale;
+    return { x: (vw - w) / 2, y: vh - h, w, h };
+}
+
+let ballRadius;
 
 const balls = [];
 const constraints = [];
@@ -77,123 +82,194 @@ let currentPopup = null;
 let popupOpen = false;
 let currentPopupDirection = null;
 
-const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
-
-for (let i = 0; i < ballColors.length; i++) {
-    const x = startX + i * spacing;
-    const y = frameTop + stringLength;
-    
-    const ball = Bodies.circle(x, y, ballRadius, {
-        density: 0.04,
-        frictionAir: 0.005,
-        restitution: 1,
-        friction: 0,
-        render: {
-            visible: false
-        }
-    });
-    
-    ball.ballIndex = i;
-    ball.stringAttachX = x;
-    ball.stringAttachY = frameTop + stringStartOffset;
-    
-    ballHighlights.push({ 
-        x: -ballRadius * 0.3, 
-        y: -ballRadius * 0.3,
-        x2: -ballRadius * 0.25,
-        y2: -ballRadius * 0.25,
-        x3: -ballRadius * 0.18,
-        y3: -ballRadius * 0.18,
-        staticX: -ballRadius * 0.3,
-        staticY: -ballRadius * 0.3
-    });
-    
-    textOpacities.push(0);
-    ballVelocities.push({ x: 0, y: 0 });
-    
-    const constraint = Constraint.create({
-        pointA: { x: x, y: frameTop },
-        bodyB: ball,
-        length: stringLength,
-        stiffness: 1,
-        render: {
-            visible: false
-        }
-    });
-    
-    balls.push(ball);
-    constraints.push(constraint);
-    
-    Composite.add(world, [ball, constraint]);
-}
-
 const nameText = "Remington Williams";
-const fontSize = height * 0.09;
-const letterSpacing = fontSize * 0.02;
-const nameY = height * 0.225;
-
 const ctx = document.createElement('canvas').getContext('2d');
-ctx.font = `bold ${fontSize}px "Museo Moderno", sans-serif`;
 
-let currentX = centerX - (ctx.measureText(nameText).width / 2);
+// The popups, nav labels, and toggle switch were originally sized/positioned in fixed
+// px and raw viewport units, tuned by eye against a ~1600x900 (16:9) window. Re-express
+// that tuning as a scale factor off the frame's own height so they track the frame the
+// same way the cradle now does, instead of drifting independently at other aspect ratios.
+const UI_SCALE_REFERENCE_HEIGHT = 900;
 
-for (let i = 0; i < nameText.length; i++) {
-    const char = nameText[i];
-    
-    if (char === ' ') {
-        currentX += fontSize * 0.4;
-        continue;
+// The nav labels and toggle switch read smaller than the original fixed-size version at
+// typical (non-maximized, sub-900px-tall) windows once tied to --ui-scale. Give them their
+// own, more generous scale so they land closer to the original size there while staying
+// responsive, without changing the popup's own scale.
+const NAV_UI_SCALE_BOOST = 1.15;
+
+function buildScene(w, h, animateIn) {
+    const frame = getFrameRect(w, h);
+
+    width = w;
+    height = h;
+    ballRadius = frame.h * 0.068;
+    const spacing = ballRadius * 2.02;
+    // Left-edge-of-first-ball to right-edge-of-last-ball — the popup's width is pinned to
+    // this (see --ui-scale below) so it reads as wide as the cradle itself, at any window size.
+    const ballRowSpan = spacing * (ballColors.length - 1) + ballRadius * 2;
+
+    // The frame graphic's own top masking band (#canvas-container::before) was tuned to
+    // 16:9 as a flat viewport percentage; keep it aligned to the actual contain-fit frame.
+    container.style.setProperty('--mask-height', (frame.y + frame.h * 0.27) + 'px');
+
+    const root = document.documentElement.style;
+    root.setProperty('--frame-x', frame.x + 'px');
+    root.setProperty('--frame-y', frame.y + 'px');
+    root.setProperty('--frame-w', frame.w + 'px');
+    root.setProperty('--frame-h', frame.h + 'px');
+    // Popups were originally 665px wide, a fixed design baseline; scale that whole design
+    // (box + every nested font/padding via transform: scale) by how much wider the actual
+    // ball row is than that baseline, so the popup always reads exactly ball-row-wide.
+    root.setProperty('--ui-scale', ballRowSpan / 665);
+    root.setProperty('--nav-scale', (frame.h / UI_SCALE_REFERENCE_HEIGHT) * NAV_UI_SCALE_BOOST);
+
+    const stringLength = frame.h * 0.62;
+    const frameTop = frame.y + frame.h * 0.165;
+    const stringStartOffset = frame.h * 0.12;
+    const centerX = frame.x + frame.w / 2;
+
+    const startX = centerX - (spacing * (ballColors.length - 1)) / 2;
+
+    for (let i = 0; i < ballColors.length; i++) {
+        const x = startX + i * spacing;
+        const y = frameTop + stringLength;
+
+        const ball = Bodies.circle(x, y, ballRadius, {
+            density: 0.04,
+            frictionAir: 0.005,
+            restitution: 1,
+            friction: 0,
+            render: {
+                visible: false
+            }
+        });
+
+        ball.ballIndex = i;
+        ball.stringAttachX = x;
+        ball.stringAttachY = frameTop + stringStartOffset;
+
+        ballHighlights.push({
+            x: -ballRadius * 0.3,
+            y: -ballRadius * 0.3,
+            x2: -ballRadius * 0.25,
+            y2: -ballRadius * 0.25,
+            x3: -ballRadius * 0.18,
+            y3: -ballRadius * 0.18,
+            staticX: -ballRadius * 0.3,
+            staticY: -ballRadius * 0.3
+        });
+
+        textOpacities.push(0);
+        ballVelocities.push({ x: 0, y: 0 });
+
+        const constraint = Constraint.create({
+            pointA: { x: x, y: frameTop },
+            bodyB: ball,
+            length: stringLength,
+            stiffness: 1,
+            render: {
+                visible: false
+            }
+        });
+
+        balls.push(ball);
+        constraints.push(constraint);
+
+        Composite.add(world, [ball, constraint]);
     }
-    
-    const charWidth = ctx.measureText(char).width;
-    const charHeight = fontSize;
-    
-    const letter = Bodies.rectangle(currentX + charWidth / 2, nameY, charWidth, charHeight, {
-        isStatic: false,
-        friction: 0.3,
-        restitution: 0.6,
-        isSensor: true,
-        render: {
-            visible: false
+
+    const fontSize = frame.h * 0.09;
+    const letterSpacing = fontSize * 0.02;
+    const nameY = frame.y + frame.h * 0.225;
+
+    ctx.font = `bold ${fontSize}px "Museo Moderno", sans-serif`;
+
+    let currentX = centerX - (ctx.measureText(nameText).width / 2);
+
+    for (let i = 0; i < nameText.length; i++) {
+        const char = nameText[i];
+
+        if (char === ' ') {
+            currentX += fontSize * 0.4;
+            continue;
         }
-    });
-    
-    letter.char = char;
-    letter.fontSize = fontSize;
-    letter.hasFallen = false;
-    letter.originalX = currentX + charWidth / 2;
-    letter.originalY = nameY;
-    
-    // Start letters at top of screen for initial animation
-    Matter.Body.setPosition(letter, { x: letter.originalX, y: -100 });
-    
-    letterBodies.push(letter);
-    currentX += charWidth + letterSpacing * 0.1;
+
+        const charWidth = ctx.measureText(char).width;
+        const charHeight = fontSize;
+
+        const letter = Bodies.rectangle(currentX + charWidth / 2, nameY, charWidth, charHeight, {
+            isStatic: !animateIn,
+            friction: 0.3,
+            restitution: 0.6,
+            isSensor: !!animateIn,
+            render: {
+                visible: false
+            }
+        });
+
+        letter.char = char;
+        letter.fontSize = fontSize;
+        letter.hasFallen = false;
+        letter.originalX = currentX + charWidth / 2;
+        letter.originalY = nameY;
+
+        if (animateIn) {
+            // Start letters at top of screen for initial animation
+            Matter.Body.setPosition(letter, { x: letter.originalX, y: -100 });
+        }
+
+        letterBodies.push(letter);
+        currentX += charWidth + letterSpacing * 0.1;
+    }
+
+    Composite.add(world, letterBodies);
+
+    if (animateIn) {
+        // Animate all letters falling in on page load
+        letterBodies.forEach((letter) => {
+            gsap.to(letter.position, {
+                y: letter.originalY,
+                duration: 1,
+                delay: 0.3,
+                ease: 'bounce.out',
+                onUpdate: function() {
+                    Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.position.y });
+                },
+                onComplete: function() {
+                    // Make letter static and remove sensor property after animation
+                    letter.isSensor = false;
+                    Matter.Body.setStatic(letter, true);
+                    Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.originalY });
+                    Matter.Body.setVelocity(letter, { x: 0, y: 0 });
+                    Matter.Body.setAngularVelocity(letter, 0);
+                    Matter.Body.setAngle(letter, 0);
+                }
+            });
+        });
+    }
 }
 
-Composite.add(world, letterBodies);
+function clearScene() {
+    gsap.killTweensOf(letterBodies.map(l => l.position));
+    mouseConstraint.constraint.bodyB = null;
+    mouseConstraint.constraint.pointB = null;
+    mouseConstraint.body = null;
+    isDragging = false;
+    draggedBall = null;
+    activeBall = null;
+    activeBallDirection = null;
+    hoveredBall = null;
+    hoveredText = null;
+    Composite.remove(world, [...balls, ...constraints, ...letterBodies]);
+    balls.length = 0;
+    constraints.length = 0;
+    letterBodies.length = 0;
+    ballHighlights.length = 0;
+    textOpacities.length = 0;
+    ballVelocities.length = 0;
+}
 
-// Animate all letters falling in on page load
-letterBodies.forEach((letter) => {
-    gsap.to(letter.position, {
-        y: letter.originalY,
-        duration: 1,
-        delay: 0.3,
-        ease: 'bounce.out',
-        onUpdate: function() {
-            Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.position.y });
-        },
-        onComplete: function() {
-            // Make letter static and remove sensor property after animation
-            letter.isSensor = false;
-            Matter.Body.setStatic(letter, true);
-            Matter.Body.setPosition(letter, { x: letter.originalX, y: letter.originalY });
-            Matter.Body.setVelocity(letter, { x: 0, y: 0 });
-            Matter.Body.setAngularVelocity(letter, 0);
-            Matter.Body.setAngle(letter, 0);
-        }
-    });
-});
+buildScene(width, height, true);
 
 const mouse = Mouse.create(render.canvas);
 const mouseConstraint = MouseConstraint.create(engine, {
@@ -254,11 +330,11 @@ window.addEventListener('mouseup', function() {
 
 render.canvas.addEventListener('mousemove', function(event) {
     const rect = render.canvas.getBoundingClientRect();
-    const scaleX = render.canvas.width / rect.width;
-    const scaleY = render.canvas.height / rect.height;
-    
-    mousePosition.x = (event.clientX - rect.left) * scaleX / (window.devicePixelRatio || 2);
-    mousePosition.y = (event.clientY - rect.top) * scaleY / (window.devicePixelRatio || 2);
+    const scaleX = render.options.width / rect.width;
+    const scaleY = render.options.height / rect.height;
+
+    mousePosition.x = (event.clientX - rect.left) * scaleX;
+    mousePosition.y = (event.clientY - rect.top) * scaleY;
     
     if (!isDragging && mouseConstraint.body === null) {
         draggedBall = null;
@@ -987,22 +1063,31 @@ Render.run(render);
 const runner = Runner.create();
 Runner.run(runner, engine);
 
+let resizeTimer = null;
 window.addEventListener('resize', () => {
-    const newWidth = container.clientWidth;
-    const newHeight = container.clientHeight;
-    const pixelRatio = window.devicePixelRatio || 2;
-    
-    render.canvas.width = newWidth * pixelRatio;
-    render.canvas.height = newHeight * pixelRatio;
-    render.canvas.style.width = newWidth + 'px';
-    render.canvas.style.height = newHeight + 'px';
-    render.options.width = newWidth;
-    render.options.height = newHeight;
-    
-    Render.lookAt(render, {
-        min: { x: 0, y: 0 },
-        max: { x: newWidth, y: newHeight }
-    });
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+        if (newWidth <= 0 || newHeight <= 0) return;
+
+        const pixelRatio = window.devicePixelRatio || 2;
+
+        render.canvas.width = newWidth * pixelRatio;
+        render.canvas.height = newHeight * pixelRatio;
+        render.canvas.style.width = newWidth + 'px';
+        render.canvas.style.height = newHeight + 'px';
+        render.options.width = newWidth;
+        render.options.height = newHeight;
+
+        Render.lookAt(render, {
+            min: { x: 0, y: 0 },
+            max: { x: newWidth, y: newHeight }
+        });
+
+        clearScene();
+        buildScene(newWidth, newHeight, false);
+    }, 150);
 });
 
 gsap.from('#canvas-container', {
