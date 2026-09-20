@@ -82,6 +82,28 @@ let currentPopup = null;
 let popupOpen = false;
 let currentPopupDirection = null;
 
+// Picker hand-off camera state. s/tx/ty are the live zoom transform (identity = no zoom
+// in progress), applied as a single CSS transform on #canvas-container (see
+// applyZoomTransform below). The canvas itself always draws balls/strings/title in
+// plain, untransformed scene coordinates — the frame background image and the nav are
+// already inside that same container, so one transform pans/scales all of them, the
+// canvas included, together as one unit instead of each implementing its own zoom logic.
+const cameraZoom = { s: 1, tx: 0, ty: 0 };
+let pinnedGroup = []; // balls held in the "pulled out" pose until the picker releases them
+let pickerAbort = null; // set by the picker module below; called if a resize interrupts its sequence
+// True from the moment a pinned ball is cut to the canvas until the zoom-out finishes.
+// While true, pinned balls' highlights ignore the mouse and hold their static rest
+// offset (see afterRender) instead of tracking the cursor through the zoom.
+let highlightsFrozen = false;
+
+function applyZoomTransform() {
+    container.style.transform = 'translate(' + cameraZoom.tx + 'px,' + cameraZoom.ty + 'px) scale(' + cameraZoom.s + ')';
+}
+
+function clearZoomTransform() {
+    container.style.transform = '';
+}
+
 const nameText = "Remington Williams";
 const ctx = document.createElement('canvas').getContext('2d');
 
@@ -260,6 +282,15 @@ function clearScene() {
     activeBallDirection = null;
     hoveredBall = null;
     hoveredText = null;
+    // A resize mid-picker-sequence would otherwise leave the beforeUpdate pin holding
+    // references to bodies this function is about to remove, and the camera stuck zoomed.
+    gsap.killTweensOf(cameraZoom);
+    pinnedGroup = [];
+    highlightsFrozen = false;
+    cameraZoom.s = 1;
+    cameraZoom.tx = 0;
+    cameraZoom.ty = 0;
+    clearZoomTransform();
     Composite.remove(world, [...balls, ...constraints, ...letterBodies]);
     balls.length = 0;
     constraints.length = 0;
@@ -337,22 +368,33 @@ window.addEventListener('mouseup', function() {
     }
 });
 
-render.canvas.addEventListener('mousemove', function(event) {
+// Listens on window, not the canvas, so mousePosition keeps updating (and the picker
+// hand-off's zoomed-in highlight keeps tracking the cursor via the canvas's own
+// getBoundingClientRect(), which already reflects the live CSS zoom transform on
+// #canvas-container) even while canvas.style.pointerEvents is 'none' during a picker
+// sequence — pointer-events:none excludes the canvas from hit-testing, so a listener
+// attached to the canvas itself would simply stop firing for as long as that lasts.
+window.addEventListener('mousemove', function(event) {
     const rect = render.canvas.getBoundingClientRect();
     const scaleX = render.options.width / rect.width;
     const scaleY = render.options.height / rect.height;
 
     mousePosition.x = (event.clientX - rect.left) * scaleX;
     mousePosition.y = (event.clientY - rect.top) * scaleY;
-    
+
+    // Hover/grab-cursor state is only meaningful when the canvas can actually receive
+    // clicks; skip it while a picker sequence has interaction disabled so a misleading
+    // "grab" cursor doesn't show over balls the visitor can't actually grab right now.
+    if (canvas.style.pointerEvents === 'none') return;
+
     if (!isDragging && mouseConstraint.body === null) {
         draggedBall = null;
     }
-    
+
     // Reset hover states
     hoveredBall = null;
     hoveredText = null;
-    
+
     // Check for hover and cursor
     let canGrab = false;
     balls.forEach(ball => {
@@ -868,6 +910,18 @@ Events.on(engine, 'collisionStart', function(event) {
     });
 });
 
+// Holds picker-selected balls dead still in their pulled-out pose (position pinned every
+// physics step) until the picker's release() lets go of them, same as a real drag would
+// hold a ball via the mouse constraint.
+Events.on(engine, 'beforeUpdate', function() {
+    if (!pinnedGroup.length) return;
+    pinnedGroup.forEach(function(ball) {
+        Matter.Body.setPosition(ball, ball._pinTarget);
+        Matter.Body.setVelocity(ball, { x: 0, y: 0 });
+        Matter.Body.setAngularVelocity(ball, 0);
+    });
+});
+
 function blendColors(color1, color2, amount) {
     const r1 = parseInt(color1.slice(1, 3), 16);
     const g1 = parseInt(color1.slice(3, 5), 16);
@@ -901,57 +955,69 @@ Events.on(render, 'afterRender', function() {
         }
         
         textOpacities[index] += (targetOpacity - textOpacities[index]) * 0.15;
+
+        // The picker hand-off zoom is a CSS transform on #canvas-container (see
+        // applyZoomTransform), not a canvas-internal one, so the canvas always draws in
+        // plain scene coordinates and the mousemove listener's own getBoundingClientRect()
+        // conversion already accounts for any zoom in progress — no un-projection needed.
+        //
+        // A pinned ball ignores the mouse entirely until the zoom-out finishes (see
+        // highlightsFrozen) — forcing dist to 0 here routes it through the same
+        // static-offset fallback used at rest below, so it holds its resting glint
+        // instead of tracking the cursor mid-zoom, then eases toward the cursor (via the
+        // normal per-frame lerp below, not a snap) once tracking resumes.
+        const frozen = highlightsFrozen && pinnedGroup.includes(ball);
         const pos = ball.position;
-        const dx = mousePosition.x - pos.x;
-        const dy = mousePosition.y - pos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
+        const dx = frozen ? 0 : mousePosition.x - pos.x;
+        const dy = frozen ? 0 : mousePosition.y - pos.y;
+        const dist = frozen ? 0 : Math.sqrt(dx * dx + dy * dy);
+
         const maxDistance = Math.max(width, height);
         const strength = Math.max(0, 1 - (dist / maxDistance));
         const pull = strength * 1.0;
-        
+
         const targetX = dist > 0 ? (dx / dist) * ballRadius * pull * 0.5 : ballHighlights[index].staticX;
         const targetY = dist > 0 ? (dy / dist) * ballRadius * pull * 0.5 : ballHighlights[index].staticY;
-        
+
         const target3X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.18;
         const target3Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.18;
-        
+
         ballHighlights[index].x3 += (target3X - ballHighlights[index].x3) * 0.08;
         ballHighlights[index].y3 += (target3Y - ballHighlights[index].y3) * 0.08;
-        
+
         const target2X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.25;
         const target2Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.25;
-        
+
         const largeRadius = ballRadius * 0.7128;
         const mediumRadius = ballRadius * 0.4752;
         const maxDistance2 = largeRadius - mediumRadius;
-        
+
         const offset2X = target2X - ballHighlights[index].x3;
         const offset2Y = target2Y - ballHighlights[index].y3;
         const offset2Dist = Math.sqrt(offset2X * offset2X + offset2Y * offset2Y);
-        
+
         if (offset2Dist > maxDistance2) {
             const clamped2X = ballHighlights[index].x3 + (offset2X / offset2Dist) * maxDistance2;
             const clamped2Y = ballHighlights[index].y3 + (offset2Y / offset2Dist) * maxDistance2;
-            
+
             ballHighlights[index].x2 += (clamped2X - ballHighlights[index].x2) * 0.12;
             ballHighlights[index].y2 += (clamped2Y - ballHighlights[index].y2) * 0.12;
         } else {
             ballHighlights[index].x2 += (target2X - ballHighlights[index].x2) * 0.12;
             ballHighlights[index].y2 += (target2Y - ballHighlights[index].y2) * 0.12;
         }
-        
+
         const smallRadius = ballRadius * 0.264;
         const maxDistance1 = mediumRadius - smallRadius;
-        
+
         const offsetX = targetX - ballHighlights[index].x2;
         const offsetY = targetY - ballHighlights[index].y2;
         const offsetDist = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
-        
+
         if (offsetDist > maxDistance1) {
             const clampedX = ballHighlights[index].x2 + (offsetX / offsetDist) * maxDistance1;
             const clampedY = ballHighlights[index].y2 + (offsetY / offsetDist) * maxDistance1;
-            
+
             ballHighlights[index].x += (clampedX - ballHighlights[index].x) * 0.15;
             ballHighlights[index].y += (clampedY - ballHighlights[index].y) * 0.15;
         } else {
@@ -963,14 +1029,14 @@ Events.on(render, 'afterRender', function() {
     balls.forEach((ball, index) => {
         const pos = ball.position;
         const radius = ball.circleRadius;
-        
+
         const dx = pos.x - ball.stringAttachX;
         const dy = pos.y - ball.stringAttachY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        
+
         const endX = ball.stringAttachX + (dx / dist) * (dist - radius);
         const endY = ball.stringAttachY + (dy / dist) * (dist - radius);
-        
+
         context.beginPath();
         context.moveTo(ball.stringAttachX, ball.stringAttachY);
         context.lineTo(endX, endY);
@@ -978,16 +1044,16 @@ Events.on(render, 'afterRender', function() {
         context.lineWidth = 3;
         context.stroke();
     });
-    
+
     balls.forEach((ball, index) => {
         const pos = ball.position;
         const radius = ball.circleRadius;
         const highlight = ballHighlights[index];
-        
+
         context.save();
         context.translate(pos.x, pos.y);
         context.rotate(ball.angle);
-        
+
         context.beginPath();
         context.arc(0, 0, radius, 0, 2 * Math.PI);
         context.fillStyle = ballOutlineColors[index];
@@ -1048,7 +1114,7 @@ Events.on(render, 'afterRender', function() {
         
         context.restore();
     });
-    
+
     letterBodies.forEach(letter => {
         if (letter.position.y > height + 100) {
             return;
@@ -1096,6 +1162,7 @@ window.addEventListener('resize', () => {
             max: { x: newWidth, y: newHeight }
         });
 
+        if (pickerAbort) pickerAbort();
         clearScene();
         buildScene(newWidth, newHeight, false);
 
@@ -1230,4 +1297,362 @@ textToggle.addEventListener('change', function() {
     observer.observe(popup, { attributes: true, attributeFilter: ['class'] });
 
     updateOverlay();
+})();
+
+// ==========================================================================
+// Color picker landing screen — hands off into the cradle above it.
+// Desktop/tablet only. Mobile, ?skip=1, and "already seen this session" are
+// all handled pre-paint by the inline script at the top of templates/index.html
+// (adds html.picker-skip, which hides #picker-overlay via CSS) — this module
+// just checks that same class and no-ops if it's set.
+// ==========================================================================
+(function () {
+    if (document.documentElement.classList.contains('picker-skip')) return;
+
+    const overlay = document.getElementById('picker-overlay');
+    const swatchesWrap = document.getElementById('picker-swatches');
+    const stage = document.getElementById('picker-stage');
+    const navEl = document.querySelector('.popup-nav');
+    const frameLayer = document.getElementById('frame-layer');
+    if (!overlay || !swatchesWrap || !stage) return;
+
+    // Shared pull angle: the DOM morph below and the real physics pin in cutToCradle()
+    // both use this, so the picker's final frame and the live canvas's first frame match.
+    const PULL_UX = 0.757, PULL_UY = -0.653;
+    const popupTitles = ['About', 'Prinsys', 'Encrypted Chat', 'Algorithmic Crafting', 'Islanding NYC', 'Contact'];
+    const swatchText = ['#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef'];
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // End-state geometry for the ball's three highlight circles, in % of the ball's own
+    // box — identical to the real canvas ball's ballHighlights rest offsets (afterRender),
+    // just expressed as CSS percentages so they track the ball element's own resize.
+    const RING_BIG = { left: '5.36%', top: '5.36%', size: '71.28%' };
+    const RING_MED = { left: '13.74%', top: '13.74%', size: '47.52%' };
+    const RING_SMALL = { left: '21.8%', top: '21.8%', size: '26.4%' };
+    const HIGHLIGHT_END_COLOR = 'rgba(242, 240, 239, 0.2)';
+    // Matches the card's own .picker-stack-layer-1/2/3 colors, front to back.
+    const BAND_COLORS = ['rgba(242, 240, 239, 0.24)', 'rgba(242, 240, 239, 0.17)', 'rgba(242, 240, 239, 0.10)'];
+
+    function div(cls) { const d = document.createElement('div'); d.className = cls; return d; }
+    function markDone() { try { sessionStorage.setItem('pickerDone', '1'); } catch (e) {} }
+
+    let sequenceActive = false;
+    const pickerButtons = [];
+
+    // If a resize fires mid-sequence, clearScene() is about to remove the very bodies
+    // pinnedGroup and cameraZoom point at (see cradle.js's resize handler above). Drop
+    // everything back to the plain at-rest cradle rather than leave a stuck zoom or
+    // dead pointer-events.
+    pickerAbort = function () {
+        // Only a resize that lands mid-sequence (pinned/zooming) needs cleanup. A resize
+        // while the picker is just sitting there unclicked, or after it's already handed
+        // off normally, must NOT touch it — this used to fire on every ordinary resize
+        // (including the layout settle right after page load) and force-hide the picker
+        // before the visitor ever got to click a swatch.
+        if (!sequenceActive) return;
+        sequenceActive = false;
+        pinnedGroup = [];
+        highlightsFrozen = false;
+        cameraZoom.s = 1; cameraZoom.tx = 0; cameraZoom.ty = 0;
+        clearZoomTransform();
+        overlay.hidden = true;
+        overlay.classList.remove('picker-leaving');
+        stage.hidden = true;
+        stage.innerHTML = '';
+        canvas.style.pointerEvents = '';
+        if (navEl) navEl.style.pointerEvents = '';
+        // Drop back to the always-fully-visible default rather than leaving the frame
+        // stuck mid-reveal if a resize interrupts the sequence.
+        if (frameLayer) { frameLayer.getAnimations().forEach(function (a) { a.cancel(); }); frameLayer.style.clipPath = ''; }
+        markDone();
+    };
+
+    ballColors.forEach(function (hex, i) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'picker-swatch';
+        b.setAttribute('aria-label', hex + ' — ' + popupTitles[i]);
+        b.style.setProperty('--c', hex);
+        b.style.setProperty('--t', swatchText[i]);
+        // Same stacked/rounded shelf treatment as the About/Contact popup footers
+        // (see .stack-layer / .picker-stack-layer), not flat tint bars. The layers sit
+        // inside the fill so they lighten it and get clipped by its own rounded corners.
+        b.innerHTML =
+            '<span class="picker-swatch-fill">' +
+                '<span class="picker-swatch-stack">' +
+                    '<span class="picker-stack-layer picker-stack-layer-3"></span>' +
+                    '<span class="picker-stack-layer picker-stack-layer-2"></span>' +
+                    '<span class="picker-stack-layer picker-stack-layer-1"></span>' +
+                '</span>' +
+                '<span class="picker-top"><span class="picker-hex">' + hex + '</span></span>' +
+            '</span>';
+        b.addEventListener('click', function () { choose(i, b); });
+        swatchesWrap.appendChild(b);
+        pickerButtons.push(b);
+    });
+
+    // Same rule as the nav-label re-pull handler above: balls 0-2 pull left and drag
+    // everything from themselves down to red along; balls 3-5 pull right and drag
+    // everything from themselves up to purple along. Red and purple are always alone.
+    function pickerGroup(i) {
+        if (i <= 2) {
+            const indices = [];
+            for (let k = 0; k <= i; k++) indices.push(k);
+            return { dir: 'left', indices: indices };
+        }
+        const indices = [];
+        for (let k = i; k <= 5; k++) indices.push(k);
+        return { dir: 'right', indices: indices };
+    }
+
+    function choose(i, btn) {
+        if (sequenceActive) return;
+        sequenceActive = true;
+
+        const group = pickerGroup(i);
+        const dir = group.dir, indices = group.indices;
+
+        overlay.classList.add('picker-leaving');
+        indices.forEach(function (idx) { pickerButtons[idx].classList.add('picked'); });
+
+        if (reduce || !btn.animate) {
+            finishReduced(i, dir);
+            return;
+        }
+
+        const W = innerWidth, H = innerHeight;
+        const D = Math.min(H * 0.34, W * 0.6);
+        // Camera sits toward the side the ball is pulled from — red/orange/yellow pull
+        // left, so the shot is biased left (0.36); green/blue/purple pull right, biased
+        // right (0.64) — not a dead-center zoom either direction.
+        const cx = dir === 'left' ? W * 0.36 : W * 0.64, cy = H * 0.52;
+        const side = dir === 'left' ? 1 : -1;
+        const ux = PULL_UX * side, uy = PULL_UY;
+        const len = Math.hypot(W, H) * 1.2;
+        // The real string is drawn from ball.stringAttachY (a cosmetic anchor a bit below
+        // the true physics anchor, constraints[i].pointA) down to the ball's true pinned
+        // position (pointA - u*L) — not a pure straight line along the pull direction u.
+        // Compute the mockup's angle/pivot from that same true geometry instead of the
+        // idealized u direction, so the string doesn't visibly kink to a different angle
+        // the instant cutToCradle hands off to the real canvas string.
+        const anchor = constraints[i].pointA;
+        const L = constraints[i].length;
+        const offsetY = balls[i].stringAttachY - anchor.y;
+        const trueDx = -ux * L, trueDy = -uy * L - offsetY;
+        const dirMag = Math.hypot(trueDx, trueDy);
+        const dirX = trueDx / dirMag, dirY = trueDy / dirMag;
+        const theta = Math.atan2(-dirX, dirY) * 180 / Math.PI;
+        // Same scale cutToCradle will pin the real balls at, and the real cradle's own
+        // ball-to-ball spacing (see buildScene's `spacing`) — used below so every group
+        // member lands exactly where its real, physics-pinned counterpart will be. Off
+        // by even a little, the picker's string (a straight line at the right angle but
+        // an approximate anchor) and the real cradle's string (drawn from the ball's
+        // actual anchor point) show up as two visibly separate lines during the hand-off.
+        const s0 = D / (2 * ballRadius);
+        const spacing = ballRadius * 2.02;
+        // The real canvas string is a constant 3px in scene units, then scaled by the
+        // CSS zoom (see afterRender's context.lineWidth = 3) — match that exactly here
+        // instead of sizing off the picker's own zoomed diameter, so the width doesn't
+        // visibly change at the hand-off cut.
+        const strW = Math.max(3, 3 * s0);
+
+        stage.innerHTML = '';
+        stage.hidden = false;
+
+        // Farthest-from-primary first, so the clicked ball paints last (on top, in focus).
+        const order = indices.slice().sort(function (a, b) { return Math.abs(b - i) - Math.abs(a - i); });
+        let primaryMorph = null;
+
+        order.forEach(function (idx) {
+            const c = ballColors[idx], edge = ballOutlineColors[idx];
+            const srcBtn = pickerButtons[idx];
+            const r = srcBtn.getBoundingClientRect();
+            const targetX = cx + (idx - i) * s0 * spacing, targetY = cy;
+            const delay = Math.abs(idx - i) * 90;
+            const T = 800;
+
+            const ball = div('picker-ball'), fill = div('picker-fill'), string = div('picker-string');
+            fill.style.background = c;
+            ball.appendChild(fill);
+            // Appended to fill (not ball) so they're clipped to the fill's own inset
+            // boundary — the same relationship the real canvas ball uses (highlight
+            // circles clipped to radius*0.93, just inside the outline) — instead of only
+            // being clipped to the ball's full outer edge, which let them bleed into
+            // where the dark outline ring renders.
+            //
+            // The three card highlight bands morph into the three ball highlight circles
+            // (not a fade): measure each band's real on-screen rect, express it as a %
+            // of this swatch's own box, and animate left/top/width/height/border-radius
+            // straight to the matching ring's geometry, on the same duration/delay/
+            // easing as the ball's own shape morph below. DOM order of the bands is
+            // layer-3, layer-2, layer-1 (see the swatch markup above) — back to front —
+            // so index 2 is the bottom/most-opaque band and index 0 the top/tallest one.
+            const bandLayers = srcBtn.querySelectorAll('.picker-stack-layer');
+            const bandToRing = [
+                { layer: bandLayers[2], color: BAND_COLORS[0], end: RING_SMALL }, // bottom band -> smallest ring
+                { layer: bandLayers[1], color: BAND_COLORS[1], end: RING_MED },   // middle band -> middle ring
+                { layer: bandLayers[0], color: BAND_COLORS[2], end: RING_BIG }    // top/tallest band -> largest ring
+            ];
+            bandToRing.forEach(function (pair) {
+                if (!pair.layer) return;
+                const lr = pair.layer.getBoundingClientRect();
+                const hl = div('picker-highlight-morph');
+                const start = {
+                    left: ((lr.left - r.left) / r.width * 100) + '%',
+                    top: ((lr.top - r.top) / r.height * 100) + '%',
+                    width: (lr.width / r.width * 100) + '%',
+                    height: (lr.height / r.height * 100) + '%',
+                    borderRadius: '40% 40% 0 0',
+                    background: pair.color
+                };
+                Object.assign(hl.style, start);
+                fill.appendChild(hl);
+                hl.animate([
+                    start,
+                    { left: pair.end.left, top: pair.end.top, width: pair.end.size, height: pair.end.size, borderRadius: '50%', background: HIGHLIGHT_END_COLOR }
+                ], { duration: T, delay: delay, easing: 'cubic-bezier(.6,0,.2,1)', fill: 'forwards' });
+            });
+            ball.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;border-radius:24px;';
+
+            const ax = targetX - dirX * len, ay = targetY - dirY * len;
+            string.style.cssText = 'left:' + (ax - strW / 2) + 'px;top:' + ay + 'px;width:' + strW + 'px;height:' + len + 'px;transform:rotate(' + theta + 'deg);';
+
+            stage.appendChild(string);
+            stage.appendChild(ball);
+
+            const end = { left: (targetX - D / 2) + 'px', top: (targetY - D / 2) + 'px', width: D + 'px', height: D + 'px', borderRadius: (D / 2) + 'px' };
+            const opt = { duration: T, delay: delay, easing: 'cubic-bezier(.6,0,.2,1)', fill: 'forwards' };
+
+            const morph = ball.animate([
+                { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', borderRadius: '24px' }, end
+            ], opt);
+            ball.animate([{ background: 'rgba(0,0,0,0)' }, { background: edge }], opt);
+            fill.animate([{ inset: '0%' }, { inset: '3.5%' }], opt);
+            string.animate(
+                [{ transform: 'rotate(' + theta + 'deg) scaleY(0)' }, { transform: 'rotate(' + theta + 'deg) scaleY(1)' }],
+                { duration: 450, delay: delay + T - 150, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' }
+            );
+
+            if (idx === i) primaryMorph = morph;
+        });
+
+        primaryMorph.onfinish = function () {
+            setTimeout(function () { cutToCradle(i, dir, indices, cx, cy, D); }, 420);
+        };
+    }
+
+    function finishReduced(i, dir) {
+        overlay.hidden = true;
+        stage.hidden = true;
+        markDone();
+        openPopup(i, dir);
+    }
+
+    // Pins the real cradle balls into the same pulled-out pose the picker just drew, then
+    // zooms/pans the canvas (see cameraZoom in afterRender above) to match the picker's
+    // final frame exactly, cuts the overlay away, and eases the camera back out.
+    function cutToCradle(primaryIndex, dir, indices, cx, cy, D) {
+        const side = dir === 'left' ? 1 : -1;
+        const ux = PULL_UX * side, uy = PULL_UY;
+
+        // Pin target is anchored at the constraint's own pointA (frameTop), not at
+        // ball.stringAttachX/Y — stringAttachY is a cosmetic offset used only for where
+        // the string is *drawn* (see buildScene), not where the real Matter Constraint
+        // (still attached, stiffness 1) is anchored. Pinning to the wrong anchor left the
+        // ball a tick away from satisfying its own constraint; the solver then yanked it
+        // to the correct spot on the very next physics step, after cameraZoom had already
+        // been computed against the wrong position — a one-frame snap that stuck for the
+        // rest of the zoom. Anchoring the pin at the same point the constraint actually
+        // uses means there's nothing left for the solver to correct.
+        pinnedGroup = indices.map(function (idx) {
+            const ball = balls[idx];
+            const anchor = constraints[idx].pointA;
+            const L = constraints[idx].length;
+            ball._pinTarget = { x: anchor.x - ux * L, y: anchor.y - uy * L };
+            Matter.Body.setPosition(ball, ball._pinTarget);
+            Matter.Body.setVelocity(ball, { x: 0, y: 0 });
+            Matter.Body.setAngularVelocity(ball, 0);
+            return ball;
+        });
+        highlightsFrozen = true;
+        // Snap straight to the resting highlight offsets instead of leaving them to ease
+        // there from wherever mouse-tracking last left them — freezing the *target* alone
+        // still let the existing per-frame lerp visibly drift toward rest for a couple
+        // hundred ms (through the frame draw-in and into the zoom-out), and a large
+        // leftover offset could push the highlight past the ball's own clip boundary.
+        indices.forEach(function (idx) {
+            const h = ballHighlights[idx];
+            h.x = h.staticX; h.y = h.staticY;
+            h.x2 = -ballRadius * 0.25; h.y2 = -ballRadius * 0.25;
+            h.x3 = -ballRadius * 0.18; h.y3 = -ballRadius * 0.18;
+        });
+
+        const primary = balls[primaryIndex];
+        const s0 = D / (2 * ballRadius);
+        cameraZoom.s = s0;
+        cameraZoom.tx = cx - s0 * primary.position.x;
+        cameraZoom.ty = cy - s0 * primary.position.y;
+        applyZoomTransform();
+
+        canvas.style.pointerEvents = 'none';
+        if (navEl) navEl.style.pointerEvents = 'none';
+
+        // Hard cut, not a fade: the pin/cameraZoom above are already in effect, so
+        // #canvas-container is already rendering this exact ball at this exact
+        // position/scale by the time this line runs. A fade here would hold the DOM
+        // mockup and the real canvas ball on screen together for a stretch — and since
+        // one draws an exact physics-anchored string and the other an approximated one,
+        // any such overlap window shows up as two faint, slightly offset balls/strings.
+        // Cutting instantly means there's only ever one ball on screen.
+        overlay.hidden = true;
+        stage.hidden = true;
+
+        // Draw the frame in top-to-bottom, at the same 450ms/easing rate the strings
+        // already draw in at, instead of it sitting fully-rendered behind the opaque
+        // overlay and appearing all at once the instant that overlay is hidden. Only
+        // one leg is on screen while zoomed in, but the clip sweeps the whole image, so
+        // whichever leg is visible draws down along with it. The zoom-out (below) is
+        // delayed by this same 450ms so the frame is always fully drawn before the
+        // camera starts pulling back.
+        const FRAME_REVEAL_MS = 450;
+        if (frameLayer) {
+            frameLayer.style.clipPath = 'inset(0 0 100% 0)';
+            frameLayer.animate(
+                [{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)' }],
+                { duration: FRAME_REVEAL_MS, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' }
+            );
+        }
+
+        gsap.to(cameraZoom, {
+            s: 1, tx: 0, ty: 0,
+            duration: 1.8,
+            delay: FRAME_REVEAL_MS / 1000,
+            ease: 'power3.inOut',
+            onUpdate: applyZoomTransform,
+            // Mouse-tracking highlights resume the instant the zoom-out visually
+            // finishes (not at release) — they'd already be fully converged on the
+            // cursor position by the time the ball is let go a beat later.
+            onComplete: function () {
+                highlightsFrozen = false;
+                // Land fully zoomed out, hold the pulled pose a beat, then let go —
+                // matches the pause a visitor sees before they actually release a
+                // dragged ball.
+                setTimeout(function () { release(primaryIndex, dir); }, 250);
+            }
+        });
+    }
+
+    // Same release path a manual drag already uses: clear the pin, set activeBall /
+    // activeBallDirection, and let gravity + the string constraint take it from there.
+    // The existing collisionStart handler (above) opens the popup when it lands.
+    function release(primaryIndex, dir) {
+        pinnedGroup = [];
+        clearZoomTransform();
+        activeBall = balls[primaryIndex];
+        activeBallDirection = dir;
+        canvas.style.pointerEvents = '';
+        if (navEl) navEl.style.pointerEvents = '';
+        sequenceActive = false;
+        markDone();
+    }
 })();

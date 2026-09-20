@@ -65,12 +65,30 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0;
+    padding: 0;
+    /* The picker hand-off's zoom (cradle.js's cameraZoom) is applied here as a single
+       translate+scale — the container sits flush at the viewport origin, so scaling
+       around its own top-left corner matches the canvas's own untransformed scene
+       coordinates exactly. This sweeps the frame layer, the canvas (balls,
+       strings, title), and the nav together as one unit; at rest the transform is
+       cleared entirely and this has no effect. */
+    transform-origin: 0 0;
+}
+
+/* The frame artwork lives on its own layer (not #canvas-container's own background)
+   so the picker hand-off can clip-path it independently — top-to-bottom, like it's
+   being drawn in — without clipping the canvas (balls/strings) or nav that sit above
+   it. At rest (no inline clip-path from cradle.js) it's simply the full image, same
+   as when it was a plain background-image. */
+#frame-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     background-image: url('../Cradle/without.svg?v=2');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center bottom;
-    margin: 0;
-    padding: 0;
 }
 
 #canvas-container::before {
@@ -1238,4 +1256,224 @@ html {
     #popup-5 .contact-value {
         font-size: 13px;
     }
+}
+
+/* ==========================================================================
+   Color picker landing screen — hands off into the cradle underneath it.
+   Desktop/tablet only (>767px); on phones the cradle itself is replaced by
+   the stacked-popup layout above, so the picker is hidden the same way.
+   ========================================================================== */
+
+#picker-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    background: #f2f0ef;
+}
+
+#picker-overlay[hidden] { display: none !important; }
+html.picker-skip #picker-overlay { display: none !important; }
+
+.picker-page {
+    /* The one spacing value cards use for everything: the gap between them, and their
+       distance from the left/right/bottom edges of the screen, are all this. */
+    --picker-gap: clamp(14px, 1.6vw, 24px);
+    position: relative;
+    max-width: 1800px;
+    margin-inline: auto;
+    height: 100%;
+    min-height: 0;
+    padding-inline: var(--picker-gap);
+    padding-top: var(--picker-gap);
+    padding-bottom: var(--picker-gap);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2in;
+    font-family: 'Museo Moderno', sans-serif;
+    color: #3b3430;
+}
+
+.picker-name {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    transition: opacity 0.3s ease;
+}
+
+/* flex:1 with min-height:0 (not justify-content:center) is what lets .picker-swatches
+   below claim exactly whatever room is left under the heading, at any viewport height,
+   instead of a fixed vh-based height that could run past the bottom of a shorter window. */
+.picker-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--picker-gap);
+}
+
+.picker-main h1 {
+    margin: 0;
+    flex: 0 0 auto;
+    max-width: 12ch;
+    font-size: clamp(44px, 9vw, 112px);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    transition: opacity 0.3s ease;
+}
+
+.picker-swatches {
+    flex: 1;
+    min-height: 160px;
+    max-height: 480px;
+    display: flex;
+    gap: var(--picker-gap);
+    padding: 24px 32px 40px;
+    margin: -24px -32px -40px;
+    box-sizing: content-box;
+    overflow-x: auto;
+}
+
+.picker-swatch {
+    position: relative;
+    flex: 1 0 96px;
+    min-width: 0;
+    appearance: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Museo Moderno', sans-serif;
+    color: var(--t);
+    transition: transform 0.28s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease;
+}
+
+.picker-swatch:hover,
+.picker-swatch:focus-visible {
+    transform: translateY(-14px);
+}
+
+.picker-swatch:hover .picker-swatch-fill,
+.picker-swatch:focus-visible .picker-swatch-fill {
+    box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 22px 30px rgba(59, 52, 50, 0.18);
+}
+
+.picker-swatch:focus-visible {
+    outline: 3px solid #3b3430;
+    outline-offset: 4px;
+}
+
+.picker-swatch:active { transform: translateY(-7px); }
+
+/* The main color card. The stacked layers and the hex label are both children of
+   this, same as .popup-box holds .stacked-footer's layers and .footer-content —
+   its own overflow:hidden + rounding is what clips the layers to match the card. */
+.picker-swatch-fill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--c);
+    box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 6px 14px rgba(59, 52, 50, 0.08);
+    transition: box-shadow 0.28s ease;
+}
+
+/* Reserves everything ABOVE the shading (matches .picker-swatch-stack's height below)
+   so the hex label lands on the pure base color, bottom-aligned against where the
+   shading begins — never on top of a lightened band, the way it briefly did. */
+.picker-swatch .picker-top {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+.picker-swatch .picker-hex {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Same stacked, rounded-shelf treatment as .stack-layer / .contact-layer in the
+   About/Contact popups: translucent paper-color bands lightening the base color,
+   each shorter/more opaque one sitting in front of a taller/fainter one behind it.
+   This container is only as tall as the deepest layer (--stack-h); layer heights
+   below are percentages of THIS box, not the whole card. */
+.picker-swatch-stack {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 42%;
+    z-index: 1;
+}
+
+.picker-stack-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.picker-stack-layer-1 { height: 43%; background-color: rgba(242, 240, 239, 0.24); z-index: 3; }
+.picker-stack-layer-2 { height: 71%; background-color: rgba(242, 240, 239, 0.17); z-index: 2; }
+.picker-stack-layer-3 { height: 100%; background-color: rgba(242, 240, 239, 0.10); z-index: 1; }
+
+/* the swatch becomes a cradle ball */
+#picker-overlay.picker-leaving .picker-swatch { pointer-events: none; }
+#picker-overlay.picker-leaving .picker-swatch:not(.picked) { opacity: 0; }
+.picker-swatch.picked { visibility: hidden; }
+#picker-overlay.picker-leaving .picker-name,
+#picker-overlay.picker-leaving .picker-main h1 { opacity: 0; }
+
+#picker-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#picker-stage[hidden] { display: none !important; }
+
+.picker-ball { position: absolute; overflow: hidden; }
+.picker-fill { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+/* The three card highlight bands morph into the ball's three highlight circles (see
+   choose() in cradle.js), measured from the real swatch DOM and animated left/top/
+   width/height/border-radius in %, so they track the ball's own resizing box the same
+   way this element's fixed geometry used to. End state (percentages) matches the real
+   cradle ball's specular highlight offsets exactly (ballHighlights rest-state in
+   afterRender: -0.3r/-0.25r/-0.18r for small/med/big) — a glossy highlight offset
+   toward the upper-left, not a centered bullseye. Getting this wrong is what made the
+   picker's ball and the real cradle ball read as two different balls at the hand-off
+   cut instead of one continuous one. */
+.picker-highlight-morph { position: absolute; }
+.picker-string {
+    position: absolute;
+    background: #3b3430;
+    border-radius: 2px;
+    transform-origin: 50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .picker-swatch, .picker-main h1, .picker-name { transition: none; }
+}
+
+@media (max-width: 767px) {
+    #picker-overlay { display: none !important; }
 }

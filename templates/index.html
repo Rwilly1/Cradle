@@ -33,9 +33,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
 </head>
 <body>
+    <script>
+    // Runs before first paint so a skipped/returning visit never flashes the picker.
+    (function () {
+        try {
+            var skip = /(?:^|[?&])skip=1(?:&|$)/.test(location.search);
+            var seen = sessionStorage.getItem('pickerDone') === '1';
+            var mobile = window.matchMedia('(max-width: 767px)').matches;
+            if (skip || seen || mobile) {
+                document.documentElement.classList.add('picker-skip');
+                if (skip) sessionStorage.setItem('pickerDone', '1');
+            }
+        } catch (e) {}
+    })();
+    </script>
+    <div id="picker-overlay">
+        <main class="picker-page" id="picker-pick">
+            <div class="picker-name">Remington Williams</div>
+            <div class="picker-main">
+                <h1>What is your favorite color?</h1>
+                <div class="picker-swatches" id="picker-swatches" role="group" aria-label="Choose your favorite color"></div>
+            </div>
+        </main>
+        <div id="picker-stage" hidden></div>
+    </div>
     <div class="invert-overlay"></div>
     <div class="container">
         <div id="canvas-container">
+            <div id="frame-layer"></div>
             <canvas id="newtons-cradle"></canvas>
             <nav class="popup-nav">
                 <label class="toggle-switch">
