@@ -1058,34 +1058,34 @@ Events.on(render, 'afterRender', function() {
         context.arc(0, 0, radius, 0, 2 * Math.PI);
         context.fillStyle = ballOutlineColors[index];
         context.fill();
-        
+
         context.beginPath();
         context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
         context.fillStyle = ballColors[index];
         context.fill();
-        
+
         context.save();
         context.beginPath();
         context.arc(0, 0, radius * 0.93, 0, 2 * Math.PI);
         context.clip();
-        
+
         context.beginPath();
         context.arc(highlight.x3, highlight.y3, radius * 0.7128, 0, 2 * Math.PI);
-        context.fillStyle = 'rgba(242, 240, 239, 0.20)';
+        context.fillStyle = 'rgba(242, 240, 239, 0.24)';
         context.fill();
-        
+
         context.beginPath();
         context.arc(highlight.x2, highlight.y2, radius * 0.4752, 0, 2 * Math.PI);
-        context.fillStyle = 'rgba(242, 240, 239, 0.20)';
+        context.fillStyle = 'rgba(242, 240, 239, 0.24)';
         context.fill();
-        
+
         context.beginPath();
         context.arc(highlight.x, highlight.y, radius * 0.264, 0, 2 * Math.PI);
-        context.fillStyle = 'rgba(242, 240, 239, 0.20)';
+        context.fillStyle = 'rgba(242, 240, 239, 0.24)';
         context.fill();
-        
+
         context.restore();
-        
+
         context.restore();
         
         context.save();
@@ -1323,13 +1323,18 @@ textToggle.addEventListener('change', function() {
     const swatchText = ['#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef'];
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // End-state geometry for the ball's three highlight circles, in % of the ball's own
-    // box — identical to the real canvas ball's ballHighlights rest offsets (afterRender),
-    // just expressed as CSS percentages so they track the ball element's own resize.
-    const RING_BIG = { left: '5.36%', top: '5.36%', size: '71.28%' };
-    const RING_MED = { left: '13.74%', top: '13.74%', size: '47.52%' };
-    const RING_SMALL = { left: '21.8%', top: '21.8%', size: '26.4%' };
-    const HIGHLIGHT_END_COLOR = 'rgba(242, 240, 239, 0.2)';
+    // End-state geometry for the ball's three highlight circles, in % of .picker-fill's
+    // own box (NOT the ball's full box) — these elements are appended to fill, and fill
+    // is inset 3.5% per side (93% of the ball's diameter) to match the real canvas's
+    // radius*0.93 clip. A ring meant to have true radius R centered at true offset
+    // (o,o), in units of the ball's own radius, needs size = 2R/1.86*100 and
+    // left/top = (o - R + 0.93)/1.86*100 when expressed against fill's smaller box —
+    // using the ball's full diameter for that math (as if fill == ball) undersizes
+    // every ring by ~7%, which is what made them visibly grow at the hand-off cut.
+    const RING_BIG = { left: '2.00%', top: '2.00%', size: '76.65%' };
+    const RING_MED = { left: '11.01%', top: '11.01%', size: '51.10%' };
+    const RING_SMALL = { left: '19.68%', top: '19.68%', size: '28.39%' };
+    const HIGHLIGHT_END_COLOR = 'rgba(242, 240, 239, 0.24)';
     // Matches the card's own .picker-stack-layer-1/2/3 colors, front to back.
     const BAND_COLORS = ['rgba(242, 240, 239, 0.24)', 'rgba(242, 240, 239, 0.17)', 'rgba(242, 240, 239, 0.10)'];
 
@@ -1468,8 +1473,8 @@ textToggle.addEventListener('change', function() {
             const srcBtn = pickerButtons[idx];
             const r = srcBtn.getBoundingClientRect();
             const targetX = cx + (idx - i) * s0 * spacing, targetY = cy;
-            const delay = Math.abs(idx - i) * 90;
-            const T = 800;
+            const delay = Math.abs(idx - i) * 60;
+            const T = 530;
 
             const ball = div('picker-ball'), fill = div('picker-fill'), string = div('picker-string');
             fill.style.background = c;
@@ -1530,14 +1535,14 @@ textToggle.addEventListener('change', function() {
             fill.animate([{ inset: '0%' }, { inset: '3.5%' }], opt);
             string.animate(
                 [{ transform: 'rotate(' + theta + 'deg) scaleY(0)' }, { transform: 'rotate(' + theta + 'deg) scaleY(1)' }],
-                { duration: 450, delay: delay + T - 150, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' }
+                { duration: 300, delay: delay + T - 100, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' }
             );
 
             if (idx === i) primaryMorph = morph;
         });
 
         primaryMorph.onfinish = function () {
-            setTimeout(function () { cutToCradle(i, dir, indices, cx, cy, D); }, 420);
+            setTimeout(function () { cutToCradle(i, dir, indices, cx, cy, D); }, 280);
         };
     }
 
@@ -1587,6 +1592,14 @@ textToggle.addEventListener('change', function() {
             h.x3 = -ballRadius * 0.18; h.y3 = -ballRadius * 0.18;
         });
 
+        // Draw the frame in top-to-bottom instead of it sitting fully-rendered behind
+        // the opaque overlay and appearing all at once the instant that overlay is
+        // hidden. Only one leg is on screen while zoomed in, but the clip sweeps the
+        // whole image, so whichever leg is visible draws down along with it. The
+        // zoom-out (below) is delayed by this same duration so the frame is always
+        // fully drawn before the camera starts pulling back.
+        const FRAME_REVEAL_MS = 300;
+
         const primary = balls[primaryIndex];
         const s0 = D / (2 * ballRadius);
         cameraZoom.s = s0;
@@ -1607,14 +1620,7 @@ textToggle.addEventListener('change', function() {
         overlay.hidden = true;
         stage.hidden = true;
 
-        // Draw the frame in top-to-bottom, at the same 450ms/easing rate the strings
-        // already draw in at, instead of it sitting fully-rendered behind the opaque
-        // overlay and appearing all at once the instant that overlay is hidden. Only
-        // one leg is on screen while zoomed in, but the clip sweeps the whole image, so
-        // whichever leg is visible draws down along with it. The zoom-out (below) is
-        // delayed by this same 450ms so the frame is always fully drawn before the
-        // camera starts pulling back.
-        const FRAME_REVEAL_MS = 450;
+        // Same duration/easing rate the strings draw in at (see choose() above).
         if (frameLayer) {
             frameLayer.style.clipPath = 'inset(0 0 100% 0)';
             frameLayer.animate(
@@ -1625,7 +1631,7 @@ textToggle.addEventListener('change', function() {
 
         gsap.to(cameraZoom, {
             s: 1, tx: 0, ty: 0,
-            duration: 1.8,
+            duration: 1.2,
             delay: FRAME_REVEAL_MS / 1000,
             ease: 'power3.inOut',
             onUpdate: applyZoomTransform,
