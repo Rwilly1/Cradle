@@ -428,6 +428,20 @@ window.addEventListener('mousemove', function(event) {
 
 let currentPopupIndex = 0;
 
+const POPUP_SESSION_KEY = 'cradleOpenPopupIndex';
+
+function savePopupState(index) {
+    try {
+        sessionStorage.setItem(POPUP_SESSION_KEY, String(index));
+    } catch (e) {}
+}
+
+function clearPopupState() {
+    try {
+        sessionStorage.removeItem(POPUP_SESSION_KEY);
+    } catch (e) {}
+}
+
 function updateNavLabels() {
     const navLabels = document.querySelectorAll('.nav-label');
     navLabels.forEach((label, index) => {
@@ -444,6 +458,7 @@ function openPopup(ballIndex, direction) {
     
     popupOpen = true;
     currentPopupIndex = ballIndex;
+    savePopupState(ballIndex);
     const popup = document.getElementById(`popup-${ballIndex}`);
     currentPopup = popup;
     currentPopupDirection = direction; // Store direction for closing
@@ -507,6 +522,7 @@ function navigateToPopup(newIndex, swipeDirection) {
     newPopup.classList.add('active');
     currentPopup = newPopup;
     currentPopupIndex = newIndex;
+    savePopupState(newIndex);
     updateNavLabels();
     
     // Animate both popups to collide in the middle
@@ -701,6 +717,7 @@ function closePopup() {
             currentPopup = null;
             currentPopupDirection = null;
             popupOpen = false;
+            clearPopupState();
             
             // Clear nav label active states
             document.querySelectorAll('.nav-label').forEach(label => {
@@ -812,6 +829,39 @@ document.querySelectorAll('.nav-label').forEach((label) => {
         }
     });
 });
+
+// Restore whichever popup was open before a page refresh (sessionStorage persists
+// for the tab's lifetime only, so this does not leak across new sessions/tabs).
+(function restorePopupState() {
+    let savedIndex = null;
+    try {
+        const raw = sessionStorage.getItem(POPUP_SESSION_KEY);
+        if (raw !== null) savedIndex = parseInt(raw, 10);
+    } catch (e) {}
+
+    if (savedIndex === null || isNaN(savedIndex) || savedIndex < 0 || savedIndex > 5) return;
+
+    const popup = document.getElementById(`popup-${savedIndex}`);
+    if (!popup) return;
+
+    popupOpen = true;
+    currentPopupIndex = savedIndex;
+    currentPopup = popup;
+    currentPopupDirection = savedIndex <= 2 ? 'left' : 'right';
+
+    const bgColor = popup.getAttribute('data-bg-color');
+    const popupBox = popup.querySelector('.popup-box');
+    if (bgColor && popupBox) {
+        popupBox.style.backgroundColor = bgColor;
+    }
+
+    popup.classList.add('active');
+    gsap.set(popup, { x: '0%', opacity: 1 });
+    updateNavLabels();
+    try {
+        enablePopupSwipe();
+    } catch (e) {}
+})();
 
 Events.on(engine, 'collisionStart', function(event) {
     const pairs = event.pairs;
