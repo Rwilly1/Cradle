@@ -1323,6 +1323,38 @@ textToggle.addEventListener('change', function() {
     const swatchText = ['#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef'];
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // "What is your favorite color?" wave-in: each character drops in with a color
+    // shift, left to right. Skipped under prefers-reduced-motion — the heading is
+    // simply left at its normal, fully-opaque rest state in that case.
+    const headingEl = document.querySelector('.picker-main .text');
+    if (headingEl && !reduce && window.gsap && window.SplitText) {
+        gsap.registerPlugin(SplitText);
+        // type: "words, chars" (not just "chars") wraps each word in its own nowrap
+        // span before splitting into characters, so the line-wrap still only ever
+        // breaks between words — plain "chars" left every letter as its own
+        // independent inline-block with no word grouping, letting the browser wrap
+        // mid-word (e.g. "favorite" splitting across the line break).
+        const split = SplitText.create(headingEl, { type: 'words, chars' });
+        // Same six hex colors as the card swatches (ballColors), each dimmed via alpha
+        // (not the flat hex) so the flash reads muted against the page background
+        // instead of a full-saturation flash.
+        const rainbow = ['rgba(122,0,0,0.55)', 'rgba(204,78,0,0.55)', 'rgba(204,163,0,0.55)',
+            'rgba(69,122,0,0.55)', 'rgba(0,78,122,0.55)', 'rgba(64,18,104,0.55)'];
+        // Split into two tweens on the same targets/stagger start so the drop-in and the
+        // color fade can run at their own independent speeds — y/opacity quick, color
+        // slow — instead of both being locked to one shared duration.
+        gsap.from(split.chars, {
+            y: 40, opacity: 0,
+            stagger: { each: 0.04, from: 'start' },
+            duration: 0.5, ease: 'sine.out'
+        });
+        gsap.from(split.chars, {
+            color: function (i) { return rainbow[i % rainbow.length]; },
+            stagger: { each: 0.055, from: 'start' },
+            duration: 0.65, ease: 'sine.out'
+        });
+    }
+
     // End-state geometry for the ball's three highlight circles, in % of .picker-fill's
     // own box (NOT the ball's full box) — these elements are appended to fill, and fill
     // is inset 3.5% per side (93% of the ball's diameter) to match the real canvas's
