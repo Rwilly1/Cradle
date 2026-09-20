@@ -171,14 +171,14 @@ function buildScene(w, h, animateIn) {
         ball.stringAttachY = frameTop + stringStartOffset;
 
         ballHighlights.push({
-            x: -ballRadius * 0.3,
-            y: -ballRadius * 0.3,
-            x2: -ballRadius * 0.25,
-            y2: -ballRadius * 0.25,
-            x3: -ballRadius * 0.18,
-            y3: -ballRadius * 0.18,
-            staticX: -ballRadius * 0.3,
-            staticY: -ballRadius * 0.3
+            x: -ballRadius * 0.15,
+            y: -ballRadius * 0.15,
+            x2: -ballRadius * 0.105,
+            y2: -ballRadius * 0.105,
+            x3: -ballRadius * 0.06,
+            y3: -ballRadius * 0.06,
+            staticX: -ballRadius * 0.15,
+            staticY: -ballRadius * 0.15
         });
 
         textOpacities.push(0);
@@ -979,14 +979,14 @@ Events.on(render, 'afterRender', function() {
         const targetX = dist > 0 ? (dx / dist) * ballRadius * pull * 0.5 : ballHighlights[index].staticX;
         const targetY = dist > 0 ? (dy / dist) * ballRadius * pull * 0.5 : ballHighlights[index].staticY;
 
-        const target3X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.18;
-        const target3Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.18;
+        const target3X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.06;
+        const target3Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.2 : -ballRadius * 0.06;
 
         ballHighlights[index].x3 += (target3X - ballHighlights[index].x3) * 0.08;
         ballHighlights[index].y3 += (target3Y - ballHighlights[index].y3) * 0.08;
 
-        const target2X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.25;
-        const target2Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.25;
+        const target2X = dist > 0 ? (dx / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.105;
+        const target2Y = dist > 0 ? (dy / dist) * ballRadius * pull * 0.35 : -ballRadius * 0.105;
 
         const largeRadius = ballRadius * 0.7128;
         const mediumRadius = ballRadius * 0.4752;
@@ -1331,9 +1331,12 @@ textToggle.addEventListener('change', function() {
     // left/top = (o - R + 0.93)/1.86*100 when expressed against fill's smaller box —
     // using the ball's full diameter for that math (as if fill == ball) undersizes
     // every ring by ~7%, which is what made them visibly grow at the hand-off cut.
-    const RING_BIG = { left: '2.00%', top: '2.00%', size: '76.65%' };
-    const RING_MED = { left: '11.01%', top: '11.01%', size: '51.10%' };
-    const RING_SMALL = { left: '19.68%', top: '19.68%', size: '28.39%' };
+    // Offsets (o) match afterRender's moderate-pull rest position (ballRadius *
+    // 0.06/0.105/0.15 for big/med/small — see cutToCradle's snap), not the old
+    // dist===0 edge-case fallback, which barely any real ball ever actually reaches.
+    const RING_BIG = { left: '8.45%', top: '8.45%', size: '76.65%' };
+    const RING_MED = { left: '18.81%', top: '18.81%', size: '51.10%' };
+    const RING_SMALL = { left: '27.74%', top: '27.74%', size: '28.39%' };
     const HIGHLIGHT_END_COLOR = 'rgba(242, 240, 239, 0.24)';
     // Matches the card's own .picker-stack-layer-1/2/3 colors, front to back.
     const BAND_COLORS = ['rgba(242, 240, 239, 0.24)', 'rgba(242, 240, 239, 0.17)', 'rgba(242, 240, 239, 0.10)'];
@@ -1535,7 +1538,7 @@ textToggle.addEventListener('change', function() {
             fill.animate([{ inset: '0%' }, { inset: '3.5%' }], opt);
             string.animate(
                 [{ transform: 'rotate(' + theta + 'deg) scaleY(0)' }, { transform: 'rotate(' + theta + 'deg) scaleY(1)' }],
-                { duration: 300, delay: delay + T - 100, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' }
+                { duration: 450, delay: delay + T - 150, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' }
             );
 
             if (idx === i) primaryMorph = morph;
@@ -1588,8 +1591,8 @@ textToggle.addEventListener('change', function() {
         indices.forEach(function (idx) {
             const h = ballHighlights[idx];
             h.x = h.staticX; h.y = h.staticY;
-            h.x2 = -ballRadius * 0.25; h.y2 = -ballRadius * 0.25;
-            h.x3 = -ballRadius * 0.18; h.y3 = -ballRadius * 0.18;
+            h.x2 = -ballRadius * 0.105; h.y2 = -ballRadius * 0.105;
+            h.x3 = -ballRadius * 0.06; h.y3 = -ballRadius * 0.06;
         });
 
         // Draw the frame in top-to-bottom instead of it sitting fully-rendered behind
@@ -1598,7 +1601,7 @@ textToggle.addEventListener('change', function() {
         // whole image, so whichever leg is visible draws down along with it. The
         // zoom-out (below) is delayed by this same duration so the frame is always
         // fully drawn before the camera starts pulling back.
-        const FRAME_REVEAL_MS = 300;
+        const FRAME_REVEAL_MS = 450;
 
         const primary = balls[primaryIndex];
         const s0 = D / (2 * ballRadius);
