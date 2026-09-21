@@ -536,8 +536,14 @@ html.case-open body {
     transition: opacity 0.2s ease;
 }
 
-.case-video-wrap:hover .case-video-pause {
-    opacity: 1;
+/* Touch devices don't get a real hover-out, so a tap here can leave the pause bars stuck
+   visible via :hover even once the video is actually playing (and the .paused rule below
+   already handles the paused state on its own). Gate the hover-reveal to devices that can
+   genuinely hover, so on touch the overlay only ever shows for .paused. */
+@media (hover: hover) and (pointer: fine) {
+    .case-video-wrap:hover .case-video-pause {
+        opacity: 1;
+    }
 }
 
 .case-video-pause svg {

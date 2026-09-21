@@ -522,6 +522,15 @@
         });
         updateOverlay();
 
+        // With no `autoplay` attribute (see above), preload="metadata" only fetches
+        // duration/dimensions — no frame ever gets decoded/painted until playback starts,
+        // so before that this element is just blank. Nudging currentTime forward a hair
+        // forces the browser to decode and paint that one frame as a de-facto thumbnail,
+        // without starting playback.
+        video.addEventListener('loadedmetadata', function () {
+            if (video.currentTime === 0) video.currentTime = 0.01;
+        }, { once: true });
+
         if ('IntersectionObserver' in window) {
             var io = new IntersectionObserver(function (entries) {
                 entries.forEach(function (en) {
