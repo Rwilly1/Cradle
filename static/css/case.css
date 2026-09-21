@@ -556,7 +556,6 @@ html.case-open body {
     font-size: clamp(14px, 1.55vw, 22px);
     font-weight: 600;
     letter-spacing: 0.14em;
-    text-transform: uppercase;
     color: var(--case-color);
     margin-bottom: 1.1vw;
 }

@@ -242,25 +242,26 @@
                        title="Islanding NYC", subtitle="3D Animation", intro=islanding_intro,
                        hero_src="Islanding/iPad_shadow.png", hero_src_mobile="Islanding/iPad_without.png",
                        hero_alt="Islanding NYC on an iPad") %}
-        {% call case_panel(side="image-left", label="Problem", image="Islanding/IslandingProject/1NYCAdobeStager.png", alt="Manhattan model staged in Adobe Substance Stager") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
-            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% call case_panel(side="image-left", label="NYC is at Risk", image="Islanding/IslandingProject/1NYCAdobeStager.png", alt="Manhattan model staged in Adobe Substance Stager") %}
+            <p>In 2012, Hurricane Sandy flooded 17% of New York City's land. The City's own projections say that without action, sea level rise will regularly flood parts of Lower Manhattan within this generation, and by 2100 almost half of its buildings will face storm surge risk. Close to a million people work, live, or commute through the Financial District, and the infrastructure that serves the whole region depends on them.</p>
+            <p>My animation imagines that risk left unchecked. It is exaggerated on purpose, because a flooded skyline gets attention that a statistic rarely does. I made it as a call to action, so people look at the real numbers and ask what happens if the city waits.</p>
         {% endcall %}
-        {% call case_panel(side="image-right", label="Simulation", image="Islanding/IslandingProject/2CubeShader.png", alt="Water simulation and caustics shader test in Blender") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
-            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% call case_panel(side="image-right", label="Building a Shader", image="Islanding/IslandingProject/2CubeShader.png", alt="Water simulation and caustics shader test in Blender") %}
+            <p>This was my first project in Blender, and building an animated shader was its most challenging part. To get full control over my water animation, I worked as a director of photography, animator, researcher, and engineer. I wanted full control over the speed of the light in relation to the water. This meant syncing two animations that moved at different speeds.</p>
+            <p>Light travels slowly through water, so I ran the light shader at 48 frames per second, which was double the 24 frames per second of the water. The caustics became the standout of the project, because they make the water realistic enough for people to imagine swimming through Manhattan. A plane near the top of the water cube served as an interior light source, and a dark plane at the bottom gave the light something to land on, which made me think carefully about materials.</p>
         {% endcall %}
-        {% call case_panel(side="image-left", label="Rendering", image="Islanding/IslandingProject/3Conetest.png", alt="Rendered water surface test") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
-            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% call case_panel(side="image-left", label="The Cone Test", image="Islanding/IslandingProject/3Conetest.png", alt="Rendered water surface test") %}
+            <p>Before committing to the city, I prototyped the lighting on a cone. Its curved surface reflects light more dynamically than a flat plane. This made it a stronger test of how the caustics respond to form.</p>
+            <p>Next I raised the water around the cone and watched how the light changed with depth. That test led to a design decision. A flood does not happen instantly, so I had the water trickle in slowly. If I had more time to work on this project, I would have added a day to night cycle to show that time passing.</p>
+            <p>I used only one object in the scene because animations take a long time to render in Blender. During that test I lowered my render samples, used denoising, and baked the fluid simulation. Once the cone had done its job and my renders were fast enough, the buildings went in.</p>
         {% endcall %}
-        {% call case_panel(side="image-right", label="Underwater", video="Islanding/IslandingProject/4NoTextureBlenderRender.mp4", alt="Rendered underwater skyline, no-texture Blender render") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
-            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% call case_panel(side="image-right", label="Faking Fluid", video="Islanding/IslandingProject/4NoTextureBlenderRender.mp4", alt="Rendered underwater skyline, no-texture Blender render") %}
+            <p>Understanding the physics of how water behaves was essential to my editing decisions. In Blender the fluid simulation lives inside a domain, and mine was a cube with hard edges, so I planned the direction of the water and the cuts between inside and outside views to keep the viewer from noticing it. The water rose along a single path or entered from several directions, and it still reads as free form.</p>
+            <p>This is where I worked most like a director, since I was manipulating cameras. The camera followed Bezier circle paths, and in the opening scene that movement makes the static clouds appear to drift. In After Effects I composited the scenes and built a lens flare from scratch to carry the transitions, tuning its timing and illusion.</p>
         {% endcall %}
-        {% call case_panel(side="image-left", label="Outcome", image="Islanding/IslandingProject/5ShaderNode.png", alt="Caustics shader node graph") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
-            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% call case_panel(side="image-left", label="Reflection", image="Islanding/IslandingProject/5ShaderNode.png", alt="Caustics shader node graph") %}
+            <p>Ten years ago, Blender was unapproachable to me as a graphic designer. I could animate by hand and even work in stop motion, but a custom light shader was out of reach. That gap is a big reason I returned to study computer science.</p>
+            <p>The node view of my shader shows why it paid off. Two Wave Textures each feed a Color Ramp, a Screen node blends them, and an Emission node sends the result out as light. It works like an entity relationship diagram, with nodes as the entities and the connections as the relationships. That logic holds across every program, and software engineering did not replace my creative side. It gave it more advanced tools.</p>
         {% endcall %}
     {% endcall %}
 
