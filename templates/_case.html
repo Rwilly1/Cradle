@@ -1,0 +1,86 @@
+{#
+  Case-study components. One project = one case_study(...) call wrapping case_panel(...) calls.
+
+  {% call case_study(slug="islanding-nyc", popup=4, color="#004e7a", title="...", subtitle="...",
+                     intro="...", hero_src="Islanding/iPad_shadow.png") %}
+      {% call case_panel(side="image-left", label="Problem", image="Islanding/spline.png", alt="...") %}
+          <p>Body text…</p>
+      {% endcall %}
+  {% endcall %}
+
+  slug   URL fragment (remingtonwilliams.com/#slug) and element id
+  popup  index of the matching popup / cradle ball (0-5)
+  label  the section's subtitle: shown in blue above its text AND used as its entry in the
+         sticky section nav at the top of the page
+  side   "image-left" or "image-right" (which edge the image block bleeds off)
+  image  path under /static; leave empty to render a labelled placeholder slot.
+         Each panel is one full screen (text + image together) and is a scroll-snap stop.
+#}
+
+{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_alt="") %}
+<article class="case" id="case-{{ slug }}" data-slug="{{ slug }}" data-popup="{{ popup }}"
+         style="--case-color: {{ color }}" role="dialog" aria-label="{{ title }} case study" tabindex="-1">
+    <div class="case-head">
+    <header class="case-hero">
+        {# Look-alikes of the popup's X and arrow, in the same spots: they fade out as the popup
+           grows into this banner (and back in as it shrinks). Never visible otherwise. #}
+        <span class="case-ghost case-ghost--close" aria-hidden="true">X</span>
+        <span class="case-ghost case-ghost--open" aria-hidden="true"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></span>
+        <div class="case-hero-media">
+            <picture>
+                {% if hero_src_mobile %}
+                <source media="(max-width: 767px)" srcset="{{ url_for('static', filename=hero_src_mobile) }}">
+                {% endif %}
+                <img src="{{ url_for('static', filename=hero_src) }}" alt="{{ hero_alt or title }}">
+            </picture>
+            {# If this popup has a video (data-video-slot), case.js moves the real element in
+               here on open and back on close — never a copy, so playback never re-syncs. #}
+        </div>
+        <div class="case-hero-text">
+            {# On mobile, the back button sits inline before the title (see .case-title-row
+               in case.css) instead of floating over the artwork — so nothing needs reserving
+               above the image, and it lands at the same spot the popup's own iPad sits at.
+               case.js slides it in from the right (where the popup's own forward-arrow sits)
+               and flips its icon partway, so it reads as the same arrow crossing over rather
+               than two unrelated buttons. On desktop .case-title-row is display:contents, so
+               this is invisible there and .case-back positions exactly as it always did
+               (top-left, over the hero, no slide). #}
+            <div class="case-title-row">
+                <button class="case-back" type="button" aria-label="Back to the cradle">
+                    <img src="{{ url_for('static', filename='arrow/arrow_circle_left.png') }}" alt="">
+                </button>
+                <h1>{{ title }}</h1>
+            </div>
+            <h2>{{ subtitle }}</h2>
+            <p>{{ intro }}</p>
+        </div>
+    </header>
+    {# Filled in from the panels' labels by case.js. #}
+    <nav class="case-nav" aria-label="Sections"></nav>
+    </div>
+
+    <main class="case-body">
+        {{ caller() }}
+        {# Sits in the bottom-right corner of the last section. #}
+        <button class="case-top" type="button" aria-label="Back to top">
+            <img src="{{ url_for('static', filename='arrow/arrow_circle_up.png') }}" alt="">
+        </button>
+    </main>
+</article>
+{% endmacro %}
+
+{% macro case_panel(side="image-left", label="", image=None, alt="", placeholder="Image") %}
+<section class="case-panel case-panel--{{ side }}"{% if label %} data-nav="{{ label }}"{% endif %}>
+    <figure class="case-media">
+        {% if image %}
+        <img src="{{ url_for('static', filename=image) }}" alt="{{ alt }}" loading="lazy">
+        {% else %}
+        <div class="case-placeholder" role="img" aria-label="{{ alt or placeholder }}">{{ placeholder }}</div>
+        {% endif %}
+    </figure>
+    <div class="case-copy">
+        {% if label %}<p class="case-label">{{ label }}</p>{% endif %}
+        {{ caller() }}
+    </div>
+</section>
+{% endmacro %}

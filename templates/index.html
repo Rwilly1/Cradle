@@ -1,3 +1,5 @@
+{% from "_case.html" import case_study, case_panel %}
+{% set islanding_intro = "A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation." %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,6 +30,7 @@
     <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/case.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/Draggable.min.js"></script>
@@ -41,7 +44,11 @@
             var skip = /(?:^|[?&])skip=1(?:&|$)/.test(location.search);
             var seen = sessionStorage.getItem('pickerDone') === '1';
             var mobile = window.matchMedia('(max-width: 767px)').matches;
-            if (skip || seen || mobile) {
+            // Deep link (/#islanding-nyc): skip the picker and let cradle.js restore that popup.
+            var deepLinks = { 'prinsys': 1, 'encrypted-chat': 2, 'algorithmic-crafting': 3, 'islanding-nyc': 4 };
+            var deep = deepLinks[location.hash.slice(1)];
+            if (deep !== undefined) sessionStorage.setItem('cradleOpenPopupIndex', String(deep));
+            if (skip || seen || mobile || deep !== undefined) {
                 document.documentElement.classList.add('picker-skip');
                 if (skip) sessionStorage.setItem('pickerDone', '1');
             }
@@ -159,7 +166,7 @@
         </div>
     </div>
 
-    <div id="popup-4" class="popup" data-bg-color="#004e7a">
+    <div id="popup-4" class="popup" data-bg-color="#004e7a" data-case="islanding-nyc">
         <div class="popup-box">
             <button class="popup-close">X</button>
             <div class="popup-project">
@@ -168,7 +175,7 @@
                         <source media="(max-width: 1024px)" srcset="{{ url_for('static', filename='Islanding/iPad_without.png') }}">
                         <img src="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}" alt="Islanding NYC" class="islanding-image">
                     </picture>
-                    <div id="islanding-video-overlay" class="islanding-video-overlay">
+                    <div id="islanding-video-overlay" class="islanding-video-overlay" data-video-slot>
                         <video class="islanding-video" src="{{ url_for('static', filename='Islanding/small_island.mp4') }}" loop playsinline preload="metadata" poster="https://img.youtube.com/vi/CjYmnk2FfLY/maxresdefault.jpg" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
                         <div class="islanding-pause-overlay" aria-hidden="true">
                             <svg viewBox="0 0 24 24" class="islanding-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
@@ -177,9 +184,17 @@
                     </div>
                 </div>
                 <div class="project-text">
-                    <h2>Islanding NYC</h2>
+                    {# On mobile the open-arrow sits inline next to the title (see
+                       .project-title-row in case.css) instead of floating bottom-right —
+                       so the case page opens with the iPad at the same spot it already sits
+                       at here. On desktop .project-title-row is display:contents, so this is
+                       invisible there and .popup-open positions exactly as it always did. #}
+                    <div class="project-title-row">
+                        <h2>Islanding NYC</h2>
+                        <a class="popup-open" href="#islanding-nyc" aria-label="Open the Islanding NYC case study"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></a>
+                    </div>
                     <h3>3D Animation</h3>
-                    <p>A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation. </p>
+                    <p>{{ islanding_intro }}</p>
                 </div>
             </div>
         </div>
@@ -221,6 +236,35 @@
             </div>
         </div>
     </div>
+
+    {# ---- Case studies (expand out of their popups; linkable as /#slug) ---- #}
+    {% call case_study(slug="islanding-nyc", popup=4, color="#004e7a",
+                       title="Islanding NYC", subtitle="3D Animation", intro=islanding_intro,
+                       hero_src="Islanding/iPad_shadow.png", hero_src_mobile="Islanding/iPad_without.png",
+                       hero_alt="Islanding NYC on an iPad") %}
+        {% call case_panel(side="image-left", label="Problem", image="Islanding/IslandingProject/1NYCAdobeStager.png", alt="Manhattan model staged in Adobe Substance Stager") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
+            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+        {% call case_panel(side="image-right", label="Simulation", image="Islanding/IslandingProject/2CubeShader.png", alt="Water simulation and caustics shader test in Blender") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
+            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+        {% call case_panel(side="image-left", label="Rendering", image="Islanding/IslandingProject/3Conetest.png", alt="Rendered water surface test") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
+            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+        {% call case_panel(side="image-right", label="Underwater", image="Islanding/IslandingProject/4NYSea.png", alt="Rendered underwater skyline") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
+            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+        {% call case_panel(side="image-left", label="Outcome", image="Islanding/IslandingProject/5ShaderNode.png", alt="Caustics shader node graph") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper. Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam.</p>
+            <p>Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+    {% endcall %}
+
     <script src="{{ url_for('static', filename='js/cradle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/case.js') }}"></script>
 </body>
 </html>

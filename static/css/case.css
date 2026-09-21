@@ -1,0 +1,704 @@
+/* ---------------------------------------------------------------------------
+   Case-study pages: a popup expands in place into one of these.
+   Color comes from --case-color (set per article), so every project shares this file.
+   --------------------------------------------------------------------------- */
+
+/* ---- Popup -> case-study affordance (only popups that have a case study) ---- */
+
+.popup-open {
+    /* same size as the X (.popup-close is 16px) and mirroring it: bottom-right corner */
+    position: absolute;
+    bottom: 14px;
+    right: 16px;
+    width: 16px;
+    height: 16px;
+    z-index: 1001;
+    display: block;
+    opacity: 0.6;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.popup-open img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Invisible on desktop (the wrapper disappears from layout entirely), so .popup-open still
+   positions absolute against .popup-box exactly as if it weren't nested in here at all. Only
+   becomes a real flex row on mobile — see the max-width:767px block below. */
+.project-title-row {
+    display: contents;
+}
+
+.popup[data-case] .popup-box {
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+.popup-open:focus-visible {
+    outline: 2px solid #f2f0ef;
+    outline-offset: 3px;
+    border-radius: 50%;
+    opacity: 1;
+}
+
+/* The cradle fades (not fully) while the pointer is over an openable popup. */
+.container {
+    transition: opacity 0.4s ease;
+}
+
+body.case-hint .container {
+    opacity: 0.4;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+    .popup[data-case] .popup-box:hover {
+        transform: scale(calc(var(--ui-scale, 1) * 1.015));
+        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.36);
+    }
+
+    .popup[data-case] .popup-box:hover .popup-open {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+}
+
+@media (max-width: 767px) {
+    /* Inline next to the title instead of floating bottom-right, so the case page's own
+       title row (below) can mirror this exactly and the iPad never needs to shift to make
+       room for either arrow. */
+    .project-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .popup-open {
+        position: static;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        opacity: 1;
+    }
+}
+
+/* ---- The case-study page itself ----
+   Proportions follow the design mockup and are expressed in vw so the page scales like the
+   artwork does; sections are one screen each and snap on desktop. */
+
+html.case-open,
+html.case-open body {
+    overflow: hidden !important;
+}
+
+.case {
+    --nav-h: 0px;
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #f2f0ef;
+    color: #3b3430;
+    font-family: 'Museo Moderno', sans-serif;
+    visibility: hidden;
+    outline: none;
+}
+
+.case.is-open {
+    visibility: visible;
+}
+
+/* The popup underneath is hidden while its page is open/growing: the page is drawn exactly
+   on top of it at the start, and would otherwise show as a ghost card past the page's edge. */
+.popup-box.is-covered {
+    visibility: hidden;
+}
+
+.case.is-animating {
+    will-change: transform, clip-path;
+}
+
+/* While the banner grows only it (and the page colour) shows; the subtitle row and sections
+   appear once it has landed. */
+.case.is-animating .case-nav,
+.case.is-animating .case-body {
+    visibility: hidden;
+}
+
+@media (min-width: 768px) and (min-height: 640px) {
+    .case:not(.no-snap) {
+        scroll-snap-type: y mandatory;
+    }
+
+    .case-head,
+    .case-panel {
+        scroll-snap-align: start;
+    }
+
+}
+
+/* Round knock-out arrows: the artwork is a white disc with a transparent arrow, so it sits
+   on a disc of the case colour. */
+.case-back,
+.case-top {
+    padding: 4px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--case-color);
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+
+.case-back img,
+.case-top img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.case-back:focus-visible,
+.case-top:focus-visible {
+    outline: 3px solid #f2f0ef;
+    outline-offset: 2px;
+}
+
+.case-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+    width: 48px;
+    height: 48px;
+}
+
+.case-back:hover {
+    transform: translateX(-3px) scale(1.06);
+}
+
+/* Invisible on desktop (the wrapper disappears from layout entirely), so .case-back still
+   positions absolute against .case-hero exactly as if it weren't nested in here at all. Only
+   becomes a real flex row on mobile — see the max-width:767px block below. */
+.case-title-row {
+    display: contents;
+}
+
+/* Hero: the popup, grown up. Everything is sized in --u, one popup-pixel (the popup is a
+   665px-wide design), so the image-to-text ratio is exactly the popup's and both scale
+   together with the window. Values below are the popup's own (style.css). */
+.case-hero {
+    --u: calc(100vw / 665);
+    position: relative;
+    height: calc(var(--u) * 280); /* the popup's own height, so the artwork lands identically */
+    background: var(--case-color);
+    color: #f2f0ef;
+    border-radius: 0 0 calc(var(--u) * 22) calc(var(--u) * 22);
+    padding: calc(var(--u) * 14) calc(var(--u) * 28); /* popup: 14 top, content row 252 tall */
+    display: flex;
+    align-items: stretch;
+    gap: calc(var(--u) * 20);
+}
+
+.case-hero-media {
+    position: relative;
+    flex-shrink: 0;
+    width: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.case-hero-media picture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* The popup shows this artwork at 135% of its 45% column (= 370 popup-px wide), centred in
+   the column and nudged -0.4%. Pinned here in the same units instead of left to flex/max-width
+   rules, so its size and position can't drift from the popup's. The artwork carries its own
+   shadow; centred like this its bottom edge meets the bottom of the blue, as in the popup. */
+.case-hero-media img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: calc(var(--u) * 370);
+    max-width: none;
+    max-height: none;
+    height: auto;
+    transform: translate(calc(-50% - var(--u) * 1.48), -50%);
+}
+
+/* Ghosts of the popup's corner symbols (see .popup-close / .popup-open): same size and place,
+   in popup pixels, invisible except while case.js fades them during the grow/shrink. */
+.case-ghost {
+    position: absolute;
+    right: calc(var(--u) * 16);
+    width: calc(var(--u) * 16);
+    height: calc(var(--u) * 16);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.case-ghost--close {
+    top: calc(var(--u) * 14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: calc(var(--u) * 1) solid rgba(242, 240, 239, 0.5);
+    border-radius: 50%;
+    color: rgba(242, 240, 239, 0.5);
+    font-size: calc(var(--u) * 9);
+    font-weight: 300;
+    line-height: 1;
+}
+
+.case-ghost--open {
+    bottom: calc(var(--u) * 14);
+}
+
+.case-ghost--open img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0.6;
+}
+
+/* The video overlay itself (.islanding-video-overlay) is moved here from the popup by
+   case.js — same element, so playback never has to re-sync. Its own rule in style.css
+   already sizes/positions it as a percentage of this (relatively positioned) box; these
+   just rescale its fixed px values by --u so it grows with everything else, and make the
+   pause icon show whenever paused (not only on hover), same as the popup does on touch. */
+.case-hero-media .islanding-video-overlay {
+    border-radius: calc(var(--u) * 8);
+    box-shadow: 0 calc(var(--u) * 4) calc(var(--u) * 20) rgba(0, 0, 0, 0.3);
+}
+
+.case-hero-media .islanding-pause-overlay {
+    opacity: 0;
+}
+
+.case-hero-media .islanding-pause-overlay.paused {
+    opacity: 1;
+}
+
+.case-hero-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.case-hero-text h1 {
+    font-size: calc(var(--u) * 25);
+    font-weight: 600; /* same as the popup's title, so nothing changes weight as it grows */
+    margin-bottom: calc(var(--u) * -6); /* line-height left at the font's normal, as in the popup */
+}
+
+.case-hero-text h2 {
+    font-size: calc(var(--u) * 16);
+    font-weight: 400;
+}
+
+.case-hero-text p {
+    font-size: calc(var(--u) * 12);
+    font-weight: 300;
+    line-height: 1.38;
+    text-align: justify;
+}
+
+/* Section nav: one large row under the hero, part of the landing view. Clicking a title
+   scrolls to that section. Once something is selected the others dim, so the selection
+   reads as brighter (no underline). */
+.case-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3vw;
+    padding: 0 4.2vw;
+    height: 9.4vw;
+    min-height: 64px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.case-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.case-nav button {
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #3b3430;
+    font-family: 'Museo Moderno', sans-serif;
+    font-size: clamp(16px, 1.95vw, 36px);
+    font-weight: 400;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.case-nav.has-active button {
+    opacity: 0.45;
+}
+
+.case-nav.has-active button.is-active,
+.case-nav button:hover,
+.case-nav button:focus-visible {
+    opacity: 1;
+}
+
+.case-nav button:focus-visible {
+    outline: 2px solid #3b3430;
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+/* One screen per section: the image block and its text together. */
+.case-body {
+    position: relative;
+    display: block;
+}
+
+.case-panel {
+    min-height: 100svh;
+    padding-top: var(--nav-h);
+    display: grid;
+    grid-template-columns: 63fr 37fr;
+    align-items: center;
+}
+
+.case-panel--image-right {
+    grid-template-columns: 37fr 63fr;
+}
+
+.case-panel--image-right .case-media {
+    order: 2;
+}
+
+.case-media {
+    /* Frame padding (top, outward side, bottom) is the same fixed amount for every panel;
+       the block's own height follows whatever image is inside it — never cropped, never
+       letterboxed — so it's never touching only three edges: the image always spans the
+       column's full width, so it's flush against the screen edge on the un-padded side. */
+    background: var(--case-color);
+    color: rgba(242, 240, 239, 0.75);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.case-panel--image-left .case-media {
+    padding: 2.8vw 2.8vw 2.8vw 0;
+    border-radius: 0 3.6vw 3.6vw 0;
+}
+
+.case-panel--image-right .case-media {
+    padding: 2.8vw 0 2.8vw 2.8vw;
+    border-radius: 3.6vw 0 0 3.6vw;
+}
+
+/* Nested lighter rings around the screenshot, same idea as the stacked shelves behind
+   the About/Contact popups' footer content and the cradle balls' highlight rings —
+   here wrapped fully around the image instead of rising from one edge. Rendered via
+   stacked box-shadows (nearest/lightest listed first) rather than extra elements, so
+   they follow the image's own border-radius for free. On panels whose image bleeds to
+   the screen edge (zero padding on that side) the ring simply clips there, same as the
+   image itself already does.
+   A box-shadow's own corner radius is the element's radius PLUS its spread, so these
+   step up from the image's 1.4vw to 2.4vw to 3.4vw as they go out — landing just under
+   .case-media's 3.6vw so the rounding reads as one continuous curve, not a jump from
+   tight image corners to a much-rounder frame. All in vw like .case-media's own radius,
+   so the match holds at any width. */
+.case-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 1.4vw;
+    box-shadow:
+        0 0 0 1vw rgba(255, 255, 255, 0.18),
+        0 0 0 2vw rgba(255, 255, 255, 0.09);
+}
+
+.case-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    padding: 16px;
+    border: 1px dashed rgba(242, 240, 239, 0.4);
+    background: rgba(255, 255, 255, 0.07);
+    letter-spacing: 0.04em;
+    border-radius: 6px;
+}
+
+.case-copy {
+    padding: 0 3.5vw 0 3vw;
+}
+
+.case-panel--image-right .case-copy {
+    padding: 0 3vw 0 3.5vw;
+}
+
+/* The back-to-top arrow floats over the last panel's bottom-right corner; reserve room
+   under the text so it never sits on top of the last line. */
+.case-panel:last-of-type .case-copy {
+    padding-bottom: calc(2.5vw + 56px + 16px);
+}
+
+.case-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: clamp(14px, 1.55vw, 22px);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--case-color);
+    margin-bottom: 1.1vw;
+}
+
+.case-label::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+}
+
+.case-copy p:not(.case-label) {
+    font-size: clamp(14px, 1.55vw, 22px);
+    font-weight: 300;
+    line-height: 1.32;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.case-copy p:not(.case-label) + p {
+    margin-top: 1.32em;
+}
+
+/* Back to top: bottom-right corner of the last section. */
+.case-top {
+    position: absolute;
+    right: 2.5vw;
+    bottom: 2.5vw;
+    width: 56px;
+    height: 56px;
+}
+
+.case-top:hover {
+    transform: translateY(-4px);
+}
+
+/* Phones and narrow windows: full-bleed, same as the desktop hero — the closed card's own
+   grow animation (case.js) shrinks this exact layout down to the card's size and scales it
+   back up as one rigid piece, so nothing here needs to reflow or reposition mid-animation. */
+@media (max-width: 767px) {
+    /* The whole page reads as one case-colour surface, text in white throughout — no more
+       per-section colour breaks or light page background. */
+    .case {
+        background: var(--case-color);
+        color: #f2f0ef;
+    }
+
+    .case-hero {
+        --u: 1px;
+        height: auto;
+        min-height: 0;
+        flex-direction: column;
+        gap: 20px;
+        border-radius: 0 0 32px 32px;
+        /* Same formula as the popup's own top padding (#popup-4 .popup-box in style.css) —
+           the back button no longer floats over the artwork needing its own clearance (it's
+           inline with the title below instead), so this can match the popup exactly and the
+           iPad lands at the same spot whether the case is open or closed. */
+        padding: calc(16px * var(--mobile-scale, 1)) 24px 40px;
+        overflow: hidden;
+    }
+
+    /* Inline before the title instead of floating over the artwork — see .case-title-row.
+       flex-start + gap (not space-between): a back button reads as sitting snug next to
+       its title, unlike the popup's own forward-arrow which sits apart at the row's far
+       end — see .project-title-row above. case.js slides it in from that far end and back
+       out to it on close, so the two arrows read as one crossing over. */
+    .case-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .case-back {
+        position: static;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+    }
+
+    /* Same box the popup's own iPad image sizes itself into (see #popup-4 .project-image in
+       style.css) — the min-height + top alignment is what keeps the video overlay's percentage
+       sizing landing on the actual screen cutout instead of ballooning over the whole bezel. */
+    .case-hero-media {
+        width: 100%;
+        align-items: flex-start;
+        min-height: calc(300px * var(--mobile-scale, 1));
+        margin-top: calc(-38px * var(--mobile-scale, 1));
+        margin-bottom: calc(-38px * var(--mobile-scale, 1));
+    }
+
+    .case-hero-media picture { height: auto; }
+
+    /* Same oversized-and-cropped treatment the popup itself uses on this artwork (see
+       .islanding-image in style.css): the video overlay's percentage sizing is tuned to land
+       on the drawn iPad's actual screen, which only lines up once the iPad is zoomed in the
+       same way here — at 100% width the screen is much smaller than the overlay expects, so
+       the video swallows the whole iPad instead of sitting inside it. .case-hero's own
+       overflow:hidden crops the excess, same as the popup card does. */
+    .case-hero-media img {
+        position: static;
+        top: auto;
+        left: auto;
+        width: auto;
+        height: auto;
+        transform: translateX(-0.4%);
+        max-width: 135%;
+        max-height: 135%;
+    }
+
+    .case-ghost { display: none; }
+    /* Matches the popup's own text sizes exactly (#popup-4 .project-text h2/h3/p in
+       style.css) — not a bigger "final" size the way the rest of this page is a scaled-up
+       version of the popup: the whole point of the mobile grow animation is that only the
+       colour/artwork visibly grow, so the text has to actually BE the same size on the open
+       page as it is on the closed card, not just held there temporarily during the tween. */
+    .case-hero-text h1 { font-size: 22px; font-weight: 600; margin-bottom: -2px; }
+    .case-hero-text h2 { font-size: 16px; font-weight: 700; }
+    .case-hero-text p  { font-size: 14px; line-height: 1.5; margin-top: 12px; }
+
+    /* No room for it on a phone screen, and the page is a single plain scroll instead. */
+    .case-nav { display: none; }
+
+    /* Each section becomes one card — image, label and text together — on the case-colour
+       page: no more alternating left/right sides, no separate colour block behind the image. */
+    .case-panel,
+    .case-panel--image-right {
+        min-height: 0;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin: 0 16px 20px;
+        /* 21px so the two ring steps below land evenly (7px apart) across the gap to the
+           card's own edge. */
+        padding: 21px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .case-panel--image-left .case-media,
+    .case-panel--image-right .case-media {
+        order: 0;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    /* Evenly spaced across the 21px gap between the image and the card's own edge (7px a
+       step: image to ring 1, ring 1 to ring 2, ring 2 to the card edge) — the same relationship
+       desktop has between its image and .case-media's edge, just in fixed px since the card
+       itself is fixed px on mobile. Radius steps up the same way, 10 to 17 to 24, landing
+       exactly on the card's own 24px radius for a seamless curve into the corner. */
+    .case-media img {
+        border-radius: 10px;
+        box-shadow:
+            0 0 0 7px rgba(255, 255, 255, 0.18),
+            0 0 0 14px rgba(255, 255, 255, 0.09);
+    }
+
+    .case-copy,
+    .case-panel--image-right .case-copy {
+        padding: 0;
+    }
+
+    /* Room for the floating arrow below the last card, as blank page background rather
+       than space inside the card — so the arrow reads as sitting on its own, not inside
+       the last card's tinted background. Padding on .case-body itself, not margin on the
+       last panel: a block's own bottom margin collapses through its (unbordered,
+       unpadded) parent instead of growing it, so .case-top — positioned off .case-body's
+       bottom edge — never actually gained the room a margin here would have reserved. */
+    .case-body {
+        padding-bottom: 64px;
+    }
+
+    .case-label { color: #f2f0ef; font-size: 16px; margin-bottom: 14px; }
+    .case-copy p:not(.case-label) { font-size: 16px; line-height: 1.55; color: #f2f0ef; }
+
+    /* Centered under the page, per the mobile design (desktop keeps bottom-right). */
+    .case-top {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .case-top:hover {
+        transform: translateX(-50%) translateY(-4px);
+    }
+}
+
+/* Scroll motion (see enableScrollMotion in case.js): motion only, no fades. */
+.case.anim-ready .case-panel {
+    overflow-x: clip;
+}
+
+.case.anim-ready .case-media,
+.case.anim-ready .case-copy > * {
+    transition: transform 0.8s cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.case.anim-ready .case-panel--image-left:not(.is-in) .case-media {
+    transform: translateX(-100%);
+}
+
+.case.anim-ready .case-panel--image-right:not(.is-in) .case-media {
+    transform: translateX(100%);
+}
+
+.case.anim-ready .case-panel:not(.is-in) .case-copy > * {
+    transform: translateY(28px);
+}
+
+/* No more left/right sides on mobile (see the max-width:767px block above), so both slide
+   up with the text instead of sliding in from whichever edge they used to bleed off. */
+@media (max-width: 767px) {
+    .case.anim-ready .case-panel--image-left:not(.is-in) .case-media,
+    .case.anim-ready .case-panel--image-right:not(.is-in) .case-media {
+        transform: translateY(28px);
+    }
+}
+
+.case.anim-ready .case-copy > :nth-child(2) { transition-delay: 0.12s; }
+.case.anim-ready .case-copy > :nth-child(3) { transition-delay: 0.22s; }
+.case.anim-ready .case-copy > :nth-child(n+4) { transition-delay: 0.3s; }
+.case.anim-ready .case-copy > :first-child { transition-delay: 0.05s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .case.anim-ready .case-media,
+    .case.anim-ready .case-copy > * { transition: none; transform: none !important; }
+    .case-back,
+    .case-top,
+    .case-nav button,
+    .popup-open,
+    .popup[data-case] .popup-box,
+    .container {
+        transition: none;
+    }
+}

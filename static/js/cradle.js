@@ -562,6 +562,7 @@ function enablePopupSwipe() {
     }
     
     const popupContent = currentPopup.querySelector('.popup-content');
+    if (!popupContent) return;
     let scrollAccumulator = 0;
     const scrollThreshold = 100;
     
