@@ -62,9 +62,8 @@
     }
 
     // Tween the page between two states with one eased progress value. onFrame (optional)
-    // gets the interpolated state and raw progress on every tick, for anything riding along
-    // with the grow/shrink beyond the page's own transform+clip (see the mobile text
-    // counter-scale and arrow slide in openCase/closeCase).
+    // gets the interpolated state on every tick, for anything riding along with the card's
+    // own live scale beyond its transform+clip (see holdFixed in openCase/closeCase).
     function stateTween(el, a, b, vars, onFrame) {
         var p = { t: 0 };
         var keys = ['x', 'y', 'scale', 'top', 'right', 'bottom', 'left', 'rs'];
@@ -73,68 +72,99 @@
         vars.onUpdate = function () {
             keys.forEach(function (k) { cur[k] = a[k] + (b[k] - a[k]) * p.t; });
             applyState(el, cur);
-            if (onFrame) onFrame(cur, p.t);
+            if (onFrame) onFrame(cur);
         };
         return { target: p, vars: vars };
     }
 
     function isMobile() { return window.matchMedia('(max-width: 767px)').matches; }
 
-    // On mobile the title (h1/h2/p together) stays at its true size the whole time instead of
-    // scaling with the page — this counter-scales it against the page's own current scale, so
-    // it reads as fixed-size text sliding into place while only the colour/artwork around it
-    // visibly grows. Desktop still scales as one rigid piece (this is never called there).
-    //
-    // The counter-scale alone would let the now-full-size text spill past the growing card's
-    // edge (it's the only thing NOT shrunk to match the card, so nothing else stops it there) —
-    // clip-path reveals it in step with the card instead. clip-path's own inset is in the
-    // element's local (unscaled) units, and gets stretched by this same counter-scale, so to
-    // land on an on-screen reveal width of scale*trueW the local inset has to target
-    // scale²*trueW: (trueW - inset)/scale = scale*trueW  =>  inset = trueW*(1 - scale²).
-    function counterScaleText(el, scale, trueW, trueH) {
-        var text = el.querySelector('.case-hero-text');
-        if (!text) return;
-        var cutX = trueW * (1 - scale * scale);
-        var cutY = trueH * (1 - scale * scale);
-        gsap.set(text, { transformOrigin: '0 0', scale: 1 / scale, clipPath: 'inset(0 ' + cutX + 'px ' + cutY + 'px 0)' });
-    }
-
-    function clearTextScale(el) {
-        var text = el.querySelector('.case-hero-text');
-        if (text) gsap.set(text, { clearProps: 'transform,transformOrigin,clipPath' });
-    }
-
-    // .case-hero-text's real (unscaled) footprint, measured before any transform touches the
-    // page — needed by counterScaleText's reveal math above.
-    function textFootprint(el) {
-        var text = el.querySelector('.case-hero-text');
-        if (!text) return { w: 0, h: 0 };
-        var r = text.getBoundingClientRect();
-        return { w: r.width, h: r.height };
-    }
-
-    // The back arrow slides in to its true resting spot (flush with the row's start) from
-    // further along the row, flipping its icon at the midpoint — one arrow crossing over
-    // rather than two unrelated buttons appearing/disappearing. It starts at the edge of
-    // what counterScaleText has already revealed at scale=revealScale (that reveal only ever
-    // grows from there), rather than the row's true far end, so its slide path never has to
-    // cross back out into not-yet-revealed territory and get clipped mid-icon. Distance is
-    // measured fresh each time: the row's true (unscaled) width never changes during the
-    // tween, only how much of it is revealed/scaled, so one measurement up front holds for
-    // the whole animation.
-    function arrowSlideDistance(el, revealScale) {
+    // Mobile only: how far .case-back has to slide to sit where the popup's own forward
+    // arrow rests (right after the title — see .project-title-row in case.css). .case-back
+    // is first in the row's DOM order (see .case-title-row), so its native, untranslated
+    // spot is BEFORE the title, not at x:0 relative to it — translating it by just the
+    // title's width would only reach the title's native starting edge, landing the arrow
+    // on top of the text instead of past it. The button has to clear its own reserved
+    // width plus both gaps (button-to-title, then title-to-arrow) to land flush after the
+    // title with no overlap. Measured pre-transform (same as shrunkOnto's own rect reads),
+    // and no longer scale-dependent now that .case-hero-text scales uniformly with the rest
+    // of the page — a plain local-space offset holds for the whole tween.
+    function arrowSlideDistance(el) {
         var row = el.querySelector('.case-title-row');
-        var btn = el.querySelector('.case-back');
-        if (!row || !btn) return 0;
-        var start = row.getBoundingClientRect().width * revealScale * revealScale;
-        return Math.max(0, start - btn.getBoundingClientRect().width);
+        var btn = row && row.querySelector('.case-back');
+        var title = row && row.querySelector('h1');
+        if (!row || !btn || !title) return 0;
+        var gap = parseFloat(getComputedStyle(row).columnGap) || 12;
+        return btn.getBoundingClientRect().width + title.getBoundingClientRect().width + gap * 2;
     }
 
-    function setArrowIcon(el, direction) {
-        var img = el.querySelector('.case-back img');
-        if (!img) return;
-        var file = direction === 'left' ? 'arrow_circle_left.png' : 'arrow_circle_right.png';
-        if (img.src.indexOf(file) === -1) img.src = img.src.replace(/arrow_circle_[a-z]+\.png$/, file);
+    // Slides .case-back between its resting spot (before the title) and the popup's own
+    // forward-arrow spot (after it), crossfading its two stacked icons (see .case-back-icon
+    // in case.css) from one direction to the other as it crosses — one arrow reads as
+    // continuously crossing over rather than two icons swapping in place. `dir` is 'open'
+    // (start at the popup's spot showing forward, end at rest showing back) or 'close'
+    // (the reverse). Returns the timeline so callers can fold it into their own cleanup.
+    function arrowCrossTween(el, dir, duration) {
+        var btn = el.querySelector('.case-back');
+        var left = el.querySelector('.case-back-icon--left');
+        var right = el.querySelector('.case-back-icon--right');
+        if (!btn || !left || !right) return null;
+        var dist = arrowSlideDistance(el);
+        var fromX = dir === 'open' ? dist : 0;
+        var toX = dir === 'open' ? 0 : dist;
+        var fromLeftOpacity = dir === 'open' ? 0 : 1;
+        var toLeftOpacity = dir === 'open' ? 1 : 0;
+        var fromRightOpacity = dir === 'open' ? 1 : 0;
+        var toRightOpacity = dir === 'open' ? 0 : 1;
+
+        gsap.killTweensOf([btn, left, right]);
+        gsap.set(btn, { x: fromX });
+        gsap.set(left, { opacity: fromLeftOpacity });
+        gsap.set(right, { opacity: fromRightOpacity });
+
+        var tl = gsap.timeline();
+        tl.to(btn, { x: toX, duration: duration, ease: 'power3.inOut' }, 0);
+        tl.to(left, { opacity: toLeftOpacity, duration: duration * 0.7, ease: 'none' }, duration * 0.15);
+        tl.to(right, { opacity: toRightOpacity, duration: duration * 0.7, ease: 'none' }, duration * 0.15);
+        return tl;
+    }
+
+    function clearArrowCross(el) {
+        var btn = el.querySelector('.case-back');
+        var left = el.querySelector('.case-back-icon--left');
+        var right = el.querySelector('.case-back-icon--right');
+        if (btn) gsap.set(btn, { clearProps: 'transform' });
+        if (left) gsap.set(left, { clearProps: 'opacity' });
+        if (right) gsap.set(right, { clearProps: 'opacity' });
+    }
+
+    // Mobile only: an element (the title row, or the subtitle) that holdFixed below will
+    // hold at true size for the whole grow/shrink. A no-op wrapper (kept as a function, not
+    // a bare querySelector, so call sites read the same as the arrow/other helpers).
+    function fixedOrigin(el, elm) {
+        return elm || null;
+    }
+
+    // Holds an element (the title row — arrow + h1 together — or the subtitle) at its true,
+    // final size for the entire grow/shrink, while everything else (paragraph, iPad,
+    // background) keeps scaling with the card. transformOrigin '0 0' anchors the scale at
+    // the element's own top-left corner, which — like every other point in .case — still
+    // drifts toward .case's own top-left as the card's own scale shrinks (transform is
+    // paint-only; layout, and so every element's true position, never changes). That drift
+    // is exactly what keeps this element's TOP edge lined up with its neighbors above and
+    // below (who are drifting the same way, uncorrected) — only its SIZE stays fixed,
+    // growing downward/rightward from that shared, still-correctly-spaced drifting point,
+    // instead of shrinking with everything else.
+    //
+    // The title row's own child (.case-back) still gets its own independent slide from
+    // arrowCrossTween above — that composes correctly on top of this because, from the
+    // button's perspective, the row is already rendering as if at true scale.
+    function holdFixed(elm, scale) {
+        if (elm) gsap.set(elm, { transformOrigin: '0 0', scale: 1 / scale });
+    }
+
+    function clearFixed(elm) {
+        if (elm) gsap.set(elm, { clearProps: 'transform,transformOrigin' });
     }
 
     // Where the page must sit to look exactly like the popup box, or null.
@@ -259,20 +289,18 @@
         var ghosts = el.querySelectorAll('.case-ghost');
         var backBtn = el.querySelector('.case-back');
         var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
-        // Mobile: title/subtitle/paragraph hold their true size throughout (counterScaleText),
-        // and the back arrow slides in from the title row's far end — where the popup's own
-        // forward-arrow sits — to its resting spot at the row's start, flipping its icon
-        // halfway. iconFlipped guards the swap to exactly once per animation. Measured before
-        // applyState below touches .case's own transform, while the row's true (unscaled)
-        // size is still what getBoundingClientRect reports.
-        var slideDist = isMobileLayout ? arrowSlideDistance(el, from.scale) : 0;
-        var footprint = isMobileLayout ? textFootprint(el) : null;
-        var iconFlipped = false;
-        if (isMobileLayout) {
-            setArrowIcon(el, 'right');
-            gsap.set(backBtn, { x: slideDist });
-        }
+        // Mobile: the arrow slides in from the popup's own forward-arrow spot (right of the
+        // title) to its resting spot here (before the title), crossfading from forward to
+        // back as it crosses — see arrowCrossTween. Runs as its own timeline, independent of
+        // the card's own grow tween below, so it reads as a deliberate motion in its own
+        // right. The title row and subtitle hold their true size/position throughout (see
+        // holdFixed) while the paragraph, iPad and background keep scaling with the card —
+        // origins measured now, before applyState below touches .case's own transform.
+        var titleRowOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-title-row')) : null;
+        var subtitleOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-text h2')) : null;
+        if (isMobileLayout) arrowCrossTween(el, 'open', 0.7);
         applyState(el, from);
+        if (isMobileLayout) { holdFixed(titleRowOrigin, from.scale); holdFixed(subtitleOrigin, from.scale); }
         // Same duration and easing as the page's growth, so the labels stay just ahead of its
         // bottom edge (pushed along by it) rather than being swallowed.
         if (push) gsap.to(oldNav, { y: '+=' + push, duration: 0.9, ease: 'power3.inOut' });
@@ -292,25 +320,18 @@
             onComplete: function () {
                 gsap.set(el, { clearProps: 'transform,transformOrigin,clipPath' });
                 gsap.set(ghosts, { clearProps: 'opacity' });
-                if (isMobileLayout) {
-                    clearTextScale(el);
-                    gsap.set(backBtn, { clearProps: 'transform' });
-                }
                 // subtitle row and sections show once the banner has landed
                 var late = el.querySelectorAll('.case-nav, .case-body');
                 gsap.set(late, { opacity: 0 });
                 el.classList.remove('is-animating');
                 gsap.to(late, { opacity: 1, duration: 0.3, ease: 'none', clearProps: 'opacity' });
+                if (isMobileLayout) { clearArrowCross(el); clearFixed(titleRowOrigin); clearFixed(subtitleOrigin); }
                 enableScrollMotion(el);
                 revealSharpHero(el);
                 busy = false;
                 el.focus({ preventScroll: true });
             }
-        }, isMobileLayout ? function (cur, t) {
-            counterScaleText(el, cur.scale, footprint.w, footprint.h);
-            gsap.set(backBtn, { x: slideDist * (1 - t) });
-            if (!iconFlipped && t >= 0.5) { setArrowIcon(el, 'left'); iconFlipped = true; }
-        } : null);
+        }, isMobileLayout ? function (cur) { holdFixed(titleRowOrigin, cur.scale); holdFixed(subtitleOrigin, cur.scale); } : null);
         gsap.to(grow.target, grow.vars);
     }
 
@@ -335,14 +356,17 @@
 
         var ghosts = el.querySelectorAll('.case-ghost');
         var backBtn = el.querySelector('.case-back');
+        var titleRowOrigin = null, subtitleOrigin = null;
 
         function finish() {
             moveVideoToPopup(slug, el);
             var media = el.querySelector('.case-hero-media');
             if (media) media.classList.remove('is-sharp');
             gsap.set(ghosts, { clearProps: 'opacity' });
-            if (backBtn) gsap.set(backBtn, { clearProps: 'opacity,transform' });
-            clearTextScale(el);
+            if (backBtn) gsap.set(backBtn, { clearProps: 'opacity' });
+            clearArrowCross(el);
+            clearFixed(titleRowOrigin);
+            clearFixed(subtitleOrigin);
             if (oldNav && pushedNav) gsap.set(oldNav, { clearProps: 'transform' });
             pushedNav = 0;
             if (box) box.classList.remove('is-covered');
@@ -379,16 +403,15 @@
         gsap.set(ghosts, { opacity: 0 });
         if (backBtn && !isMobileLayout) gsap.to(backBtn, { opacity: 0, duration: 0.3, delay: wait, ease: 'none' });
         gsap.to(ghosts, { opacity: 1, duration: 0.35, delay: wait + 0.45, ease: 'none' });
-        // Reverse of the open-side slide/flip in openCase — see the comment there.
-        var slideDist = isMobileLayout ? arrowSlideDistance(el, to.scale) : 0;
-        var footprint = isMobileLayout ? textFootprint(el) : null;
-        var iconFlipped = false;
-        if (isMobileLayout) setArrowIcon(el, 'left');
-        var shrink = stateTween(el, FULL_STATE, to, { duration: 0.8, ease: 'power3.inOut' }, isMobileLayout ? function (cur, t) {
-            counterScaleText(el, cur.scale, footprint.w, footprint.h);
-            gsap.set(backBtn, { x: slideDist * t });
-            if (!iconFlipped && t >= 0.5) { setArrowIcon(el, 'right'); iconFlipped = true; }
-        } : null);
+        // Reverse of the open-side cross in openCase — see the comment there.
+        if (isMobileLayout) {
+            titleRowOrigin = fixedOrigin(el, el.querySelector('.case-title-row'));
+            subtitleOrigin = fixedOrigin(el, el.querySelector('.case-hero-text h2'));
+            var arrowTl = arrowCrossTween(el, 'close', 0.7);
+            if (arrowTl && wait) arrowTl.delay(wait);
+        }
+        var shrink = stateTween(el, FULL_STATE, to, { duration: 0.8, ease: 'power3.inOut' },
+            isMobileLayout ? function (cur) { holdFixed(titleRowOrigin, cur.scale); holdFixed(subtitleOrigin, cur.scale); } : null);
         tl.to(shrink.target, shrink.vars);
     }
 
@@ -406,9 +429,11 @@
 
     // Scroll motion (motion only, no fades): each section's image block slides in from the
     // screen edge it hangs off, and its text lifts into place. Panels get .is-in the first time
-    // half of them is on screen. Styles live under .anim-ready in case.css.
+    // half of them is on screen. Styles live under .anim-ready in case.css. Desktop only —
+    // on mobile every panel just renders fully in place immediately, no scroll-triggered
+    // animation at all.
     function enableScrollMotion(el) {
-        if (reduceMotion || !('IntersectionObserver' in window)) return;
+        if (reduceMotion || !('IntersectionObserver' in window) || isMobile()) return;
         if (el._io) el._io.disconnect();
         el.classList.add('anim-ready');
         var io = new IntersectionObserver(function (entries) {

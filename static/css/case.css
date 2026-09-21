@@ -95,13 +95,13 @@ body.case-hint .container {
         display: none;
     }
 
-    /* Inline next to the title instead of floating bottom-right, so the case page's own
+    /* Right next to the title instead of floating bottom-right, so the case page's own
        title row (below) can mirror this exactly and the iPad never needs to shift to make
        room for either arrow. */
     .project-title-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
     }
 
@@ -188,6 +188,26 @@ html.case-open body {
     display: block;
     width: 100%;
     height: 100%;
+}
+
+/* .case-back holds two stacked icons (not one that swaps): the back icon is the resting
+   state everywhere (this is what desktop always shows, untouched), and the forward icon
+   stays fully faded out by default. On mobile only, case.js crossfades both as the button
+   slides across the title — see .case-title-row below. */
+.case-back-icon {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.case-back-icon--left {
+    opacity: 1;
+}
+
+.case-back-icon--right {
+    opacity: 0;
 }
 
 .case-back:focus-visible,
@@ -641,11 +661,12 @@ html.case-open body {
         overflow: hidden;
     }
 
-    /* Inline before the title instead of floating over the artwork — see .case-title-row.
-       flex-start + gap (not space-between): a back button reads as sitting snug next to
-       its title, unlike the popup's own forward-arrow which sits apart at the row's far
-       end — see .project-title-row above. case.js slides it in from that far end and back
-       out to it on close, so the two arrows read as one crossing over. */
+    /* Before the title instead of floating over the artwork — see .case-title-row.
+       case.js slides it in from the row's far end (the popup's own forward-arrow spot,
+       see .project-title-row above) to its resting spot here, crossfading its icon from
+       forward to back as it crosses — see .case-back-icon below. This row (and the
+       subtitle below it) also hold their true size the whole time instead of scaling
+       with the card — see holdFixed in case.js. */
     .case-title-row {
         display: flex;
         align-items: center;
@@ -654,7 +675,12 @@ html.case-open body {
     }
 
     .case-back {
-        position: static;
+        position: relative;
+        /* Neutralize the desktop rule's own top/left (20px each) — harmless there since
+           position:absolute needs them, but position:relative here would otherwise read
+           them as an offset from its normal flex spot, shoving it into the title. */
+        top: 0;
+        left: 0;
         width: 44px;
         height: 44px;
         flex-shrink: 0;
@@ -782,7 +808,9 @@ html.case-open body {
     }
 }
 
-/* Scroll motion (see enableScrollMotion in case.js): motion only, no fades. */
+/* Scroll motion (see enableScrollMotion in case.js): motion only, no fades. Desktop only —
+   enableScrollMotion never adds .anim-ready on mobile, so panels there just render fully in
+   place immediately, no scroll-triggered animation at all. */
 .case.anim-ready .case-panel {
     overflow-x: clip;
 }
@@ -802,15 +830,6 @@ html.case-open body {
 
 .case.anim-ready .case-panel:not(.is-in) .case-copy > * {
     transform: translateY(28px);
-}
-
-/* No more left/right sides on mobile (see the max-width:767px block above), so both slide
-   up with the text instead of sliding in from whichever edge they used to bleed off. */
-@media (max-width: 767px) {
-    .case.anim-ready .case-panel--image-left:not(.is-in) .case-media,
-    .case.anim-ready .case-panel--image-right:not(.is-in) .case-media {
-        transform: translateY(28px);
-    }
 }
 
 .case.anim-ready .case-copy > :nth-child(2) { transition-delay: 0.12s; }

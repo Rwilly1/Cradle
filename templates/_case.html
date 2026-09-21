@@ -46,16 +46,19 @@
         </div>
         <div class="case-hero-text">
             {# On mobile, the back button sits inline before the title (see .case-title-row
-               in case.css) instead of floating over the artwork — so nothing needs reserving
-               above the image, and it lands at the same spot the popup's own iPad sits at.
-               case.js slides it in from the right (where the popup's own forward-arrow sits)
-               and flips its icon partway, so it reads as the same arrow crossing over rather
-               than two unrelated buttons. On desktop .case-title-row is display:contents, so
-               this is invisible there and .case-back positions exactly as it always did
-               (top-left, over the hero, no slide). #}
+               in case.css) instead of floating over the artwork. It holds two stacked icons
+               (left/back and right/forward) instead of one: case.js slides the button from
+               the popup's own forward-arrow spot (right of the title, see .project-title-row)
+               over to its resting spot here, wiping via clip-path from the forward icon to
+               the back icon as it crosses — one arrow reads as continuously crossing over,
+               not two unrelated icons swapping. On desktop .case-title-row is
+               display:contents, so this is invisible there — CSS alone keeps the back icon
+               permanently visible and the forward icon permanently clipped away, and
+               .case-back positions exactly as it always did (top-left, over the hero). #}
             <div class="case-title-row">
                 <button class="case-back" type="button" aria-label="Back to the cradle">
-                    <img src="{{ url_for('static', filename='arrow/arrow_circle_left.png') }}" alt="">
+                    <img class="case-back-icon case-back-icon--left" src="{{ url_for('static', filename='arrow/arrow_circle_left.png') }}" alt="">
+                    <img class="case-back-icon case-back-icon--right" src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt="">
                 </button>
                 <h1>{{ title }}</h1>
             </div>
