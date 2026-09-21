@@ -24,6 +24,27 @@
     height: 100%;
 }
 
+/* "Read More" hint that appears next to the arrow on hover (desktop only — see the
+   min-width:768px block below). Injected by case.js (one per .popup-open, so it works
+   for any current/future case-study popup) as plain text, then split into chars there
+   for the rainbow color-wave chase on hover; this file only owns its rest/hover
+   position and fade, same mechanism as .popup-open's own opacity/translateX above. */
+.popup-read-more {
+    position: absolute;
+    bottom: 14px;
+    right: 40px;
+    z-index: 1001;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    color: #f2f0ef;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
 /* Invisible on desktop (the wrapper disappears from layout entirely), so .popup-open still
    positions absolute against .popup-box exactly as if it weren't nested in here at all. Only
    becomes a real flex row on mobile — see the max-width:767px block below. */
@@ -62,9 +83,18 @@ body.case-hint .container {
         opacity: 1;
         transform: translateX(3px);
     }
+
+    .popup[data-case] .popup-box:hover .popup-read-more {
+        opacity: 1;
+        transform: translateX(3px);
+    }
 }
 
 @media (max-width: 767px) {
+    .popup-read-more {
+        display: none;
+    }
+
     /* Inline next to the title instead of floating bottom-right, so the case page's own
        title row (below) can mirror this exactly and the iPad never needs to shift to make
        room for either arrow. */

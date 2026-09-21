@@ -480,6 +480,42 @@
         updateOverlay();
     });
 
+    // "Read More" hint next to any case-study popup's arrow: fades/slides in on hover
+    // (CSS, see .popup-read-more in case.css) with its letters running the same rainbow
+    // color-wave chase as the landing page's picker heading (see the SplitText block in
+    // cradle.js), replayed on every hover-in. Desktop only, and only for popups that
+    // actually have an arrow (.popup[data-case] .popup-open) — future case studies get
+    // this for free since it's wired here rather than hardcoded per popup.
+    var hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 768px)').matches;
+    if (hoverCapable && window.gsap && window.SplitText) {
+        gsap.registerPlugin(SplitText);
+        var rainbow = ['#7a0000', '#cc4e00', '#cca300', '#457a00', '#004e7a', '#401268'];
+        document.querySelectorAll('.popup[data-case] .popup-open').forEach(function (arrow) {
+            var box = arrow.closest('.popup-box');
+            if (!box) return;
+            var label = document.createElement('span');
+            label.className = 'popup-read-more';
+            label.setAttribute('aria-hidden', 'true');
+            label.textContent = 'Explore';
+            arrow.insertAdjacentElement('beforebegin', label);
+            var split = SplitText.create(label, { type: 'chars' });
+            var wave = null;
+            box.addEventListener('mouseenter', function () {
+                if (wave) wave.kill();
+                gsap.set(split.chars, { color: '#f2f0ef' });
+                wave = gsap.from(split.chars, {
+                    color: function (i) { return rainbow[i % rainbow.length]; },
+                    stagger: { each: 0.045, from: 'start' },
+                    duration: 0.5, ease: 'sine.out'
+                });
+            });
+            box.addEventListener('mouseleave', function () {
+                if (wave) wave.kill();
+                gsap.set(split.chars, { color: '#f2f0ef' });
+            });
+        });
+    }
+
     // --- Popup wiring -------------------------------------------------------------
 
     slugs.forEach(function (slug) {
