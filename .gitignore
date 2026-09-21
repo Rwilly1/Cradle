@@ -32,3 +32,6 @@ Thumbs.db
 
 # Build output
 dist/
+
+# Raw video source exports (re-encode to static/**/*.mp4 for delivery)
+static/**/*.mov
