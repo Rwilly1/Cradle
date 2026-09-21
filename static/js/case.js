@@ -210,6 +210,13 @@
         if (el._videoIO) { el._videoIO.disconnect(); el._videoIO = null; }
     }
 
+    // Crossfades the hero's low-res "shadow" iPad image to the higher-res "sharp" one
+    // (see .case-hero-sharp in case.css) — a no-op if this case study doesn't have one.
+    function revealSharpHero(el) {
+        var media = el.querySelector('.case-hero-media');
+        if (media) media.classList.add('is-sharp');
+    }
+
     function openCase(slug, opts) {
         if (!cases[slug] || openSlug || busy) return;
         opts = opts || {};
@@ -240,6 +247,7 @@
         if (!from) {
             if (push) gsap.set(oldNav, { y: '+=' + push });
             enableScrollMotion(el);
+            revealSharpHero(el);
             el.focus({ preventScroll: true });
             return;
         }
@@ -294,6 +302,7 @@
                 el.classList.remove('is-animating');
                 gsap.to(late, { opacity: 1, duration: 0.3, ease: 'none', clearProps: 'opacity' });
                 enableScrollMotion(el);
+                revealSharpHero(el);
                 busy = false;
                 el.focus({ preventScroll: true });
             }
@@ -329,6 +338,8 @@
 
         function finish() {
             moveVideoToPopup(slug, el);
+            var media = el.querySelector('.case-hero-media');
+            if (media) media.classList.remove('is-sharp');
             gsap.set(ghosts, { clearProps: 'opacity' });
             if (backBtn) gsap.set(backBtn, { clearProps: 'opacity,transform' });
             clearTextScale(el);

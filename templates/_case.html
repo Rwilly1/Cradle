@@ -17,7 +17,7 @@
          Each panel is one full screen (text + image together) and is a scroll-snap stop.
 #}
 
-{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_alt="") %}
+{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_src_sharp=None, hero_alt="") %}
 <article class="case" id="case-{{ slug }}" data-slug="{{ slug }}" data-popup="{{ popup }}"
          style="--case-color: {{ color }}" role="dialog" aria-label="{{ title }} case study" tabindex="-1">
     <div class="case-head">
@@ -31,8 +31,16 @@
                 {% if hero_src_mobile %}
                 <source media="(max-width: 767px)" srcset="{{ url_for('static', filename=hero_src_mobile) }}">
                 {% endif %}
-                <img src="{{ url_for('static', filename=hero_src) }}" alt="{{ hero_alt or title }}">
+                <img class="case-hero-shadow" src="{{ url_for('static', filename=hero_src) }}" alt="{{ hero_alt or title }}">
             </picture>
+            {% if hero_src_sharp %}
+            {# Desktop only (see .case-hero-sharp in case.css) — hero_src is sized small in the
+               popup so it can afford to be low-res there, but blown up to hero size here it's
+               visibly soft. case.js crossfades to this higher-res "sharp" image once the hero
+               settles into place, so the swap reads as the popup simply never having lost
+               quality rather than as a jarring resolution jump mid-page. #}
+            <img class="case-hero-sharp" src="{{ url_for('static', filename=hero_src_sharp) }}" alt="" aria-hidden="true">
+            {% endif %}
             {# If this popup has a video (data-video-slot), case.js moves the real element in
                here on open and back on close — never a copy, so playback never re-syncs. #}
         </div>

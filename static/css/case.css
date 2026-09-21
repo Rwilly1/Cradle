@@ -265,6 +265,28 @@ html.case-open body {
     transform: translate(calc(-50% - var(--u) * 1.48), -50%);
 }
 
+/* iPad_without.png (no drop shadow baked in) has more empty margin around the iPad
+   itself than iPad_shadow.png does, so laid over the shadow image at the same width
+   it reads visibly smaller — 1.35x compensates, the same ratio already tuned for this
+   exact pair on mobile (see .case-hero-media img in the max-width:767px block). Starts
+   invisible; case.js adds .is-sharp to .case-hero-media once the hero settles, and it
+   fades in on top. The shadow image underneath stays fully visible the whole time —
+   both PNGs have alpha, so iPad_without's transparent margin lets the shadow keep
+   showing around it once it lands, while the iPad itself reads sharp on top. Desktop
+   only (min-width:768px) — mobile already loads iPad_without.png as its hero_src_mobile,
+   at full quality from the start, so it never needs a swap. */
+@media (min-width: 768px) {
+    .case-hero-sharp {
+        transform: translate(calc(-50% - var(--u) * 1.48), -50%) scale(1.35);
+        opacity: 0;
+        transition: opacity 0.6s ease;
+    }
+
+    .case-hero-media.is-sharp .case-hero-sharp {
+        opacity: 1;
+    }
+}
+
 /* Ghosts of the popup's corner symbols (see .popup-close / .popup-open): same size and place,
    in popup pixels, invisible except while case.js fades them during the grow/shrink. */
 .case-ghost {
@@ -651,6 +673,10 @@ html.case-open body {
 
     .case-hero-media picture { height: auto; }
 
+    /* hero_src_mobile already loads the higher-res image directly on mobile (see
+       templates/_case.html), so the desktop-only crossfade element is never needed here. */
+    .case-hero-sharp { display: none; }
+
     /* Same oversized-and-cropped treatment the popup itself uses on this artwork (see
        .islanding-image in style.css): the video overlay's percentage sizing is tuned to land
        on the drawn iPad's actual screen, which only lines up once the iPad is zoomed in the
@@ -721,6 +747,14 @@ html.case-open body {
     .case-copy,
     .case-panel--image-right .case-copy {
         padding: 0;
+    }
+
+    /* Desktop reserves extra bottom padding on the last panel's copy for its own
+       bottom-right-corner arrow (see .case-panel:last-of-type .case-copy above); on
+       mobile the arrow instead sits centered below the whole card (.case-body's own
+       padding-bottom, right below), so that reservation would just be a dead gap here. */
+    .case-panel:last-of-type .case-copy {
+        padding-bottom: 0;
     }
 
     /* Room for the floating arrow below the last card, as blank page background rather
