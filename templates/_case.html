@@ -69,10 +69,18 @@
 </article>
 {% endmacro %}
 
-{% macro case_panel(side="image-left", label="", image=None, alt="", placeholder="Image") %}
+{% macro case_panel(side="image-left", label="", image=None, alt="", placeholder="Image", video=None, poster=None) %}
 <section class="case-panel case-panel--{{ side }}"{% if label %} data-nav="{{ label }}"{% endif %}>
     <figure class="case-media">
-        {% if image %}
+        {% if video %}
+        <div class="case-video-wrap">
+            <video src="{{ url_for('static', filename=video) }}" {% if poster %}poster="{{ poster }}" {% endif %}autoplay loop muted playsinline preload="metadata" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;" aria-label="{{ alt }}"></video>
+            <div class="case-video-pause" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="case-video-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                <svg viewBox="0 0 24 24" class="case-video-icon-play" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+        </div>
+        {% elif image %}
         <img src="{{ url_for('static', filename=image) }}" alt="{{ alt }}" loading="lazy">
         {% else %}
         <div class="case-placeholder" role="img" aria-label="{{ alt or placeholder }}">{{ placeholder }}</div>

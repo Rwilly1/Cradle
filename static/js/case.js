@@ -453,6 +453,33 @@
 
     slugs.forEach(function (s) { setupPage(cases[s].el); });
 
+    // Panel videos (e.g. the Islanding "Underwater" render): click to play/pause, same
+    // pause-overlay treatment as the popup's own hero video (see cradle.js).
+    document.querySelectorAll('.case-video-wrap').forEach(function (wrap) {
+        var video = wrap.querySelector('video');
+        var overlay = wrap.querySelector('.case-video-pause');
+        if (!video) return;
+
+        function updateOverlay() {
+            if (overlay) overlay.classList.toggle('paused', video.paused);
+        }
+
+        wrap.addEventListener('click', function () {
+            if (video.paused) video.play(); else video.pause();
+        });
+
+        video.addEventListener('play', updateOverlay);
+        video.addEventListener('pause', updateOverlay);
+        // Belt-and-suspenders for the native loop attribute: some browsers (older iOS
+        // Safari in particular) can drop out of looping once playback has been toggled
+        // via JS rather than left fully alone, so force a restart on 'ended' too.
+        video.addEventListener('ended', function () {
+            video.currentTime = 0;
+            video.play().catch(function () {});
+        });
+        updateOverlay();
+    });
+
     // --- Popup wiring -------------------------------------------------------------
 
     slugs.forEach(function (slug) {

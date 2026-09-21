@@ -417,14 +417,78 @@ html.case-open body {
    .case-media's 3.6vw so the rounding reads as one continuous curve, not a jump from
    tight image corners to a much-rounder frame. All in vw like .case-media's own radius,
    so the match holds at any width. */
-.case-media img {
+.case-media img,
+.case-video-wrap video {
     display: block;
     width: 100%;
     height: auto;
+}
+
+.case-media img {
     border-radius: 1.4vw;
     box-shadow:
         0 0 0 1vw rgba(255, 255, 255, 0.18),
         0 0 0 2vw rgba(255, 255, 255, 0.09);
+}
+
+.case-video-wrap {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 1.4vw;
+    box-shadow:
+        0 0 0 1vw rgba(255, 255, 255, 0.18),
+        0 0 0 2vw rgba(255, 255, 255, 0.09);
+}
+
+/* The source render has a sliver of Blender's UI along its left edge; scale in and
+   nudge right to crop it out. Radius/shadow live on the wrap (above) instead of the
+   video itself, since overflow:hidden there is what actually clips the crop. */
+.case-video-wrap video {
+    transform: scale(1.08) translateX(2.5%);
+    transform-origin: center;
+}
+
+.case-video-pause {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.case-video-wrap:hover .case-video-pause {
+    opacity: 1;
+}
+
+.case-video-pause svg {
+    width: 48px;
+    height: 48px;
+    fill: rgba(255, 255, 255, 0.92);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.case-video-pause .case-video-icon-play {
+    display: none;
+}
+
+.case-video-pause.paused .case-video-icon-pause {
+    display: none;
+}
+
+.case-video-pause.paused .case-video-icon-play {
+    display: block;
+}
+
+.case-video-pause.paused {
+    opacity: 1;
 }
 
 .case-placeholder {
@@ -617,7 +681,8 @@ html.case-open body {
        desktop has between its image and .case-media's edge, just in fixed px since the card
        itself is fixed px on mobile. Radius steps up the same way, 10 to 17 to 24, landing
        exactly on the card's own 24px radius for a seamless curve into the corner. */
-    .case-media img {
+    .case-media img,
+    .case-video-wrap {
         border-radius: 10px;
         box-shadow:
             0 0 0 7px rgba(255, 255, 255, 0.18),
