@@ -500,7 +500,10 @@
             arrow.insertAdjacentElement('beforebegin', label);
             var split = SplitText.create(label, { type: 'chars' });
             var wave = null;
-            box.addEventListener('mouseenter', function () {
+            var tapTl = null;
+            var boxHovering = false;
+
+            function playWave() {
                 if (wave) wave.kill();
                 gsap.set(split.chars, { color: '#f2f0ef' });
                 wave = gsap.from(split.chars, {
@@ -508,11 +511,57 @@
                     stagger: { each: 0.045, from: 'start' },
                     duration: 0.5, ease: 'sine.out'
                 });
+            }
+
+            // Periodic "tap" nudge on top of the arrow/label's own steady hover offset
+            // (translateX(3px), set by CSS), to keep pulling the eye back to it while the
+            // pointer lingers. x:3 here matches that CSS offset so GSAP can take over the
+            // transform with no visible jump; clearProps hands it back to CSS.
+            function startTap() {
+                if (tapTl) tapTl.kill();
+                gsap.set([arrow, label], { x: 3, opacity: 1 });
+                tapTl = gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: 1.4 });
+                tapTl.to([arrow, label], { x: 9, duration: 0.22, ease: 'power2.out' })
+                     .to([arrow, label], { x: 3, duration: 0.28, ease: 'power2.in' });
+            }
+
+            function stopTap() {
+                if (tapTl) { tapTl.kill(); tapTl = null; }
+            }
+
+            box.addEventListener('mouseenter', function () {
+                boxHovering = true;
+                playWave();
+                startTap();
             });
             box.addEventListener('mouseleave', function () {
+                boxHovering = false;
                 if (wave) wave.kill();
                 gsap.set(split.chars, { color: '#f2f0ef' });
+                stopTap();
+                gsap.set([arrow, label], { clearProps: 'x,opacity' });
             });
+
+            // Hovering the X specifically should hide the arrow/label entirely (back to
+            // their un-hovered look) rather than reading as "close AND open" at once, then
+            // restore them (and resume the tap loop) once the pointer leaves the X while
+            // still over the rest of the box.
+            var closeBtn = box.querySelector('.popup-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('mouseenter', function () {
+                    stopTap();
+                    gsap.to(arrow, { opacity: 0.6, x: 0, duration: 0.2, ease: 'sine.out' });
+                    gsap.to(label, { opacity: 0, x: 8, duration: 0.2, ease: 'sine.out' });
+                });
+                closeBtn.addEventListener('mouseleave', function () {
+                    if (!boxHovering) return;
+                    gsap.to(arrow, { opacity: 1, x: 3, duration: 0.2, ease: 'sine.out' });
+                    gsap.to(label, {
+                        opacity: 1, x: 3, duration: 0.2, ease: 'sine.out',
+                        onComplete: function () { if (boxHovering) startTap(); }
+                    });
+                });
+            }
         });
     }
 
