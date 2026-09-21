@@ -491,6 +491,13 @@
 
     // Panel videos (e.g. the Islanding "Underwater" render): click to play/pause, same
     // pause-overlay treatment as the popup's own hero video (see cradle.js).
+    //
+    // No `autoplay` attribute here (see _case.html) — on mobile Safari that attribute can
+    // sit "pending" for a moment after load, during which the browser shows its own native
+    // tap-to-play affordance stacked on top of this custom overlay (two play symbols until
+    // playback actually starts). Instead, play is triggered explicitly via JS the moment the
+    // video scrolls into view, same as the hero video's enableVideoAutoplay — a JS-initiated
+    // .play() never gets that native fallback UI.
     document.querySelectorAll('.case-video-wrap').forEach(function (wrap) {
         var video = wrap.querySelector('video');
         var overlay = wrap.querySelector('.case-video-pause');
@@ -514,6 +521,18 @@
             video.play().catch(function () {});
         });
         updateOverlay();
+
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (en.isIntersecting) video.play().catch(function () {});
+                    else video.pause();
+                });
+            }, { threshold: 0.25 });
+            io.observe(wrap);
+        } else {
+            video.play().catch(function () {});
+        }
     });
 
     // "Read More" hint next to any case-study popup's arrow: fades/slides in on hover
