@@ -1071,19 +1071,31 @@ html.case-open body {
 
 /* Crossfade, not a stack: every slide is stacked absolute+inset:0 over a
    container sized by a fixed aspect ratio (not by flow content, since no
-   slide is ever the sole in-flow child), and only .is-active is opaque. */
+   slide is ever the sole in-flow child), and only .is-active is opaque.
+   overflow:hidden is a backstop for the minmax(0, 1fr) tracks below — belt
+   and suspenders, not a substitute for it. */
 .carousel-grids {
     position: relative;
     width: 100%;
     aspect-ratio: 8 / 7;
+    overflow: hidden;
 }
 
+/* minmax(0, 1fr), not bare 1fr: a grid item's automatic minimum size is
+   "auto" (its content's intrinsic size), not 0, so a plain 1fr track can
+   still grow past its even share to fit an image's natural pixel size
+   while it's mid-decode — invisible on localhost (images load instantly
+   from disk) but very visible on a real phone over a real network, where
+   a still-loading image blows its column out and drags the row heights
+   (and the arrows sitting in flow right after this grid) out of place
+   with it. minmax(0, 1fr) caps every track at its fair share regardless
+   of what its content wants. */
 .carousel-grid-slide {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 1vw;
     opacity: 0;
     pointer-events: none;
