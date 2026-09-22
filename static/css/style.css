@@ -49,6 +49,14 @@ html {
     padding: 0;
 }
 
+/* Deep link straight into a case study (see the pre-paint script in index.html): hide the
+   homepage chrome that would otherwise flash before case.js opens the case page. Desktop's
+   chrome is .container (cradle + nav); mobile's is handled where .popup/body::before are
+   defined below. Cleared by case.js right after it opens the case. */
+html.case-pending .container {
+    visibility: hidden;
+}
+
 .title {
     font-size: clamp(2rem, 5vw, 4rem);
     font-weight: 600;
@@ -931,6 +939,14 @@ html {
         pointer-events: auto;
         z-index: 10;
         background-color: #f2f0ef;
+    }
+
+    /* Deep link straight into a case study (see html.case-pending above): the stacked
+       popups (About included) and the sticky title are always-on on mobile, so hide them
+       for the same pre-paint window until case.js opens the case page. */
+    html.case-pending .popup,
+    html.case-pending body::before {
+        visibility: hidden;
     }
     
     .popup-box {

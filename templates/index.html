@@ -52,6 +52,11 @@
                 document.documentElement.classList.add('picker-skip');
                 if (skip) sessionStorage.setItem('pickerDone', '1');
             }
+            // Deep link into a case study: hide the homepage chrome (cradle/nav on desktop,
+            // stacked popups + sticky title on mobile) until case.js opens the case study
+            // page, so a cold load/refresh never flashes the homepage first. case.js clears
+            // this class itself once it has taken over.
+            if (deep !== undefined) document.documentElement.classList.add('case-pending');
         } catch (e) {}
     })();
     </script>

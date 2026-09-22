@@ -848,4 +848,11 @@
     if (cases[initial]) {
         openCase(initial, { animate: false, push: false });
     }
+    // Hand off from the pre-paint hiding (see html.case-pending in index.html/style.css).
+    // Unconditional (not just inside the `if` above): the pre-paint script also sets
+    // case-pending for hashes that only deep-link to a popup, not a full case page (e.g.
+    // /#prinsys) — those are handled by cradle.js's own popup restore, which has already
+    // run by this point (its script tag precedes this one), so it's safe to reveal
+    // whatever homepage state is now in place either way.
+    root.classList.remove('case-pending');
 })();
