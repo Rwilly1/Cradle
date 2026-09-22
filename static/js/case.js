@@ -405,10 +405,10 @@
 
         function easeContentUp() {
             gsap.to(caseHero, {
-                y: 0, duration: 0.5, ease: 'back.out(1.7)',
+                y: 0, duration: 0.5, ease: 'power3.out',
                 onComplete: finishOpen, onInterrupt: finishOpen
             });
-            if (titleRow) gsap.to(titleRow, { x: 0, duration: 0.5, ease: 'back.out(1.7)' });
+            if (titleRow) gsap.to(titleRow, { x: 0, duration: 0.5, ease: 'power3.out' });
         }
         }
     }
@@ -479,8 +479,20 @@
         busy = true;
         el.classList.add('no-snap', 'is-animating'); // snapping would fight the scroll-to-top below
         gsap.killTweensOf(el);
+
+        // Mobile only, and only once already scrolled past the hero into the panels: the
+        // hero-pin mirror further down needs .case-hero to actually be on screen (it measures
+        // and eases it), which only holds at scrollTop 0. Getting there first meant an
+        // animated scroll-to-top — its own fast, distance-dependent motion, tacked on before
+        // the "real" close even started — which is what read as the card shooting up to a
+        // broken-looking frame before it shrank. Skip the mirror entirely here and just
+        // shrink the whole .case (panels and all, exactly as currently on screen) onto the
+        // popup in one motion, same as desktop does below. el.scrollTop resets for free in
+        // finish(), once .case is already hidden, so nothing is ever seen jumping back up.
+        var scrolledClose = isMobileLayout && el.scrollTop > 0;
+
         var wait = 0;
-        if (el.scrollTop > 0) {
+        if (!scrolledClose && el.scrollTop > 0) {
             wait = 0.35;
             gsap.to(el, { scrollTop: 0, duration: 0.35, ease: 'power2.out' });
         }
@@ -504,25 +516,42 @@
             return;
         }
 
-        // Mobile: reverse of open — the hero content eases DOWN, straight down, from its
-        // natural position to the popup's (already-centered) position first; once that
-        // lands, the now-empty background shrinks onto the popup at the same pace the whole
-        // card always shrank at, arrow crossfade running alongside that shrink same as it
-        // always has. Same reasoning as openCase: nothing ever rides on .case-bg's own
+        if (scrolledClose) {
+            // Scrolled past the hero: there's no hero on screen for the mirror below to pin,
+            // so just shrink .case as a single rigid unit — background, whatever panel is
+            // currently showing, all of it — straight onto the popup, the same tween desktop
+            // uses above. One motion, starting from wherever the card already is.
+            gsap.set(el, { transformOrigin: '0 0' });
+            arrowCrossTween(el, 'close', 0.7);
+            var scrolledShrink = stateTween(el, FULL_STATE, to, {
+                duration: 0.8, ease: 'power3.inOut',
+                onComplete: finish, onInterrupt: finish
+            });
+            gsap.to(scrolledShrink.target, scrolledShrink.vars);
+            return;
+        }
+
+        // Mobile, already at the top: reverse of open — the hero content eases DOWN, straight
+        // down, from its natural position to the popup's (already-centered) position first;
+        // once that lands, the now-empty background shrinks onto the popup at the same pace
+        // the whole card always shrank at, arrow crossfade running alongside that shrink same
+        // as it always has. Same reasoning as openCase: nothing ever rides on .case-bg's own
         // transform, so nothing can get clipped by it. .case-title-row eases from 0 to
         // -shift in the same beat (see titleRowShiftX) so the title lands already aligned
         // with the popup's unshifted title by the time the popup is revealed underneath,
-        // instead of snapping into alignment.
+        // instead of snapping into alignment. Reaching this branch means el.scrollTop was
+        // already 0 (see scrolledClose above), so heroNatural/boxRect can be measured right
+        // away — no stale, scrolled-away position to wait out.
         gsap.killTweensOf([caseBg, caseHero, titleRow]);
         var heroNatural = caseHero.getBoundingClientRect();
         var boxRect = box.getBoundingClientRect();
         var heroOffsetY = boxRect.top - heroNatural.top;
         gsap.to(caseHero, {
-            y: heroOffsetY, duration: 0.5, ease: 'back.out(1.7)', delay: wait,
+            y: heroOffsetY, duration: 0.5, ease: 'power3.out',
             onComplete: shrinkBackground, onInterrupt: shrinkBackground
         });
         if (titleRow) {
-            gsap.to(titleRow, { x: -titleRowShiftX(el), duration: 0.5, ease: 'back.out(1.7)', delay: wait });
+            gsap.to(titleRow, { x: -titleRowShiftX(el), duration: 0.5, ease: 'power3.out' });
         }
 
         function shrinkBackground() {

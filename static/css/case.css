@@ -790,9 +790,19 @@ html.case-open body {
        version of the popup: the whole point of the mobile grow animation is that only the
        colour/artwork visibly grow, so the text has to actually BE the same size on the open
        page as it is on the closed card, not just held there temporarily during the tween. */
+    /* Matches the popup's own .project-text margin-top exactly (style.css) — without it,
+       the title/subtitle/paragraph sit a constant ~12px lower inside .case-hero than the
+       equivalent text sits inside .popup-box, which reads as a jump the instant the case
+       opens (or closes), independent of and on top of any of case.js's own easing. */
+    .case-hero-text { margin-top: -12px; }
     .case-hero-text h1 { font-size: 22px; font-weight: 600; margin-bottom: -2px; }
-    .case-hero-text h2 { font-size: 16px; font-weight: 700; }
-    .case-hero-text p  { font-size: 14px; line-height: 1.5; margin-top: 12px; }
+    /* margin-bottom/margin-top below mirror the popup's own h3/p exactly (.popup-project
+       .project-text h3/p in style.css: h3 margin-bottom 8px, p margin-top 0) — left as
+       they were (h2 margin-bottom 0, p margin-top 12px), the subtitle-to-paragraph gap
+       reads 4px wider here than on the closed card, a small second jump riding on top of
+       the block-level -12px correction above. */
+    .case-hero-text h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .case-hero-text p  { font-size: 14px; line-height: 1.5; margin-top: 0; }
 
     /* No room for it on a phone screen, and the page is a single plain scroll instead. */
     .case-nav { display: none; }
