@@ -261,10 +261,24 @@
         if (media) media.classList.add('is-sharp');
     }
 
+    // Panel images load="lazy" so the homepage never fetches every case study's pictures
+    // up front — but that same laziness means a fast scroll straight to the bottom of an
+    // opened case can outrun the browser's own lazy-fetch trigger, showing the panel's
+    // plain .case-media background color slide in before its picture has loaded. Called the
+    // instant a case opens (before its own ~1s open animation even starts), so every one of
+    // its panel images gets a real head start fetching in the background while that
+    // animation plays, well before the user could possibly scroll to them.
+    function preloadCasePanelImages(el) {
+        el.querySelectorAll('.case-panel img[loading="lazy"]').forEach(function (img) {
+            img.loading = 'eager';
+        });
+    }
+
     function openCase(slug, opts) {
         if (!cases[slug] || openSlug || busy) return;
         opts = opts || {};
         var el = cases[slug].el;
+        preloadCasePanelImages(el);
         var box = popupBox(slug);
         var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
         // Only when this will actually animate — a cold direct-link load (animate:false)
