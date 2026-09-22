@@ -105,6 +105,22 @@
         return btn.getBoundingClientRect().width + title.getBoundingClientRect().width + gap * 2;
     }
 
+    // .case-back sits BEFORE the title in .case-title-row's flow (its resting spot — see
+    // arrowSlideDistance above), reserving its own width + one gap ahead of the title even
+    // while it's transformed elsewhere. The popup's title has no such reservation (its arrow
+    // sits after it there), so the title's natural x in the case layout is always shifted
+    // right of where it sat in the popup by exactly that amount. Left alone, that shift shows
+    // up as a hard snap the instant the case page paints, before any tween starts. Callers pin
+    // the row at -shift and ease it to 0 alongside the vertical hero tween so it reads as one
+    // smooth diagonal slide instead.
+    function titleRowShiftX(el) {
+        var row = el.querySelector('.case-title-row');
+        var btn = row && row.querySelector('.case-back');
+        if (!row || !btn) return 0;
+        var gap = parseFloat(getComputedStyle(row).columnGap) || 12;
+        return btn.getBoundingClientRect().width + gap;
+    }
+
     // Slides .case-back between its resting spot (before the title) and the popup's own
     // forward-arrow spot (after it), crossfading its two stacked icons (see .case-back-icon
     // in case.css) from one direction to the other as it crosses — one arrow reads as
@@ -266,20 +282,29 @@
         var from = opts.animate !== false && !reduceMotion && box ? shrunkOnto(box) : null;
         var caseBg = isMobileLayout ? el.querySelector('.case-bg') : null;
         var caseHero = isMobileLayout ? el.querySelector('.case-hero') : null;
+        var titleRow = isMobileLayout ? el.querySelector('.case-title-row') : null;
 
         // Mobile: the title/subtitle/paragraph/iPad never change size (see the mobile
         // .case-hero-text rules in case.css) — only .case-bg's own shape grows. Pin the
         // whole hero block (arrow + title + subtitle + paragraph + media, moved together as
         // one rigid unit) over the popup's current position now, before .case becomes
         // visible, so the very first paint already shows it there instead of flashing at its
-        // natural (top-of-page) position first. Vertical offset only — horizontal position
-        // never changes, so the block only ever eases straight up/down, never diagonally.
+        // natural (top-of-page) position first. The block itself only ever eases straight
+        // up/down. .case-title-row is pinned separately, on top of that: see
+        // titleRowShiftX — its own natural x is shifted right of the popup's title by the
+        // back button's reserved width, so it's pinned at -shift and eased to 0 alongside the
+        // block's y so the title reads as one smooth diagonal slide, not a snap into place.
         var heroOffsetY = null;
+        var titleShiftX = 0;
         if (caseHero && box && from) {
             var heroNatural = caseHero.getBoundingClientRect();
             var boxRect = box.getBoundingClientRect();
             heroOffsetY = boxRect.top - heroNatural.top;
             gsap.set(caseHero, { transformOrigin: '0 0', y: heroOffsetY });
+            if (titleRow) {
+                titleShiftX = titleRowShiftX(el);
+                gsap.set(titleRow, { x: -titleShiftX });
+            }
         }
 
         openSlug = slug;
@@ -334,6 +359,7 @@
             gsap.set(el, { clearProps: 'transform,transformOrigin,clipPath' });
             if (caseBg) gsap.set(caseBg, { clearProps: 'transform,transformOrigin,clipPath' });
             if (caseHero) gsap.set(caseHero, { clearProps: 'transform,transformOrigin' });
+            if (titleRow) gsap.set(titleRow, { clearProps: 'transform' });
             gsap.set(ghosts, { clearProps: 'opacity' });
             // subtitle row and sections show once the banner has landed
             var late = el.querySelectorAll('.case-nav, .case-body');
@@ -382,6 +408,7 @@
                 y: 0, duration: 0.5, ease: 'back.out(1.7)',
                 onComplete: finishOpen, onInterrupt: finishOpen
             });
+            if (titleRow) gsap.to(titleRow, { x: 0, duration: 0.5, ease: 'back.out(1.7)' });
         }
         }
     }
@@ -418,6 +445,7 @@
         var backBtn = el.querySelector('.case-back');
         var caseBg = isMobileLayout ? el.querySelector('.case-bg') : null;
         var caseHero = isMobileLayout ? el.querySelector('.case-hero') : null;
+        var titleRow = isMobileLayout ? el.querySelector('.case-title-row') : null;
 
         // Also used as onInterrupt — see the matching note in openCase's finishOpen.
         function finish() {
@@ -428,6 +456,7 @@
             if (backBtn) gsap.set(backBtn, { clearProps: 'opacity' });
             clearArrowCross(el);
             if (caseHero) gsap.set(caseHero, { clearProps: 'transform,transformOrigin' });
+            if (titleRow) gsap.set(titleRow, { clearProps: 'transform' });
             if (caseBg) gsap.set(caseBg, { clearProps: 'transform,transformOrigin,clipPath' });
             if (oldNav && pushedNav) gsap.set(oldNav, { clearProps: 'transform' });
             pushedNav = 0;
@@ -480,8 +509,11 @@
         // lands, the now-empty background shrinks onto the popup at the same pace the whole
         // card always shrank at, arrow crossfade running alongside that shrink same as it
         // always has. Same reasoning as openCase: nothing ever rides on .case-bg's own
-        // transform, so nothing can get clipped by it.
-        gsap.killTweensOf([caseBg, caseHero]);
+        // transform, so nothing can get clipped by it. .case-title-row eases from 0 to
+        // -shift in the same beat (see titleRowShiftX) so the title lands already aligned
+        // with the popup's unshifted title by the time the popup is revealed underneath,
+        // instead of snapping into alignment.
+        gsap.killTweensOf([caseBg, caseHero, titleRow]);
         var heroNatural = caseHero.getBoundingClientRect();
         var boxRect = box.getBoundingClientRect();
         var heroOffsetY = boxRect.top - heroNatural.top;
@@ -489,6 +521,9 @@
             y: heroOffsetY, duration: 0.5, ease: 'back.out(1.7)', delay: wait,
             onComplete: shrinkBackground, onInterrupt: shrinkBackground
         });
+        if (titleRow) {
+            gsap.to(titleRow, { x: -titleRowShiftX(el), duration: 0.5, ease: 'back.out(1.7)', delay: wait });
+        }
 
         function shrinkBackground() {
             gsap.set(caseBg, { transformOrigin: '0 0' });
