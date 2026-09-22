@@ -1,4 +1,5 @@
 {% from "_case.html" import case_study, case_panel %}
+{% set prinsys_intro = "A battery-free sensor system designed to detect and monitor water leaks across commercial properties. Our international team developed the product end to end, spanning research, service design, UX/UI, system architecture, hardware integration, and development. We delivered a working application and receiver prototype to Prinsys for continued development." %}
 {% set islanding_intro = "A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation." %}
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +27,7 @@
     
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='Prinsys/horizontal/web/iPhone-15-Pro.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -116,20 +117,27 @@
         </div>
     </div>
 
-    <div id="popup-1" class="popup" data-bg-color="#cc4e00">
+    <div id="popup-1" class="popup" data-bg-color="#cc4e00" data-case="prinsys">
         <div class="popup-box">
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
                     <picture>
-                        <source media="(max-width: 1024px)" srcset="{{ url_for('static', filename='Prinsys/vertical/iPhone 16 Pro.png') }}">
-                        <img src="{{ url_for('static', filename='Prinsys/horizontal/iPhone 15 Pro .png') }}" alt="Prinsys" class="prinsys-image">
+                        <source media="(max-width: 1024px)" srcset="{{ url_for('static', filename='Prinsys/vertical/web/iPhone-16-Pro-hq.png') }}">
+                        <img src="{{ url_for('static', filename='Prinsys/horizontal/web/iPhone-15-Pro.png') }}" alt="Prinsys" class="prinsys-image">
                     </picture>
                 </div>
                 <div class="project-text">
-                    <h2>Prinsys</h2>
+                    {# See the matching comment on #popup-4's .project-title-row: on mobile the
+                       open-arrow sits inline next to the title instead of floating bottom-right,
+                       so the case page opens with the phones at the same spot they already sit
+                       at here. #}
+                    <div class="project-title-row">
+                        <h2>Prinsys</h2>
+                        <a class="popup-open" href="#prinsys" aria-label="Open the Prinsys case study"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></a>
+                    </div>
                     <h3>Early Leakage Detection</h3>
-                    <p>A battery-free sensor system designed to detect and monitor water leaks across commercial properties. Our international team developed the product end to end, spanning research, service design, UX/UI, system architecture, hardware integration, and development. We delivered a working application and receiver prototype to Prinsys for continued development. </p>
+                    <p>{{ prinsys_intro }}</p>
                 </div>
             </div>
         </div>
@@ -243,6 +251,128 @@
     </div>
 
     {# ---- Case studies (expand out of their popups; linkable as /#slug) ---- #}
+    {% call case_study(slug="prinsys", popup=1, color="#cc4e00",
+                       title="Prinsys", subtitle="Early Leakage Detection", intro=prinsys_intro,
+                       hero_src="Prinsys/horizontal/web/iPhone-15-Pro.png",
+                       hero_src_mobile="Prinsys/vertical/web/iPhone-16-Pro-sharp.png",
+                       hero_alt="The Prinsys app on an iPhone") %}
+        <section class="case-panel case-panel--image-left" data-nav="Going to Finland">
+            <figure class="case-media">
+                <div class="prinsys-carousel prinsys-carousel--fade" data-carousel data-effect="fade" data-autoplay="4000">
+                    <div class="carousel-stack">
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /1Prinsys_finland_carousel/web/1AmericanTeam.jpg') }}" alt="The Prinsys team, American side"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /1Prinsys_finland_carousel/web/2TeamMeeting.jpg') }}" alt="Team meeting in Finland"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /1Prinsys_finland_carousel/web/3PrototypingDay.jpg') }}" alt="Prototyping day"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /1Prinsys_finland_carousel/web/4PhoneDemo.jpg') }}" alt="Demoing the app on a phone"></div>
+                    </div>
+                </div>
+            </figure>
+            <div class="case-copy">
+                <p class="case-label">Going to Finland</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
+                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            </div>
+        </section>
+
+        {% call case_panel(side="image-right", label="Service Design", image="Prinsys/Prinsys Project /web/service-blueprint.jpg", alt="Prinsys service blueprint mapping customer, front-of-stage, back-of-stage, and support processes") %}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
+            <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+        {% endcall %}
+
+        <section class="case-panel case-panel--image-left" data-nav="Wireframes">
+            <figure class="case-media case-media--wireframe">
+                <div class="prinsys-carousel prinsys-carousel--fade-grid" data-carousel data-effect="fade-grid">
+                    <div class="carousel-grid-title" data-carousel-title aria-live="polite"></div>
+                    <div class="carousel-grids">
+                        <div class="carousel-grid-slide" data-title="Property Monitoring">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/1_HomeAlert.png') }}" alt="Property monitoring flow, screen 1">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/2_Properties.png') }}" alt="Property monitoring flow, screen 2">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/3_Propertiesmap.png') }}" alt="Property monitoring flow, screen 3">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/4_15 Beekman Overview.png') }}" alt="Property monitoring flow, screen 4">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/5_15 Beekman Floorplan.png') }}" alt="Property monitoring flow, screen 5">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/6_NYCDF Sensor Alert Overivew.png') }}" alt="Property monitoring flow, screen 6">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/7_Manage Sensor Normal.png') }}" alt="Property monitoring flow, screen 7">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/1Propery Monitoring Flow/8_Manage Receiver.png') }}" alt="Property monitoring flow, screen 8">
+                        </div>
+                        <div class="carousel-grid-slide" data-title="Installation Guide">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/1_Installation_Home.png') }}" alt="Installation flow, screen 1">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/2_Receiver Installation1.png') }}" alt="Installation flow, screen 2">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/3_Receiver Installation 2.png') }}" alt="Installation flow, screen 3">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/4_Receiver Installation 3.png') }}" alt="Installation flow, screen 4">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/5_Sensor Installation 1.png') }}" alt="Installation flow, screen 5">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/6_Sensor Installation 2.png') }}" alt="Installation flow, screen 6">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/7_Sensor Installation 3.png') }}" alt="Installation flow, screen 7">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/2Install Flow/9_Sensor Details.png') }}" alt="Installation flow, screen 8">
+                        </div>
+                        <div class="carousel-grid-slide" data-title="Account Management">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/1_Property Owner Sidebar Overlay.png') }}" alt="Account management flow, screen 1">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/2_profile.png') }}" alt="Account management flow, screen 2">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/3_security.png') }}" alt="Account management flow, screen 3">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/4_password.png') }}" alt="Account management flow, screen 4">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/5_alerts.png') }}" alt="Account management flow, screen 5">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/6_help-center.png') }}" alt="Account management flow, screen 6">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/7_privacy.png') }}" alt="Account management flow, screen 7">
+                            <img src="{{ url_for('static', filename='Prinsys/Prinsys Project /2Wireframe_carousel/3Account Managment Flow/8_Terms.png') }}" alt="Account management flow, screen 8">
+                        </div>
+                    </div>
+                    <div class="carousel-arrows">
+                        <button type="button" class="carousel-prev" aria-label="Previous flow">
+                            <img src="{{ url_for('static', filename='arrow/arrow_circle_left.png') }}" alt="">
+                        </button>
+                        <button type="button" class="carousel-next" aria-label="Next flow">
+                            <img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt="">
+                        </button>
+                    </div>
+                </div>
+            </figure>
+            <div class="case-copy">
+                <p class="case-label">Wireframe Flow</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
+                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            </div>
+        </section>
+
+        <section class="case-panel case-panel--full" data-nav="Admin Panel">
+            <div class="erd-wrap">
+                <h3 class="erd-title">Admin Panel Entity Relationship Model</h3>
+                <img class="erd-image" src="{{ url_for('static', filename='Prinsys/Prinsys Project /PDP-EDR.png') }}" alt="Admin Panel entity relationship diagram">
+            </div>
+        </section>
+
+        <section class="case-panel case-panel--image-right" data-nav="RF Circuit">
+            <figure class="case-media">
+                <div class="prinsys-carousel prinsys-carousel--fade" data-carousel data-effect="fade" data-autoplay="6000">
+                    <div class="carousel-stack">
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /RF Circuit schematic/web/2-schematic-cropped.jpg') }}" alt="RF circuit schematic and bill of materials"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /RF Circuit schematic/2IMG_2787.JPG') }}" alt="RF circuit schematic, EDA layout"></div>
+                    </div>
+                </div>
+            </figure>
+            <div class="case-copy">
+                <p class="case-label">RF Circuit schematic</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
+                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            </div>
+        </section>
+
+        <section class="case-panel case-panel--image-left" data-nav="Handoff">
+            <figure class="case-media">
+                <div class="prinsys-carousel prinsys-carousel--fade" data-carousel data-effect="fade" data-autoplay="4000">
+                    <div class="carousel-stack">
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /Handoff/web/1HardwarePrototype.jpg') }}" alt="Hardware prototype"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /Handoff/web/2IMG_2790.jpg') }}" alt="The Prinsys receiver hardware, handed off for continued development"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /Handoff/web/3FinalHardware.jpg') }}" alt="Final hardware"></div>
+                    </div>
+                </div>
+            </figure>
+            <div class="case-copy">
+                <p class="case-label">The Handoff</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
+                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            </div>
+        </section>
+    {% endcall %}
+
     {% call case_study(slug="islanding-nyc", popup=4, color="#004e7a",
                        title="Islanding NYC", subtitle="3D Animation", intro=islanding_intro,
                        hero_src="Islanding/iPad_shadow.png", hero_src_mobile="Islanding/iPad_without.png",
@@ -272,5 +402,6 @@
 
     <script src="{{ url_for('static', filename='js/cradle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/case.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/prinsys.js') }}"></script>
 </body>
 </html>

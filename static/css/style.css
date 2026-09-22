@@ -582,10 +582,25 @@ html.case-pending .container {
     height: 100%;
 }
 
-.prinsys-image {
-    transform: translateX(12px);
-    mask-image: linear-gradient(to right, black 30%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+/* Desktop only — #popup-1 .project-image img (below, under max-width:767px) sets its own
+   mobile sizing (200%/800px, no nudge) and needs to win outright, but !important always
+   beats a non-important rule regardless of specificity, so the desktop cap has to stay
+   out of that cascade entirely rather than rely on losing a specificity fight it can't. */
+@media (min-width: 768px) {
+    /* Capped the same way .islanding-image is: at 135% the image's rendered height lands
+       just inside .popup-box's own height, so it never needs overflow:hidden to clip it and
+       never needs a mask to hide that clip (the old 150% cap rendered taller than the box,
+       which hard-cropped the shadow — see .islanding-image for the working version of this).
+       The -0.4% nudge also matches .islanding-image, not the old fixed 12px: case.js grows
+       the whole case page as one rigid block onto the popup's box (see .case-hero-media img
+       in case.css, "nudged -0.4%"), so the popup image and the hero image have to agree on
+       the same *relative* offset or the page visibly slides into place instead of just
+       scaling up — a flat px nudge doesn't track the box's width, a % one does. */
+    .prinsys-image {
+        max-width: 135% !important;
+        max-height: 135% !important;
+        transform: translateX(-0.4%);
+    }
 }
 
 .algorithmic-image {

@@ -491,6 +491,18 @@ html.case-open body {
     border-radius: 0 3.6vw 3.6vw 0;
 }
 
+/* The wireframe card itself is capped at 75% of its column's width (see
+   .case-media--wireframe), which used to leave the other 25% as a dead gap
+   only .case-media could see. Shrinking this panel's own column split by
+   that same 25% (63fr * 0.75 = 47.25fr) hands that freed-up width to the
+   copy column instead — the card's on-screen size is unchanged, but the
+   text now has room to actually use the space next to it. */
+@media (min-width: 768px) {
+    .case-panel[data-nav="Wireframes"] {
+        grid-template-columns: 47.25fr 52.75fr;
+    }
+}
+
 .case-panel--image-right .case-media {
     padding: 2.8vw 0 2.8vw 2.8vw;
     border-radius: 3.6vw 0 0 3.6vw;
@@ -920,6 +932,303 @@ html.case-open body {
     .popup-open,
     .popup[data-case] .popup-box,
     .container {
+        transition: none;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   Prinsys: carousels + the full-bleed Admin Panel ERD. Everything below lives
+   inside a normal .case-panel (scroll-snap, scroll-in motion, mobile card
+   styling all apply for free — see case.js/prinsys.js), it just replaces the
+   plain <img> a case_panel(...) would render with something interactive.
+   --------------------------------------------------------------------------- */
+
+/* Full-bleed variant (Admin Panel): no image/text split, one column. */
+.case-panel--full {
+    grid-template-columns: 1fr;
+    display: block;
+    padding-top: calc(var(--nav-h) + 2vw);
+    padding-bottom: 2vw;
+}
+
+/* ---- Carousels (shared chrome) ---- */
+
+.prinsys-carousel {
+    position: relative;
+    width: 100%;
+}
+
+/* Static frame around the box itself (not the photo) — same ring treatment
+   .case-media img normally gets, moved here so it never moves or fades along
+   with whichever photo is currently crossfading underneath it. */
+.carousel-stack {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--carousel-ratio, 4 / 3);
+    border-radius: 1.4vw;
+    box-shadow:
+        0 0 0 1vw rgba(255, 255, 255, 0.18),
+        0 0 0 2vw rgba(255, 255, 255, 0.09);
+    overflow: hidden;
+}
+
+.carousel-stack .carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 2.2s ease-in-out;
+}
+
+.carousel-stack .carousel-slide.is-active {
+    opacity: 1;
+}
+
+.carousel-stack .carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* The ring above already frames the box; images themselves (and the tiny
+   arrow icons, when present — see .prinsys-carousel--fade-grid below) must
+   not also pick up the generic .case-media img ring, or the frame would
+   double up / move with whichever element it's attached to. */
+.case-media .prinsys-carousel img {
+    box-shadow: none;
+}
+
+/* Arrows sit on the case-colour media block with no background of their own —
+   same trick as .popup-open (case.css above): the artwork is a white disc with
+   a transparent arrow, so it reads as "white ring, case-colour arrow" directly
+   against .case-media's own background, no wrapper needed. Bottom-centered and
+   static (never move), per the wireframe. */
+.carousel-arrows {
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    transform: translate(-50%, 50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.carousel-arrows button {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-arrows button:hover,
+.carousel-arrows button:focus-visible {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.carousel-arrows button:focus-visible {
+    outline: 2px solid #f2f0ef;
+    outline-offset: 3px;
+    border-radius: 50%;
+}
+
+.carousel-arrows img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ---- Fade-grid (Wireframe Flow) ---- */
+
+.prinsys-carousel--fade-grid .carousel-grid-title {
+    color: #f2f0ef;
+    font-size: clamp(18px, 1.8vw, 26px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0 1.4vw;
+    margin-bottom: 1.2vw;
+    min-height: 1.2em;
+}
+
+.prinsys-carousel--fade-grid .carousel-grid-title .rainbow-char {
+    display: inline-block;
+}
+
+/* Crossfade, not a stack: every slide is stacked absolute+inset:0 over a
+   container sized by a fixed aspect ratio (not by flow content, since no
+   slide is ever the sole in-flow child), and only .is-active is opaque. */
+.carousel-grids {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 8 / 7;
+}
+
+.carousel-grid-slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1vw;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease-in-out;
+}
+
+.carousel-grid-slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.carousel-grid-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 4 / 7;
+    /* cover, not contain: the source PNGs are hand-resized to roughly match
+       each other, not pixel-exact — contain would letterbox (shrink inside
+       its own slot, with visible background around it) whichever ones are
+       slightly off the 4/7 frame ratio, instead of every slide reading the
+       same size in the grid. */
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 0.6vw;
+}
+
+.prinsys-carousel--fade-grid .carousel-arrows {
+    position: static;
+    /* translateY, not more margin: shifts the buttons down into the card's
+       own existing bottom padding instead of growing the card (more margin
+       would push the padding-bottom — and so the card's own orange bottom
+       edge — down along with it). */
+    transform: translateY(8px);
+    justify-content: center;
+    /* Clamp (not just vw) so the gap between the grid and the nav buttons
+       stays clearly visible even once the whole card is scaled down below —
+       a pure vw value shrinks right along with everything else and reads as
+       the arrows sitting flush against the images instead of below them. */
+    margin-top: clamp(16px, 2.4vw, 32px);
+}
+
+/* Desktop only: a more compact card overall — reduced side padding on the
+   surrounding frame, a shorter/more square grid, and tighter gaps between
+   the title, the screenshots, and the card's own edges. */
+@media (min-width: 768px) {
+    /* Equal padding on every side (unlike the other panels' 0-on-the-outward-
+       edge rule) so the orange frame reads the same thickness left/right as
+       it does top/bottom — this card doesn't bleed to the viewport edge.
+       Selector matches .case-panel--image-left .case-media's own specificity
+       (two classes) so this actually wins over its padding-left:0 instead of
+       silently losing to it. */
+    /* This panel's own grid column split gives the card less width to begin
+       with (see .case-panel[data-nav="Wireframes"] below) — 47.25fr is
+       75% of the default 63fr media column, so the card's own on-screen size
+       is unchanged from before; the copy column simply grows from 37fr to
+       52.75fr to actually use the freed-up space instead of leaving it as a
+       dead gap only .case-media itself can see. */
+    /* The box itself stays flush against the viewport edge (no margin) —
+       only its left padding grows, to 3.5vw, to match the "Service Design"
+       panel copy's own left inset just above it and shift the screenshots
+       (not the orange) over to align with that text. Right padding matches
+       it so the rim reads the same thickness on both sides. */
+    .case-panel--image-left .case-media--wireframe {
+        padding: 1.4vw 3.5vw;
+    }
+
+    .prinsys-carousel--fade-grid .carousel-grid-title {
+        padding: 0 0.6vw;
+        margin-bottom: 0.6vw;
+    }
+
+    .carousel-grids {
+        aspect-ratio: 8 / 6.2;
+    }
+
+    .carousel-grid-slide {
+        gap: 1.4vw;
+    }
+}
+
+/* ---- Admin Panel ERD ---- */
+
+.erd-wrap {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 3.5vw;
+}
+
+/* Sits directly over the image's own blank top-left corner (the PNG's
+   background is transparent there) instead of pushing the image down,
+   since there's no frame/border under it to visually clash with anymore. */
+.erd-title {
+    position: absolute;
+    top: 0;
+    left: 3.5vw;
+    font-size: clamp(20px, 2.4vw, 34px);
+    font-weight: 600;
+    color: #3b3430;
+    margin: 0;
+    z-index: 1;
+}
+
+.erd-image {
+    display: block;
+    width: auto;
+    /* Small enough that the title (overlaid above/on it) plus the rest of
+       the diagram both fit in one screen, not just the diagram alone. */
+    max-width: 100%;
+    max-height: calc(100svh - var(--nav-h) - 4vw);
+    margin: 0 auto;
+}
+
+@media (max-width: 767px) {
+    .case-panel--full {
+        min-height: 0;
+        margin: 0 16px 20px;
+        padding: 21px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .erd-wrap {
+        padding: 0;
+    }
+
+    /* Overlaying the title on the diagram only works with the roomier
+       desktop layout — back to normal flow above the (smaller, harder to
+       spare room from) mobile image instead. */
+    .erd-title {
+        position: static;
+        color: #f2f0ef;
+        font-size: 18px;
+        margin: 0 0 14px;
+    }
+
+    .erd-image {
+        max-height: none;
+        border-radius: 12px;
+    }
+
+    .carousel-grid-slide {
+        gap: 6px;
+    }
+
+    .carousel-grid-slide img {
+        border-radius: 6px;
+    }
+
+    .prinsys-carousel--fade-grid .carousel-grid-title {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carousel-stack .carousel-slide {
         transition: none;
     }
 }
