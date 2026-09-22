@@ -1237,16 +1237,42 @@ html.case-open body {
         border-radius: 12px;
     }
 
-    .carousel-grid-slide {
-        gap: 6px;
-    }
-
-    .carousel-grid-slide img {
-        border-radius: 6px;
+    /* Mobile swaps the 4-up-by-2 grid for a one-at-a-time filmstrip built by
+       prinsys.js (setupMobileFilmstrip) — the grid + arrow markup stays in
+       the DOM (unused) so hide both here rather than deleting anything. */
+    .carousel-grids,
+    .prinsys-carousel--fade-grid .carousel-arrows {
+        display: none;
     }
 
     .prinsys-carousel--fade-grid .carousel-grid-title {
         font-size: 16px;
+    }
+
+    /* One wireframe at a time, sized like every other case-media image on
+       mobile (full card width, height auto) instead of the grid's fixed
+       cells — --carousel-ratio (set per-slide in JS) drives the box's own
+       height so nothing is ever cropped or squeezed, and object-fit:contain
+       is the backstop for the split second right after it updates. */
+    .carousel-mobile-stack {
+        position: relative;
+        width: 100%;
+        aspect-ratio: var(--carousel-ratio, 4 / 7);
+    }
+
+    .carousel-mobile-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        border-radius: 6px;
+        transition: opacity 1s ease-in-out;
+    }
+
+    .carousel-mobile-img.is-active {
+        opacity: 1;
     }
 }
 
