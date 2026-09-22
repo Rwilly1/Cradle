@@ -20,6 +20,11 @@
 {% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_src_sharp=None, hero_alt="") %}
 <article class="case" id="case-{{ slug }}" data-slug="{{ slug }}" data-popup="{{ popup }}"
          style="--case-color: {{ color }}" role="dialog" aria-label="{{ title }} case study" tabindex="-1">
+    {# Mobile only (see .case-bg in case.css): the card's colour/shape, grown and shrunk
+       independently of the title/subtitle/paragraph/iPad above it — see the open/close
+       choreography comment on .case-bg. Desktop keeps growing/shrinking .case itself directly
+       and never touches this element. #}
+    <div class="case-bg" aria-hidden="true"></div>
     <div class="case-head">
     <header class="case-hero">
         {# Look-alikes of the popup's X and arrow, in the same spots: they fade out as the popup

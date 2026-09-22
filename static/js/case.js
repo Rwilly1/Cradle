@@ -3,7 +3,12 @@
 
    - Hover (or focus) an openable popup: the cradle dims, the arrow nudges.
    - Click the popup / arrow: the popup's box grows to fill the screen (clip-path from the
-     box's own rectangle), becoming the case-study header.
+     box's own rectangle), becoming the case-study header. On mobile this is two beats, not
+     one: .case-bg (the card's colour/shape) grows first while the title/subtitle/paragraph/
+     iPad sit still, pinned over the popup's position; once it settles, that content eases up
+     to its own natural position — at a constant size the whole time, so it can never be cut
+     off by a still-growing container. Closing mirrors this in reverse. See .case-bg in
+     case.css and openCase/closeCase below.
    - The address becomes  /#<slug>  so the page can be linked directly (e.g. from a résumé).
      Browser Back, the top-left arrow, or Esc collapse it back into the popup.
    - Loading /#<slug> cold skips the colour picker and opens the case study directly; closing
@@ -26,6 +31,11 @@
     if (!slugs.length) return;
 
     var root = document.documentElement;
+    // We drive scroll position ourselves around open/close (see centerCardInViewport) —
+    // left on the browser default ('auto'), history.back() would ALSO try to restore its own
+    // remembered scroll position for the entry being returned to, racing our own and landing
+    // as a visible jump right as/after the close animation finishes.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var openSlug = null;
     var pushed = false; // did *we* push the history entry (vs. arriving on a direct link)?
@@ -61,10 +71,8 @@
         gsap.set(el, { x: s.x, y: s.y, scale: s.scale, clipPath: clipOf(s) });
     }
 
-    // Tween the page between two states with one eased progress value. onFrame (optional)
-    // gets the interpolated state on every tick, for anything riding along with the card's
-    // own live scale beyond its transform+clip (see holdFixed in openCase/closeCase).
-    function stateTween(el, a, b, vars, onFrame) {
+    // Tween the page between two states with one eased progress value.
+    function stateTween(el, a, b, vars) {
         var p = { t: 0 };
         var keys = ['x', 'y', 'scale', 'top', 'right', 'bottom', 'left', 'rs'];
         var cur = {};
@@ -72,7 +80,6 @@
         vars.onUpdate = function () {
             keys.forEach(function (k) { cur[k] = a[k] + (b[k] - a[k]) * p.t; });
             applyState(el, cur);
-            if (onFrame) onFrame(cur);
         };
         return { target: p, vars: vars };
     }
@@ -138,73 +145,6 @@
         if (right) gsap.set(right, { clearProps: 'opacity' });
     }
 
-    // Mobile only: an element (the title row, or the subtitle) that holdFixed below will
-    // hold at true size for the whole grow/shrink. A no-op wrapper (kept as a function, not
-    // a bare querySelector, so call sites read the same as the arrow/other helpers).
-    function fixedOrigin(el, elm) {
-        return elm || null;
-    }
-
-    // Holds an element at its true, final size for the entire grow/shrink, with no
-    // correction to its position at all — it drifts on both axes toward .case's own
-    // top-left as the card's own scale shrinks (transform is paint-only; layout, and so
-    // every element's true position, never changes). Kept as the general building block;
-    // the title row uses holdHorizontal below instead, which cancels the vertical half of
-    // this same drift.
-    function holdFixed(elm, scale) {
-        if (elm) gsap.set(elm, { transformOrigin: '0 0', scale: 1 / scale });
-    }
-
-    // Holds the title row (arrow + h1 together) at its true, final size, canceling the
-    // vertical half of holdFixed's drift (see above) but leaving the horizontal half alone
-    // — so the row only ever slides left/right, never up/down, as the card grows/shrinks.
-    // That horizontal slide is deliberate: it's what makes the row read as "sliding into
-    // place" alongside the arrow's own crossing animation (see arrowCrossTween) rather than
-    // teleporting. The subtitle and paragraph below get the stronger holdStatic treatment
-    // instead, which cancels drift on both axes (see below) since they have no reason to
-    // move at all.
-    //
-    // ty is the same per-axis correction holdStatic uses (see its own comment for the
-    // derivation) — just applied to y only, leaving x to inherit the parent's translate
-    // untouched, same as holdFixed above.
-    //
-    // The title row's own child (.case-back) still gets its own independent slide from
-    // arrowCrossTween above — that composes correctly on top of this because, from the
-    // button's perspective, the row is already rendering as if at true scale.
-    function holdHorizontal(elm, targetRect, cur) {
-        if (!elm || !targetRect) return;
-        var invScale = 1 / cur.scale;
-        var ty = (targetRect.top * (1 - cur.scale) - cur.y) * invScale;
-        gsap.set(elm, { transformOrigin: '0 0', y: ty, scale: invScale });
-    }
-
-    // Pins an element at its true, final size AND screen position for the entire
-    // grow/shrink — unlike holdFixed above, this cancels the drift too, so the element never
-    // visibly moves at all; only the colour/artwork around it grows. Used for the subtitle
-    // and paragraph, which (unlike the title row) have no reason to slide.
-    //
-    // .case has transformOrigin '0 0' and sits at the viewport's own (0,0) at rest (it's
-    // position:fixed; inset:0), so a descendant's true resting screen position IS its local
-    // offset within .case — which is exactly `targetRect`, captured once before any
-    // transform touches .case. At any later point in the tween, .case's own transform
-    // (translate(cur.x, cur.y) scale(cur.scale), origin 0 0) would place that same point at
-    // screen = cur.{x,y} + cur.scale * targetRect.{left,top} if this element carried no
-    // transform of its own. The element's own translate/scale (applied on top of the
-    // inherited parent transform, so a `1px` move here is `cur.scale` real screen pixels)
-    // needs to cancel exactly that: scale by 1/cur.scale (same as holdFixed) and translate by
-    // (targetRect - that inherited position) / cur.scale, landing it back at targetRect.
-    function holdStatic(elm, targetRect, cur) {
-        if (!elm || !targetRect) return;
-        var invScale = 1 / cur.scale;
-        var tx = (targetRect.left * (1 - cur.scale) - cur.x) * invScale;
-        var ty = (targetRect.top * (1 - cur.scale) - cur.y) * invScale;
-        gsap.set(elm, { transformOrigin: '0 0', x: tx, y: ty, scale: invScale });
-    }
-
-    function clearFixed(elm) {
-        if (elm) gsap.set(elm, { clearProps: 'transform,transformOrigin' });
-    }
-
     // Where the page must sit to look exactly like the popup box, or null.
     function shrunkOnto(box) {
         var r = box.getBoundingClientRect();
@@ -223,6 +163,26 @@
             x: r.left, y: r.top - HERO_DELTA * s, scale: k,
             top: y0, right: 0, bottom: H - y0 - r.height / k, left: 0, rs: rs
         };
+    }
+
+    // Mobile only: popups sit in normal page flow, so whichever scroll position the user
+    // happens to be at is what shrunkOnto reads — nothing guarantees the box is fully inside
+    // the viewport. Snap it to vertical-center first (instant, not smooth: there's no reason
+    // to preserve or animate from the prior scroll position) so the grow/shrink target is
+    // never partway off-screen. Runs synchronously right before the caller reads the box's
+    // rect, so the corrected position is what the animation actually uses.
+    function centerCardInViewport(box) {
+        if (box) box.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    }
+
+    // Right after centerCardInViewport scrolls the page, give the browser a couple of frames
+    // before reading rects for the animation. A scroll can trigger layout/compositor work
+    // that isn't done by the very next line — notably mobile Safari's address bar
+    // collapsing/expanding, which changes the real viewport size asynchronously — and if we
+    // capture the animation's target rect before that's settled, the transition visibly jumps
+    // once it catches up.
+    function afterLayoutSettles(cb) {
+        requestAnimationFrame(function () { requestAnimationFrame(cb); });
     }
 
     // The cradle's own nav (About / Prinsys / ...): the growing page pushes it down and off
@@ -290,7 +250,37 @@
         opts = opts || {};
         var el = cases[slug].el;
         var box = popupBox(slug);
+        var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
+        // Only when this will actually animate — a cold direct-link load (animate:false)
+        // never touches shrunkOnto at all, so centering first would just flash-scroll the
+        // (still-hidden-behind-.case) page behind it for no visible reason.
+        var centered = isMobileLayout && !!box && opts.animate !== false && !reduceMotion;
+        // Hold the door shut (same lock openCase/closeCase already check on entry) for the
+        // gap between centering and actually opening below — otherwise a fast double-tap
+        // could slip through while openSlug is still unset.
+        if (centered) { busy = true; centerCardInViewport(box); }
+        if (centered) { afterLayoutSettles(function () { busy = false; proceedOpen(); }); return; }
+        proceedOpen();
+
+        function proceedOpen() {
         var from = opts.animate !== false && !reduceMotion && box ? shrunkOnto(box) : null;
+        var caseBg = isMobileLayout ? el.querySelector('.case-bg') : null;
+        var caseHero = isMobileLayout ? el.querySelector('.case-hero') : null;
+
+        // Mobile: the title/subtitle/paragraph/iPad never change size (see the mobile
+        // .case-hero-text rules in case.css) — only .case-bg's own shape grows. Pin the
+        // whole hero block (arrow + title + subtitle + paragraph + media, moved together as
+        // one rigid unit) over the popup's current position now, before .case becomes
+        // visible, so the very first paint already shows it there instead of flashing at its
+        // natural (top-of-page) position first. Vertical offset only — horizontal position
+        // never changes, so the block only ever eases straight up/down, never diagonally.
+        var heroOffsetY = null;
+        if (caseHero && box && from) {
+            var heroNatural = caseHero.getBoundingClientRect();
+            var boxRect = box.getBoundingClientRect();
+            heroOffsetY = boxRect.top - heroNatural.top;
+            gsap.set(caseHero, { transformOrigin: '0 0', y: heroOffsetY });
+        }
 
         openSlug = slug;
         document.body.classList.remove('case-hint');
@@ -323,39 +313,10 @@
         busy = true;
         el.classList.add('is-animating');
         gsap.killTweensOf(el);
-        gsap.set(el, { transformOrigin: '0 0' });
         var ghosts = el.querySelectorAll('.case-ghost');
         var backBtn = el.querySelector('.case-back');
-        var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
-        // Mobile: the arrow slides in from the popup's own forward-arrow spot (right of the
-        // title) to its resting spot here (before the title), crossfading from forward to
-        // back as it crosses — see arrowCrossTween. Runs as its own timeline, independent of
-        // the card's own grow tween below, so it reads as a deliberate motion in its own
-        // right. The title row holds its true size and never moves vertically, only
-        // left/right with the card (see holdHorizontal) — that's the motion the arrow's own
-        // crossing rides on top of. The subtitle and paragraph hold true size AND position
-        // on both axes (see holdStatic) since they have no reason to move at all. Rects
-        // measured now, before applyState below touches .case's own transform — while .case
-        // is still untransformed, a descendant's rect IS its true resting screen position
-        // (see holdStatic's own comment).
-        var titleRowOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-title-row')) : null;
-        var subtitleOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-text h2')) : null;
-        var paragraphOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-text p')) : null;
-        var mediaOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-media')) : null;
-        var titleRowRect = titleRowOrigin ? titleRowOrigin.getBoundingClientRect() : null;
-        var subtitleRect = subtitleOrigin ? subtitleOrigin.getBoundingClientRect() : null;
-        var paragraphRect = paragraphOrigin ? paragraphOrigin.getBoundingClientRect() : null;
-        var mediaRect = mediaOrigin ? mediaOrigin.getBoundingClientRect() : null;
-        if (isMobileLayout) arrowCrossTween(el, 'open', 0.7);
-        applyState(el, from);
-        if (isMobileLayout) {
-            holdHorizontal(titleRowOrigin, titleRowRect, from);
-            holdStatic(subtitleOrigin, subtitleRect, from);
-            holdStatic(paragraphOrigin, paragraphRect, from);
-            holdStatic(mediaOrigin, mediaRect, from);
-        }
-        // Same duration and easing as the page's growth, so the labels stay just ahead of its
-        // bottom edge (pushed along by it) rather than being swallowed.
+        // Same duration and easing as the background's own growth, so the labels stay just
+        // ahead of its bottom edge (pushed along by it) rather than being swallowed.
         if (push) gsap.to(oldNav, { y: '+=' + push, duration: 0.9, ease: 'power3.inOut' });
         // The popup's X and arrow fade out while the page's own back arrow fades in — only
         // meaningful on desktop, where both sit in the same overlaid corner. On mobile the
@@ -367,47 +328,66 @@
             gsap.set(backBtn, { opacity: 0 });
             gsap.to(backBtn, { opacity: 1, duration: 0.4, delay: 0.5, ease: 'none', clearProps: 'opacity' });
         }
-        // Also used as onInterrupt (not just onComplete): if this tween is killed early — a
-        // rapid re-tap, the tab going backgrounded mid-grow and starving GSAP's rAF ticker,
-        // whatever — the held-fixed elements must still drop their counter-scale instead of
-        // being left stuck at whatever mid-tween factor they last held (visibly oversized
-        // title/subtitle/paragraph, overlapping the arrow).
+        // Also used as onInterrupt (not just onComplete) — a rapid re-tap, the tab going
+        // backgrounded mid-tween and starving GSAP's rAF ticker, whatever.
         function finishOpen() {
             gsap.set(el, { clearProps: 'transform,transformOrigin,clipPath' });
+            if (caseBg) gsap.set(caseBg, { clearProps: 'transform,transformOrigin,clipPath' });
+            if (caseHero) gsap.set(caseHero, { clearProps: 'transform,transformOrigin' });
             gsap.set(ghosts, { clearProps: 'opacity' });
             // subtitle row and sections show once the banner has landed
             var late = el.querySelectorAll('.case-nav, .case-body');
             gsap.set(late, { opacity: 0 });
             el.classList.remove('is-animating');
             gsap.to(late, { opacity: 1, duration: 0.3, ease: 'none', clearProps: 'opacity' });
-            if (isMobileLayout) {
-                clearArrowCross(el);
-                clearFixed(titleRowOrigin);
-                clearFixed(subtitleOrigin);
-                clearFixed(paragraphOrigin);
-                clearFixed(mediaOrigin);
-            }
+            if (isMobileLayout) clearArrowCross(el);
             enableScrollMotion(el);
             revealSharpHero(el);
             busy = false;
             el.focus({ preventScroll: true });
         }
-        var grow = stateTween(el, from, FULL_STATE, {
-            duration: 0.9,
-            ease: 'power3.inOut',
-            onComplete: finishOpen,
-            onInterrupt: finishOpen
-        }, isMobileLayout ? function (cur) {
-            holdHorizontal(titleRowOrigin, titleRowRect, cur);
-            holdStatic(subtitleOrigin, subtitleRect, cur);
-            holdStatic(paragraphOrigin, paragraphRect, cur);
-            holdStatic(mediaOrigin, mediaRect, cur);
-        } : null);
+
+        if (!isMobileLayout) {
+            // Desktop: unchanged — .case itself grows directly in one beat.
+            gsap.set(el, { transformOrigin: '0 0' });
+            applyState(el, from);
+            var grow = stateTween(el, from, FULL_STATE, {
+                duration: 0.9, ease: 'power3.inOut',
+                onComplete: finishOpen, onInterrupt: finishOpen
+            });
+            gsap.to(grow.target, grow.vars);
+            return;
+        }
+
+        // Mobile: two beats. First .case-bg alone grows from the popup's footprint to fill
+        // the screen, at the same pace the whole card always grew at — the hero content
+        // sits still throughout (pinned above), so there's nothing riding on .case-bg's
+        // transform that could get cut off by it. The arrow crossfade runs alongside this
+        // same beat, same as it always has — only the title/subtitle/paragraph/iPad wait:
+        // once the background settles, that content eases up from the popup's position to
+        // its own natural one — straight up, no scale change, so it can never get clipped
+        // along the way either.
+        gsap.killTweensOf([caseBg, caseHero]);
+        gsap.set(caseBg, { transformOrigin: '0 0' });
+        applyState(caseBg, from);
+        arrowCrossTween(el, 'open', 0.7);
+        var grow = stateTween(caseBg, from, FULL_STATE, {
+            duration: 0.9, ease: 'power3.inOut',
+            onComplete: easeContentUp, onInterrupt: easeContentUp
+        });
         gsap.to(grow.target, grow.vars);
+
+        function easeContentUp() {
+            gsap.to(caseHero, {
+                y: 0, duration: 0.5, ease: 'back.out(1.7)',
+                onComplete: finishOpen, onInterrupt: finishOpen
+            });
+        }
+        }
     }
 
     function closeCase(fromPop) {
-        if (!openSlug) return;
+        if (!openSlug || busy) return;
 
         // UI close of an entry we pushed: let the browser pop it, popstate finishes the job.
         if (!fromPop && pushed) {
@@ -421,14 +401,23 @@
         var slug = openSlug;
         var el = cases[slug].el;
         var box = popupBox(slug);
+        var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
+        var centered = isMobileLayout && !!box && !reduceMotion;
+        // Same re-entrancy lock as openCase: hold the door shut across the centering wait so
+        // a fast double-tap on the back arrow can't slip through while openSlug is still set.
+        if (centered) { busy = true; centerCardInViewport(box); }
+        if (centered) { afterLayoutSettles(function () { busy = false; proceedClose(); }); return; }
+        proceedClose();
+
+        function proceedClose() {
         openSlug = null;
         pushed = false;
         disableVideoAutoplay(el);
 
         var ghosts = el.querySelectorAll('.case-ghost');
         var backBtn = el.querySelector('.case-back');
-        var titleRowOrigin = null, subtitleOrigin = null, paragraphOrigin = null, mediaOrigin = null;
-        var titleRowRect = null, subtitleRect = null, paragraphRect = null, mediaRect = null;
+        var caseBg = isMobileLayout ? el.querySelector('.case-bg') : null;
+        var caseHero = isMobileLayout ? el.querySelector('.case-hero') : null;
 
         // Also used as onInterrupt — see the matching note in openCase's finishOpen.
         function finish() {
@@ -438,10 +427,8 @@
             gsap.set(ghosts, { clearProps: 'opacity' });
             if (backBtn) gsap.set(backBtn, { clearProps: 'opacity' });
             clearArrowCross(el);
-            clearFixed(titleRowOrigin);
-            clearFixed(subtitleOrigin);
-            clearFixed(paragraphOrigin);
-            clearFixed(mediaOrigin);
+            if (caseHero) gsap.set(caseHero, { clearProps: 'transform,transformOrigin' });
+            if (caseBg) gsap.set(caseBg, { clearProps: 'transform,transformOrigin,clipPath' });
             if (oldNav && pushedNav) gsap.set(oldNav, { clearProps: 'transform' });
             pushedNav = 0;
             if (box) box.classList.remove('is-covered');
@@ -459,49 +446,60 @@
             return;
         }
 
-        // Reverse of opening: shrink back onto the popup, no fade.
+        // Reverse of opening: back onto the popup, no fade.
         busy = true;
         el.classList.add('no-snap', 'is-animating'); // snapping would fight the scroll-to-top below
         gsap.killTweensOf(el);
-        gsap.set(el, { transformOrigin: '0 0' });
-        var tl = gsap.timeline({ onComplete: finish, onInterrupt: finish });
+        var wait = 0;
         if (el.scrollTop > 0) {
-            tl.to(el, { scrollTop: 0, duration: 0.35, ease: 'power2.out' });
+            wait = 0.35;
+            gsap.to(el, { scrollTop: 0, duration: 0.35, ease: 'power2.out' });
         }
         if (oldNav && pushedNav) {
-            gsap.to(oldNav, { y: '-=' + pushedNav, duration: 0.8, delay: el.scrollTop > 0 ? 0.35 : 0, ease: 'power3.inOut' });
+            gsap.to(oldNav, { y: '-=' + pushedNav, duration: 0.8, delay: wait, ease: 'power3.inOut' });
         }
         // Reverse of the opening: the back arrow fades out, the popup's X and arrow fade back in
         // (desktop only — see the matching note in openCase).
-        var isMobileLayout = window.matchMedia('(max-width: 767px)').matches;
-        var wait = el.scrollTop > 0 ? 0.35 : 0;
         gsap.set(ghosts, { opacity: 0 });
         if (backBtn && !isMobileLayout) gsap.to(backBtn, { opacity: 0, duration: 0.3, delay: wait, ease: 'none' });
         gsap.to(ghosts, { opacity: 1, duration: 0.35, delay: wait + 0.45, ease: 'none' });
-        // Reverse of the open-side cross in openCase — see the comment there.
-        if (isMobileLayout) {
-            titleRowOrigin = fixedOrigin(el, el.querySelector('.case-title-row'));
-            subtitleOrigin = fixedOrigin(el, el.querySelector('.case-hero-text h2'));
-            paragraphOrigin = fixedOrigin(el, el.querySelector('.case-hero-text p'));
-            mediaOrigin = fixedOrigin(el, el.querySelector('.case-hero-media'));
-            // el is still untransformed here (open/resting state), so these rects are the
-            // true resting screen position holdStatic/holdHorizontal need to pin back to —
-            // see holdStatic's own comment.
-            titleRowRect = titleRowOrigin ? titleRowOrigin.getBoundingClientRect() : null;
-            subtitleRect = subtitleOrigin ? subtitleOrigin.getBoundingClientRect() : null;
-            paragraphRect = paragraphOrigin ? paragraphOrigin.getBoundingClientRect() : null;
-            mediaRect = mediaOrigin ? mediaOrigin.getBoundingClientRect() : null;
-            var arrowTl = arrowCrossTween(el, 'close', 0.7);
-            if (arrowTl && wait) arrowTl.delay(wait);
+
+        if (!isMobileLayout) {
+            // Desktop: unchanged — .case itself shrinks directly in one beat.
+            gsap.set(el, { transformOrigin: '0 0' });
+            var shrink = stateTween(el, FULL_STATE, to, {
+                duration: 0.8, ease: 'power3.inOut', delay: wait,
+                onComplete: finish, onInterrupt: finish
+            });
+            gsap.to(shrink.target, shrink.vars);
+            return;
         }
-        var shrink = stateTween(el, FULL_STATE, to, { duration: 0.8, ease: 'power3.inOut' },
-            isMobileLayout ? function (cur) {
-                holdHorizontal(titleRowOrigin, titleRowRect, cur);
-                holdStatic(subtitleOrigin, subtitleRect, cur);
-                holdStatic(paragraphOrigin, paragraphRect, cur);
-                holdStatic(mediaOrigin, mediaRect, cur);
-            } : null);
-        tl.to(shrink.target, shrink.vars);
+
+        // Mobile: reverse of open — the hero content eases DOWN, straight down, from its
+        // natural position to the popup's (already-centered) position first; once that
+        // lands, the now-empty background shrinks onto the popup at the same pace the whole
+        // card always shrank at, arrow crossfade running alongside that shrink same as it
+        // always has. Same reasoning as openCase: nothing ever rides on .case-bg's own
+        // transform, so nothing can get clipped by it.
+        gsap.killTweensOf([caseBg, caseHero]);
+        var heroNatural = caseHero.getBoundingClientRect();
+        var boxRect = box.getBoundingClientRect();
+        var heroOffsetY = boxRect.top - heroNatural.top;
+        gsap.to(caseHero, {
+            y: heroOffsetY, duration: 0.5, ease: 'back.out(1.7)', delay: wait,
+            onComplete: shrinkBackground, onInterrupt: shrinkBackground
+        });
+
+        function shrinkBackground() {
+            gsap.set(caseBg, { transformOrigin: '0 0' });
+            arrowCrossTween(el, 'close', 0.7);
+            var shrink = stateTween(caseBg, FULL_STATE, to, {
+                duration: 0.9, ease: 'power3.inOut',
+                onComplete: finish, onInterrupt: finish
+            });
+            gsap.to(shrink.target, shrink.vars);
+        }
+        }
     }
 
     // --- Section nav + bottom arrow (per case study) --------------------------------

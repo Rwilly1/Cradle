@@ -142,6 +142,25 @@ html.case-open body {
     visibility: visible;
 }
 
+/* Mobile only: the growing/shrinking card shape, kept separate from .case itself so the
+   title/subtitle/paragraph/iPad (.case-head, in normal flow, never transformed) can sit on
+   top of it without inheriting its scale — see the open/close choreography in case.js.
+   Same colour as .case's own (static, untransformed) background, so once case.js is done
+   animating it there's no visible seam between the two. Hidden entirely on desktop, where
+   .case itself still grows/shrinks directly, exactly as before. */
+.case-bg {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.case-head,
+.case-body {
+    position: relative;
+    z-index: 1;
+}
+
 /* The popup underneath is hidden while its page is open/growing: the page is drawn exactly
    on top of it at the start, and would otherwise show as a ghost card past the page's edge. */
 .popup-box.is-covered {
@@ -641,15 +660,47 @@ html.case-open body {
     transform: translateY(-4px);
 }
 
-/* Phones and narrow windows: full-bleed, same as the desktop hero — the closed card's own
-   grow animation (case.js) shrinks this exact layout down to the card's size and scales it
-   back up as one rigid piece, so nothing here needs to reflow or reposition mid-animation. */
+/* Phones and narrow windows: full-bleed, same as the desktop hero. Opening/closing never
+   scales this layout at all (see case.js) — .case-bg's shape grows/shrinks between the
+   popup's footprint and the full screen while this content sits on top of it in place, then
+   eases between the popup's on-screen position and its own natural one once the shape has
+   settled — so nothing here ever changes size, only position. */
 @media (max-width: 767px) {
+    .case-bg {
+        display: block;
+        background: var(--case-color);
+    }
+
     /* The whole page reads as one case-colour surface, text in white throughout — no more
        per-section colour breaks or light page background. */
     .case {
         background: var(--case-color);
         color: #f2f0ef;
+    }
+
+    /* .case's own background above is unconditional (needed for the whole scrolled-open
+       page, hero + panels alike) — but while .case-bg is mid grow/shrink, that same solid
+       colour sitting underneath it at full coverage would make .case-bg's own clip-path
+       shape (and its corner-radius morph) invisible: same colour on both, no contrast.
+       Transparent here for the animation's duration only, so .case-bg is the sole source
+       of colour and the real page shows through around its still-growing/shrinking edge,
+       same as it always has on desktop (where .case itself is what's clipped). */
+    .case.is-animating {
+        background: transparent;
+    }
+
+    /* .case-hero (below) has always had its own solid background + rounded bottom corners,
+       harmless when .case itself was the single thing growing (its transform scaled
+       .case-hero right along with it, edges staying perfectly aligned). Now .case-hero is
+       pinned by a plain translate instead — no scale — so it renders at its own natural
+       (full-bleed) width and position the whole time, independent of .case-bg's actual
+       grow/shrink footprint. With its own background left in, that's a second, differently
+       sized rounded-rect competing with .case-bg's for the same colour — the "rectangle"
+       and hard seam this cancels. Transparent here for the same reason as .case above: only
+       .case-bg should be visible during the transition, its content sitting on top of it
+       colourless until the shape settles under it exactly. */
+    .case.is-animating .case-hero {
+        background: transparent;
     }
 
     .case-hero {
@@ -677,9 +728,9 @@ html.case-open body {
     /* Before the title instead of floating over the artwork — see .case-title-row.
        case.js slides it in from the row's far end (the popup's own forward-arrow spot,
        see .project-title-row above) to its resting spot here, crossfading its icon from
-       forward to back as it crosses — see .case-back-icon below. This row (and the
-       subtitle below it) also hold their true size the whole time instead of scaling
-       with the card — see holdFixed in case.js. */
+       forward to back as it crosses — see .case-back-icon below. This row is part of
+       .case-hero, which never changes size during open/close (see the .case-bg comment
+       above) — only its position eases between the popup's spot and this one. */
     .case-title-row {
         display: flex;
         align-items: center;
