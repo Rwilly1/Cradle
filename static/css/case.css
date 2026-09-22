@@ -659,11 +659,18 @@ html.case-open body {
         flex-direction: column;
         gap: 20px;
         border-radius: 0 0 32px 32px;
-        /* Same formula as the popup's own top padding (#popup-4 .popup-box in style.css) —
-           the back button no longer floats over the artwork needing its own clearance (it's
+        /* Same formula as the popup's own padding (#popup-4 .popup-box in style.css) — the
+           back button no longer floats over the artwork needing its own clearance (it's
            inline with the title below instead), so this can match the popup exactly and the
-           iPad lands at the same spot whether the case is open or closed. */
-        padding: calc(16px * var(--mobile-scale, 1)) 24px 40px;
+           iPad lands at the same spot whether the case is open or closed. Side padding must
+           reproduce .popup-box's REAL inset, not just its own padding value: .case (unlike
+           .popup) has no outer wrapper of its own (position:fixed; inset:0), while the popup
+           sits inside .popup's own `padding: 0 16px 16px 16px` before .popup-box adds its
+           20px on top. So .case-hero needs that missing flat 16px folded into its own side
+           padding, or the text column ends up a real ~32px wider here than on the card and
+           re-wraps to a different line count the instant the case opens — independent of
+           the grow animation. */
+        padding: calc(16px * var(--mobile-scale, 1)) calc(16px + 20px * var(--mobile-scale, 1)) 40px;
         overflow: hidden;
     }
 
