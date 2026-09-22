@@ -145,24 +145,37 @@
         return elm || null;
     }
 
-    // Holds the title row (arrow + h1 together) at its true, final size for the entire
-    // grow/shrink, while the iPad and background keep scaling with the card. transformOrigin
-    // '0 0' anchors the scale at the element's own top-left corner, which — like every other
-    // point in .case — still drifts toward .case's own top-left as the card's own scale
-    // shrinks (transform is paint-only; layout, and so every element's true position, never
-    // changes). That drift is exactly what keeps this element's TOP edge lined up with its
-    // neighbors above and below — only its SIZE stays fixed, growing downward/rightward from
-    // that shared, still-correctly-spaced drifting point, instead of shrinking with
-    // everything else. This drift is deliberate here: it's what makes the row read as
-    // "sliding into place" alongside the arrow's own crossing animation (see
-    // arrowCrossTween) rather than teleporting — the subtitle and paragraph below get the
-    // stronger holdStatic treatment instead, which cancels the drift too (see below).
+    // Holds an element at its true, final size for the entire grow/shrink, with no
+    // correction to its position at all — it drifts on both axes toward .case's own
+    // top-left as the card's own scale shrinks (transform is paint-only; layout, and so
+    // every element's true position, never changes). Kept as the general building block;
+    // the title row uses holdHorizontal below instead, which cancels the vertical half of
+    // this same drift.
+    function holdFixed(elm, scale) {
+        if (elm) gsap.set(elm, { transformOrigin: '0 0', scale: 1 / scale });
+    }
+
+    // Holds the title row (arrow + h1 together) at its true, final size, canceling the
+    // vertical half of holdFixed's drift (see above) but leaving the horizontal half alone
+    // — so the row only ever slides left/right, never up/down, as the card grows/shrinks.
+    // That horizontal slide is deliberate: it's what makes the row read as "sliding into
+    // place" alongside the arrow's own crossing animation (see arrowCrossTween) rather than
+    // teleporting. The subtitle and paragraph below get the stronger holdStatic treatment
+    // instead, which cancels drift on both axes (see below) since they have no reason to
+    // move at all.
+    //
+    // ty is the same per-axis correction holdStatic uses (see its own comment for the
+    // derivation) — just applied to y only, leaving x to inherit the parent's translate
+    // untouched, same as holdFixed above.
     //
     // The title row's own child (.case-back) still gets its own independent slide from
     // arrowCrossTween above — that composes correctly on top of this because, from the
     // button's perspective, the row is already rendering as if at true scale.
-    function holdFixed(elm, scale) {
-        if (elm) gsap.set(elm, { transformOrigin: '0 0', scale: 1 / scale });
+    function holdHorizontal(elm, targetRect, cur) {
+        if (!elm || !targetRect) return;
+        var invScale = 1 / cur.scale;
+        var ty = (targetRect.top * (1 - cur.scale) - cur.y) * invScale;
+        gsap.set(elm, { transformOrigin: '0 0', y: ty, scale: invScale });
     }
 
     // Pins an element at its true, final size AND screen position for the entire
@@ -318,23 +331,28 @@
         // title) to its resting spot here (before the title), crossfading from forward to
         // back as it crosses — see arrowCrossTween. Runs as its own timeline, independent of
         // the card's own grow tween below, so it reads as a deliberate motion in its own
-        // right. The title row holds its true size but still slides with the card (see
-        // holdFixed) — that's the motion the arrow's own crossing rides on top of. The
-        // subtitle and paragraph hold true size AND position (see holdStatic) since they
-        // have no reason to move at all. Origins/rects measured now, before applyState below
-        // touches .case's own transform — while .case is still untransformed, a descendant's
-        // rect IS its true resting screen position (see holdStatic's own comment).
+        // right. The title row holds its true size and never moves vertically, only
+        // left/right with the card (see holdHorizontal) — that's the motion the arrow's own
+        // crossing rides on top of. The subtitle and paragraph hold true size AND position
+        // on both axes (see holdStatic) since they have no reason to move at all. Rects
+        // measured now, before applyState below touches .case's own transform — while .case
+        // is still untransformed, a descendant's rect IS its true resting screen position
+        // (see holdStatic's own comment).
         var titleRowOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-title-row')) : null;
         var subtitleOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-text h2')) : null;
         var paragraphOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-text p')) : null;
+        var mediaOrigin = isMobileLayout ? fixedOrigin(el, el.querySelector('.case-hero-media')) : null;
+        var titleRowRect = titleRowOrigin ? titleRowOrigin.getBoundingClientRect() : null;
         var subtitleRect = subtitleOrigin ? subtitleOrigin.getBoundingClientRect() : null;
         var paragraphRect = paragraphOrigin ? paragraphOrigin.getBoundingClientRect() : null;
+        var mediaRect = mediaOrigin ? mediaOrigin.getBoundingClientRect() : null;
         if (isMobileLayout) arrowCrossTween(el, 'open', 0.7);
         applyState(el, from);
         if (isMobileLayout) {
-            holdFixed(titleRowOrigin, from.scale);
+            holdHorizontal(titleRowOrigin, titleRowRect, from);
             holdStatic(subtitleOrigin, subtitleRect, from);
             holdStatic(paragraphOrigin, paragraphRect, from);
+            holdStatic(mediaOrigin, mediaRect, from);
         }
         // Same duration and easing as the page's growth, so the labels stay just ahead of its
         // bottom edge (pushed along by it) rather than being swallowed.
@@ -367,6 +385,7 @@
                 clearFixed(titleRowOrigin);
                 clearFixed(subtitleOrigin);
                 clearFixed(paragraphOrigin);
+                clearFixed(mediaOrigin);
             }
             enableScrollMotion(el);
             revealSharpHero(el);
@@ -379,9 +398,10 @@
             onComplete: finishOpen,
             onInterrupt: finishOpen
         }, isMobileLayout ? function (cur) {
-            holdFixed(titleRowOrigin, cur.scale);
+            holdHorizontal(titleRowOrigin, titleRowRect, cur);
             holdStatic(subtitleOrigin, subtitleRect, cur);
             holdStatic(paragraphOrigin, paragraphRect, cur);
+            holdStatic(mediaOrigin, mediaRect, cur);
         } : null);
         gsap.to(grow.target, grow.vars);
     }
@@ -407,8 +427,8 @@
 
         var ghosts = el.querySelectorAll('.case-ghost');
         var backBtn = el.querySelector('.case-back');
-        var titleRowOrigin = null, subtitleOrigin = null, paragraphOrigin = null;
-        var subtitleRect = null, paragraphRect = null;
+        var titleRowOrigin = null, subtitleOrigin = null, paragraphOrigin = null, mediaOrigin = null;
+        var titleRowRect = null, subtitleRect = null, paragraphRect = null, mediaRect = null;
 
         // Also used as onInterrupt — see the matching note in openCase's finishOpen.
         function finish() {
@@ -421,6 +441,7 @@
             clearFixed(titleRowOrigin);
             clearFixed(subtitleOrigin);
             clearFixed(paragraphOrigin);
+            clearFixed(mediaOrigin);
             if (oldNav && pushedNav) gsap.set(oldNav, { clearProps: 'transform' });
             pushedNav = 0;
             if (box) box.classList.remove('is-covered');
@@ -462,18 +483,23 @@
             titleRowOrigin = fixedOrigin(el, el.querySelector('.case-title-row'));
             subtitleOrigin = fixedOrigin(el, el.querySelector('.case-hero-text h2'));
             paragraphOrigin = fixedOrigin(el, el.querySelector('.case-hero-text p'));
+            mediaOrigin = fixedOrigin(el, el.querySelector('.case-hero-media'));
             // el is still untransformed here (open/resting state), so these rects are the
-            // true resting screen position holdStatic needs to pin back to — see its comment.
+            // true resting screen position holdStatic/holdHorizontal need to pin back to —
+            // see holdStatic's own comment.
+            titleRowRect = titleRowOrigin ? titleRowOrigin.getBoundingClientRect() : null;
             subtitleRect = subtitleOrigin ? subtitleOrigin.getBoundingClientRect() : null;
             paragraphRect = paragraphOrigin ? paragraphOrigin.getBoundingClientRect() : null;
+            mediaRect = mediaOrigin ? mediaOrigin.getBoundingClientRect() : null;
             var arrowTl = arrowCrossTween(el, 'close', 0.7);
             if (arrowTl && wait) arrowTl.delay(wait);
         }
         var shrink = stateTween(el, FULL_STATE, to, { duration: 0.8, ease: 'power3.inOut' },
             isMobileLayout ? function (cur) {
-                holdFixed(titleRowOrigin, cur.scale);
+                holdHorizontal(titleRowOrigin, titleRowRect, cur);
                 holdStatic(subtitleOrigin, subtitleRect, cur);
                 holdStatic(paragraphOrigin, paragraphRect, cur);
+                holdStatic(mediaOrigin, mediaRect, cur);
             } : null);
         tl.to(shrink.target, shrink.vars);
     }
