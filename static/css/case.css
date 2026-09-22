@@ -796,6 +796,17 @@ html.case-open body {
         max-height: 135%;
     }
 
+    /* Prinsys' own popup art (#popup-1 .project-image img in style.css) is sized on a
+       different formula than the generic 135%/-0.4% rule above, which is really the
+       iPad's — so on mobile only, match it exactly here or the phone visibly jumps in
+       size the instant the case opens/closes (unlike Islanding, whose art already uses
+       the generic rule above and so never moves). */
+    .case[data-slug="prinsys"] .case-hero-media img {
+        max-width: 200%;
+        max-height: calc(800px * var(--mobile-scale, 1));
+        transform: none;
+    }
+
     .case-ghost { display: none; }
     /* Matches the popup's own text sizes exactly (#popup-4 .project-text h2/h3/p in
        style.css) — not a bigger "final" size the way the rest of this page is a scaled-up
