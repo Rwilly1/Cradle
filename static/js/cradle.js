@@ -376,6 +376,12 @@ window.addEventListener('mouseup', function() {
 // attached to the canvas itself would simply stop firing for as long as that lasts.
 window.addEventListener('mousemove', function(event) {
     const rect = render.canvas.getBoundingClientRect();
+    // A hidden canvas (mobile breakpoint — see the resize handler below) collapses its
+    // own rect to 0x0. Dividing by that would make scaleX/scaleY Infinity and poison
+    // mousePosition with Infinity/NaN, which then permanently corrupts the highlight
+    // lerp in afterRender (NaN self-propagates through its += accumulator and never
+    // heals on its own). Nothing to track against while there's no visible canvas.
+    if (!rect.width || !rect.height) return;
     const scaleX = render.options.width / rect.width;
     const scaleY = render.options.height / rect.height;
 
@@ -1197,7 +1203,20 @@ window.addEventListener('resize', () => {
     resizeTimer = setTimeout(() => {
         const newWidth = container.clientWidth;
         const newHeight = container.clientHeight;
-        if (newWidth <= 0 || newHeight <= 0) return;
+        if (newWidth <= 0 || newHeight <= 0) {
+            // Crossed down past the mobile breakpoint — #canvas-container just went
+            // display:none. Actually stop the render/physics loops instead of leaving them
+            // running against a hidden canvas: besides the wasted work, a hidden canvas's
+            // getBoundingClientRect() collapses to 0x0, which is what let mousemove poison
+            // mousePosition with Infinity/NaN (see the guard added there) and permanently
+            // break the ball highlights until a future resize happened to rebuild the scene.
+            if (cradleActive) {
+                cradleActive = false;
+                Render.stop(render);
+                Runner.stop(runner);
+            }
+            return;
+        }
 
         const pixelRatio = window.devicePixelRatio || 2;
 
@@ -1217,14 +1236,29 @@ window.addEventListener('resize', () => {
         clearScene();
         buildScene(newWidth, newHeight, false);
 
-        // First time the cradle becomes visible (e.g. resizing up past the 1024px
-        // mobile breakpoint, or rotating a tablet), start the render/physics loops.
+        // Becoming visible again (e.g. resizing up past the 767px mobile breakpoint, or
+        // rotating a tablet), (re)start the render/physics loops stopped above.
         if (!cradleActive) {
             cradleActive = true;
             Render.run(render);
             Runner.run(runner, engine);
         }
     }, 150);
+});
+
+// Scroll the open popup's section into view the instant the mobile breakpoint flips,
+// not the resize handler above's 150ms-debounced settle. That handler still does the
+// heavy work (stopping Render/Runner, rebuilding the desktop scene) — 150ms late for
+// that is invisible — but the CSS breakpoint itself flips immediately, natively, the
+// moment the width crosses 767px, switching every .popup to display:block in normal
+// document flow (see style.css) with the page scrolled to its top. Waiting on the
+// debounce to then correct that scroll position left a visible flash of the top of the
+// page (the About section) before it jumped to the actually-open card. matchMedia's
+// change event fires right as that flip happens, so react there instead.
+window.matchMedia('(max-width: 767px)').addEventListener('change', function(e) {
+    if (!e.matches || !popupOpen) return;
+    const openPopupEl = document.getElementById(`popup-${currentPopupIndex}`);
+    if (openPopupEl) openPopupEl.scrollIntoView({ block: 'start' });
 });
 
 gsap.from('#canvas-container', {
