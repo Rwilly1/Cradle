@@ -1245,8 +1245,12 @@ html.case-open body {
         display: none;
     }
 
+    /* Property Monitoring / Account Management / Installation Guide — the
+       per-flow title above the wireframes — mobile only, since the filmstrip
+       already reads fine without it and it's one more thing competing for
+       space on a phone screen. */
     .prinsys-carousel--fade-grid .carousel-grid-title {
-        font-size: 16px;
+        display: none;
     }
 
     /* One wireframe at a time, sized like every other case-media image on
