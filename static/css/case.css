@@ -1199,6 +1199,13 @@ html.case-open body {
     z-index: 1;
 }
 
+/* Desktop has the room to read this on one line — only force the break
+   (after "Admin") on mobile, where .erd-title switches to normal flow and
+   the full string alone would otherwise wrap wherever happens to fit. */
+.erd-title-break {
+    display: none;
+}
+
 .erd-image {
     display: block;
     width: auto;
@@ -1230,6 +1237,10 @@ html.case-open body {
         color: #f2f0ef;
         font-size: 18px;
         margin: 0 0 14px;
+    }
+
+    .erd-title-break {
+        display: block;
     }
 
     .erd-image {
