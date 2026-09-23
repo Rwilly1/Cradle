@@ -860,8 +860,7 @@ html.case-open body {
        itself is fixed px on mobile. Radius steps up the same way, 10 to 17 to 24, landing
        exactly on the card's own 24px radius for a seamless curve into the corner. */
     .case-media img,
-    .case-video-wrap,
-    .carousel-stack {
+    .case-video-wrap {
         border-radius: 10px;
         box-shadow:
             0 0 0 7px rgba(255, 255, 255, 0.18),
@@ -982,6 +981,21 @@ html.case-open body {
         0 0 0 1vw rgba(255, 255, 255, 0.18),
         0 0 0 2vw rgba(255, 255, 255, 0.09);
     overflow: hidden;
+}
+
+/* Same fixed-px ring the mobile .case-media img rule above uses — declared
+   again here (not just added to that selector) because this unconditional
+   .carousel-stack rule comes after it in the file: equal specificity means
+   source order decides, and without this second declaration the vw-based
+   shadow right above would silently win back on mobile despite that
+   earlier, more mobile-appropriate media-query rule matching too. */
+@media (max-width: 767px) {
+    .carousel-stack {
+        border-radius: 10px;
+        box-shadow:
+            0 0 0 7px rgba(255, 255, 255, 0.18),
+            0 0 0 14px rgba(255, 255, 255, 0.09);
+    }
 }
 
 .carousel-stack .carousel-slide {
