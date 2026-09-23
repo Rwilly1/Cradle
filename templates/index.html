@@ -269,14 +269,15 @@
             </figure>
             <div class="case-copy">
                 <p class="case-label">Going to Finland</p>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
-                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+                <p>Four of us from Pace's NYC Design Factory, one of only 30 Design Factories in the world, joined Aalto University's yearlong Product Development Project. Our client was Prinsys, a Finnish startup working to bring a battery free leak detection sensor to market.</p>
+                <p>Our team of 11 brought together students from New York, Pakistan, the Netherlands, India, Colombia, and France. We met the Prinsys team and its investors in Helsinki. We spent several days prototyping in the ProtoBunker. It had electrical tools, plumbing equipment, and 3D printers. The trip was also filled with team development and collaborative brainstorming sessions, and it is where our research began.</p>
             </div>
         </section>
 
         {% call case_panel(side="image-right", label="Service Design", image="Prinsys/Prinsys Project /web/service-blueprint.jpg", alt="Prinsys service blueprint mapping customer, front-of-stage, back-of-stage, and support processes") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
-            <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            <p>Before we built an app or any hardware, we mapped the user journey and designed the service end to end. Prinsys was not just selling a battery free water leak sensor, but an entire service connecting sensors, software, people, and processes to prevent water damage.</p>
+            <p>Our service blueprint maps each customer touchpoint to the people and systems behind it. It follows a building from assessment and quote, through installation, to a dashboard fed by sensors that continuously check themselves.</p>
+            <p>The biggest question was what happens when something goes wrong. A malfunction and a leak both notify the customer and Prinsys, but only a leak sends maintenance to repair it. That line decided what Prinsys was liable for and outlined everything we built next.</p>
         {% endcall %}
 
         <section class="case-panel case-panel--image-left" data-nav="Wireframes">
@@ -326,9 +327,10 @@
                 </div>
             </figure>
             <div class="case-copy">
-                <p class="case-label">Wireframe Flow</p>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
-                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+                <p class="case-label">Wireframes</p>
+                <p>The U.S. team owned the front end, and we refined the wireframes with Prinsys. We created high fidelity, WCAG aligned screens across three flows. We went with a mobile first approach.</p>
+                <p>Property Monitoring includes a map. The app is designed for owners of apartments and hotels who manage many buildings. The Installation Guide took the longest to troubleshoot. Barcodes let maintenance teams register sensors with a phone camera for ease of use. Account Management covers alerts and support.</p>
+                <p>I built the app in Vue.js, converting real blueprints into SVG floor plans with clickable sensors. A separate team of 8 CS students at Aalto built the backend and mocked our data, so we could test every alert.</p>
             </div>
         </section>
 
@@ -343,15 +345,15 @@
             <figure class="case-media">
                 <div class="prinsys-carousel prinsys-carousel--fade" data-carousel data-effect="fade" data-autoplay="6000">
                     <div class="carousel-stack">
-                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /RF Circuit schematic/web/2-schematic-cropped.jpg') }}" alt="RF circuit schematic and bill of materials"></div>
+                        <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /RF Circuit schematic/web/2-schematic-cropped.jpg') }}" alt="RF circuit Schematic and bill of materials"></div>
                         <div class="carousel-slide"><img src="{{ url_for('static', filename='Prinsys/Prinsys Project /RF Circuit schematic/2IMG_2787.JPG') }}" alt="RF circuit schematic, EDA layout"></div>
                     </div>
                 </div>
             </figure>
             <div class="case-copy">
                 <p class="case-label">RF Circuit schematic</p>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
-                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+                <p>A building full of sensors needs a receiver to collect their signals, and the Finnish team designed its circuit. As the only engineer on the U.S. team, I became the link between their hardware and our software.</p>
+                <p>They started from a reference circuit built around the PT4455 chip, which runs at 315 or 433.92 MHz. A crystal oscillator locks the signal to one frequency, and a matching network shapes the output so it leaves the board cleanly. The team then rebuilt it in KiCad, wiring each part to the chip's pins, power and ground rails, and connectors for PCB layout. Every alert in the app begins as a signal on this board.</p>
             </div>
         </section>
 
@@ -367,8 +369,9 @@
             </figure>
             <div class="case-copy">
                 <p class="case-label">The Handoff</p>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit urna orci, vel viverra eros suscipit et. Sed accumsan diam eget accumsan semper. Nulla tincidunt ornare, lacus sed tincidunt ornare, nunc ligula lobortis.</p>
-                <p>Enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo. Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+                <p>At the end of the year, we handed Prinsys a service design, a receiver prototype, and a working app. Prinsys took the Vue.js app I built for continued development, and the receiver prototype is being refined for production.</p>
+                <p>Prinsys had always been building the sensor. Before this project, the sensor was one piece of a business. Our team built the service, software, and hardware around it, and gave Prinsys a roadmap to a finished product. All of that work is still being used and built on.</p>
+                <p>The final work was presented at Aalto University's Product Development Gala. It was one of the most unique experiences of my time in college. I watched a product start from the ground up, and I learned from a team of brilliant minds.</p>
             </div>
         </section>
     {% endcall %}
