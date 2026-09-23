@@ -15,6 +15,17 @@
   side   "image-left" or "image-right" (which edge the image block bleeds off)
   image  path under /static; leave empty to render a labelled placeholder slot.
          Each panel is one full screen (text + image together) and is a scroll-snap stop.
+
+  MOBILE POPUP-ART GOTCHA: if the new case's #popup-N .project-image in style.css needs its
+  own min-height/margin-top/margin-bottom/img sizing (because the art isn't shaped like
+  Islanding's iPad — Prinsys's taller phone shot is why #popup-1 has one), you MUST add a
+  matching .case[data-slug="..."] .case-hero-media / .case-hero-media img override in the
+  mobile block of case.css (see the data-slug="prinsys" overrides there, right after the
+  generic .case-hero-media rule, which also explains why). Skip it and the case page's hero
+  box silently falls back to Islanding's generic numbers while the popup card keeps its own —
+  the two disagree the instant the case opens, and the title/paragraph block (eased as one
+  rigid unit) visibly jumps/overlaps its own image on open. If the new case's art fits the
+  generic box fine (like Islanding's does), no override is needed at all.
 #}
 
 {% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_src_sharp=None, hero_alt="") %}

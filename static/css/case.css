@@ -764,7 +764,15 @@ html.case-open body {
 
     /* Same box the popup's own iPad image sizes itself into (see #popup-4 .project-image in
        style.css) — the min-height + top alignment is what keeps the video overlay's percentage
-       sizing landing on the actual screen cutout instead of ballooning over the whole bezel. */
+       sizing landing on the actual screen cutout instead of ballooning over the whole bezel.
+       These numbers are Islanding's own (#popup-4 .project-image never overrides them, so it
+       gets this generic box for free and its case page opens/closes with zero jump). ANY case
+       whose #popup-N .project-image in style.css DOES override min-height/margin-top/
+       margin-bottom (Prinsys does — see the data-slug="prinsys" override right below) needs a
+       matching .case[data-slug="..."] .case-hero-media override here with those same three
+       values, or its case-hero-media silently falls back to Islanding's box and the image
+       jumps by the difference the instant the case opens — exactly the bug this comment is
+       here to keep you from reintroducing on the next case study. */
     .case-hero-media {
         width: 100%;
         align-items: flex-start;
@@ -805,6 +813,18 @@ html.case-open body {
         max-width: 200%;
         max-height: calc(800px * var(--mobile-scale, 1));
         transform: none;
+    }
+
+    /* #popup-1 .project-image (style.css) also overrides the BOX around that art — a taller
+       min-height and a shallower (less negative) margin-top than the generic .case-hero-media
+       above — so it has to be matched here too, same reasoning as the img override right
+       above it: otherwise this box silently falls back to Islanding's numbers and the whole
+       hero block (image + pinned title/paragraph, eased as one rigid unit by case.js) lands
+       in a different spot than the closed popup the instant the case opens, reading as the
+       text getting cut off/overlapped mid-transition. */
+    .case[data-slug="prinsys"] .case-hero-media {
+        min-height: calc(450px * var(--mobile-scale, 1));
+        margin-top: calc(-24px * var(--mobile-scale, 1));
     }
 
     .case-ghost { display: none; }
