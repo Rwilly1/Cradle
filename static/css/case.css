@@ -653,13 +653,71 @@ html.case-open body {
     transform-origin: 0% 50%;
 }
 
+/* Methodology panel: the Google Slides recording has a thin black line along its top
+   edge; crops roughly 1/16 inch off the top by zooming in, anchored to the bottom edge
+   so only the excess pushed above the frame gets clipped by overflow:hidden. */
+.case-panel[data-nav="Methodology"] .case-video-wrap video {
+    transform: scale(1.02);
+    transform-origin: 50% 100%;
+}
+
+/* 3D Ties panel: crops roughly 1/2 inch off the top of the Blender screenshot so the
+   knots read as more vertically centered. aspect-ratio shrinks the img's own box (height:
+   auto normally follows the PNG's real 1560x1128 ratio; this widens it instead), and
+   object-fit:cover + object-position:bottom crops the excess off the top to fill that
+   shorter box rather than stretching or letterboxing it. */
+.case-panel[data-nav="3D Ties"] .case-media img {
+    aspect-ratio: 1.554;
+    object-fit: cover;
+    object-position: bottom;
+}
+
 /* Algorithmic Crafting's first panel: a photo stacked directly above its matching video,
    reading as one tall rectangle instead of the usual single image/video figure. Column
    layout is all this needs — .case-media's own padding/radius/background and the img/
    .case-video-wrap width:100% rules above already apply to both children unchanged. */
 .case-media--stacked {
+    display: flex;
     flex-direction: column;
     gap: 1.4vw;
+    width: 100%;
+}
+
+/* Knots in Pieces panel: image and video sit flush, no gap between them, and share ONE
+   ring/shadow around the pair instead of each carrying its own — so the two rings don't
+   double up at the seam. border-radius + overflow:hidden live on the shared container;
+   the image/video below have their own radius and shadow stripped so only the
+   container's own four corners round (the touching edge in the middle is a straight
+   line, since it isn't near any of those corners). */
+.case-panel[data-nav="Knots in Pieces"] .case-media--stacked {
+    gap: 0;
+    border-radius: 1.4vw;
+    box-shadow:
+        0 0 0 1vw rgba(255, 255, 255, 0.18),
+        0 0 0 2vw rgba(255, 255, 255, 0.09);
+    overflow: hidden;
+}
+
+.case-panel[data-nav="Knots in Pieces"] .case-media--stacked img,
+.case-panel[data-nav="Knots in Pieces"] .case-media--stacked .case-video-wrap {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Knots in Pieces panel: crops roughly 1/16 inch off the video's right edge, same
+   left-anchored zoom technique as the Unity Tests crop above. */
+.case-panel[data-nav="Knots in Pieces"] .case-video-wrap video {
+    transform: scale(1.02);
+    transform-origin: 0% 50%;
+}
+
+@media (max-width: 767px) {
+    .case-panel[data-nav="Knots in Pieces"] .case-media--stacked {
+        border-radius: 10px;
+        box-shadow:
+            0 0 0 7px rgba(255, 255, 255, 0.18),
+            0 0 0 14px rgba(255, 255, 255, 0.09);
+    }
 }
 
 .case-video-pause {
