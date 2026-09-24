@@ -839,10 +839,14 @@ html.case-open body {
     transform: translateY(-4px);
 }
 
-/* Algorithmic Crafting only: back-to-top arrow sits bottom-left instead of bottom-right. */
-.case[data-slug="algorithmic-crafting"] .case-top {
-    right: auto;
-    left: 2.5vw;
+/* Algorithmic Crafting only: back-to-top arrow sits bottom-left instead of bottom-right.
+   Desktop only (min-width:768px) — otherwise this beats the mobile centered .case-top
+   rule below on specificity alone, regardless of media-query source order. */
+@media (min-width: 768px) {
+    .case[data-slug="algorithmic-crafting"] .case-top {
+        right: auto;
+        left: 2.5vw;
+    }
 }
 
 /* Phones and narrow windows: full-bleed, same as the desktop hero. Opening/closing never
@@ -1109,16 +1113,6 @@ html.case-open body {
 
     .case-top:hover {
         transform: translateX(-50%) translateY(-4px);
-    }
-
-    /* Algorithmic Crafting only: bottom-left instead of centered on mobile too. */
-    .case[data-slug="algorithmic-crafting"] .case-top {
-        left: 16px;
-        transform: none;
-    }
-
-    .case[data-slug="algorithmic-crafting"] .case-top:hover {
-        transform: translateY(-4px);
     }
 }
 
