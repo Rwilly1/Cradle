@@ -714,12 +714,13 @@
     // color-wave chase as the landing page's picker heading (see the SplitText block in
     // cradle.js), replayed on every hover-in. Desktop only, and only for popups that
     // actually have an arrow (.popup[data-case] .popup-open) — future case studies get
-    // this for free since it's wired here rather than hardcoded per popup.
+    // this for free since it's wired here rather than hardcoded per popup. Algorithmic
+    // Crafting opts out by request — its arrow shows with no "Explore" label.
     var hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 768px)').matches;
     if (hoverCapable && window.gsap && window.SplitText) {
         gsap.registerPlugin(SplitText);
         var rainbow = ['#7a0000', '#cc4e00', '#cca300', '#457a00', '#004e7a', '#401268'];
-        document.querySelectorAll('.popup[data-case] .popup-open').forEach(function (arrow) {
+        document.querySelectorAll('.popup[data-case]:not([data-case="algorithmic-crafting"]) .popup-open').forEach(function (arrow) {
             var box = arrow.closest('.popup-box');
             if (!box) return;
             var label = document.createElement('span');

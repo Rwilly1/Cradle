@@ -28,7 +28,7 @@
   generic box fine (like Islanding's does), no override is needed at all.
 #}
 
-{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src, hero_src_mobile=None, hero_src_sharp=None, hero_alt="") %}
+{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src=None, hero_src_mobile=None, hero_src_sharp=None, hero_alt="", hero_knots=None, hero_knots_square=None) %}
 <article class="case" id="case-{{ slug }}" data-slug="{{ slug }}" data-popup="{{ popup }}"
          style="--case-color: {{ color }}" role="dialog" aria-label="{{ title }} case study" tabindex="-1">
     {# Mobile only (see .case-bg in case.css): the card's colour/shape, grown and shrunk
@@ -37,12 +37,27 @@
        and never touches this element. #}
     <div class="case-bg" aria-hidden="true"></div>
     <div class="case-head">
-    <header class="case-hero">
+    <header class="case-hero{% if hero_knots %} case-hero--stacked{% endif %}">
         {# Look-alikes of the popup's X and arrow, in the same spots: they fade out as the popup
            grows into this banner (and back in as it shrinks). Never visible otherwise. #}
         <span class="case-ghost case-ghost--close" aria-hidden="true">X</span>
         <span class="case-ghost case-ghost--open" aria-hidden="true"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></span>
         <div class="case-hero-media">
+            {% if hero_knots %}
+            {# Algorithmic Crafting only: the popup's own card shows a row of knot diagrams
+               (desktop) that collapses to one square vector (mobile) instead of a single
+               hero photo — see .algorithmic-knots in style.css. Mirrored here verbatim (same
+               files, same desktop/mobile swap) so the banner reads as the popup simply
+               having grown, not switched to different artwork. #}
+            <div class="case-hero-knots">
+                {% for k in hero_knots %}
+                <img src="{{ url_for('static', filename=k.src) }}" alt="{{ k.alt }}">
+                {% endfor %}
+            </div>
+            {% if hero_knots_square %}
+            <img class="case-hero-knot-square" src="{{ url_for('static', filename=hero_knots_square) }}" alt="{{ hero_alt or title }}">
+            {% endif %}
+            {% else %}
             <picture>
                 {% if hero_src_mobile %}
                 <source media="(max-width: 767px)" srcset="{{ url_for('static', filename=hero_src_mobile) }}">
@@ -56,6 +71,7 @@
                settles into place, so the swap reads as the popup simply never having lost
                quality rather than as a jarring resolution jump mid-page. #}
             <img class="case-hero-sharp" src="{{ url_for('static', filename=hero_src_sharp) }}" alt="" aria-hidden="true">
+            {% endif %}
             {% endif %}
             {# If this popup has a video (data-video-slot), case.js moves the real element in
                here on open and back on close — never a copy, so playback never re-syncs. #}

@@ -271,6 +271,33 @@ html.case-open body {
     gap: calc(var(--u) * 20);
 }
 
+/* Algorithmic Crafting only: the popup card stacks its knot row above the full-width title/
+   text instead of splitting image-left/text-right (see .algorithmic-layout in style.css), so
+   its banner has to grow into the same stacked shape rather than the generic side-by-side
+   .case-hero above. Kept at the SAME fixed height as every other hero (280 popup-units —
+   every .popup-box is 665x280, algorithmic-crafting's included) with the knot row/gaps sized
+   down to the popup's own exact values (scaled by --u instead of px) so the whole banner
+   already matches 100% of the closed popup's content at any size — nothing is clipped away
+   and revealed mid-grow, nothing left over once it lands. See hero_knots in _case.html. */
+.case-hero--stacked {
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--u) * 10);
+}
+
+.case-hero--stacked .case-hero-media {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.case-hero--stacked .case-hero-text {
+    flex: none;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
 .case-hero-media {
     position: relative;
     flex-shrink: 0;
@@ -326,6 +353,61 @@ html.case-open body {
     }
 }
 
+/* The knot row (desktop) and its single-square mobile replacement (see hero_knots /
+   hero_knots_square in _case.html) both land directly in .case-hero-media, so they'd
+   otherwise inherit the single-hero-image rule above (absolute, fixed --u width, centred) —
+   both selectors here need to out-specificity that generic .case-hero-media img rule, so
+   each is written as its own complete, self-contained override rather than sharing one. */
+.case-hero-knots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--u) * 10);
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Same 24%-wide, 140-tall-max, 0.9-scaled treatment as #popup-3 .algorithmic-knots
+   .knots-horizontal in style.css — matched value-for-value (just in --u instead of px) so
+   the knots render at exactly the popup's own size once the banner is scaled to match it. */
+.case-hero-media .case-hero-knots img {
+    position: static;
+    width: 24%;
+    max-width: none;
+    max-height: calc(var(--u) * 140);
+    height: auto;
+    object-fit: contain;
+    transform: scale(0.9);
+}
+
+/* Mobile shows only the square vector (matching #popup-3 .algorithmic-knots on the popup
+   card); the knot row is desktop only. */
+.case-hero-media .case-hero-knot-square {
+    display: none;
+    position: static;
+    max-width: none;
+    max-height: none;
+    height: auto;
+    transform: none;
+}
+
+@media (max-width: 767px) {
+    .case-hero-knots {
+        display: none;
+    }
+
+    /* Same fixed-and-scaled formula as #popup-3 .algorithmic-knots .knots-square in
+       style.css (400px * --mobile-scale), not a %, so the vector renders at exactly the
+       popup's own mobile size instead of a different one that jumps when the case opens. */
+    .case-hero-media .case-hero-knot-square {
+        display: block;
+        width: calc(400px * var(--mobile-scale, 1));
+        max-width: 100%;
+        margin: 0 auto;
+    }
+}
+
 /* Ghosts of the popup's corner symbols (see .popup-close / .popup-open): same size and place,
    in popup pixels, invisible except while case.js fades them during the grow/shrink. */
 .case-ghost {
@@ -352,6 +434,14 @@ html.case-open body {
 
 .case-ghost--open {
     bottom: calc(var(--u) * 14);
+}
+
+/* Algorithmic Crafting's real open-arrow sits inline next to the title, not floating in
+   this bottom-right corner (see .algorithmic-layout .popup-open in style.css — the popup
+   card is already full, with no room for a floating corner arrow) — so this ghost has
+   nothing real to fade in/out over and would just flash in an empty corner every open/close. */
+.case[data-slug="algorithmic-crafting"] .case-ghost--open {
+    display: none;
 }
 
 .case-ghost--open img {
@@ -545,12 +635,23 @@ html.case-open body {
         0 0 0 2vw rgba(255, 255, 255, 0.09);
 }
 
-/* The source render has a sliver of Blender's UI along its left edge; scale in and
-   nudge right to crop it out. Radius/shadow live on the wrap (above) instead of the
-   video itself, since overflow:hidden there is what actually clips the crop. */
-.case-video-wrap video {
+/* Islanding's source render has a sliver of Blender's UI along its left edge; scale in and
+   nudge right to crop it out. Scoped to that one case only — every other case's panel
+   videos (Algorithmic Crafting's screen recordings included) have nothing to hide and
+   should show uncropped. Radius/shadow live on the wrap (above) instead of the video
+   itself, since overflow:hidden there is what actually clips the crop. */
+.case[data-slug="islanding-nyc"] .case-video-wrap video {
     transform: scale(1.08) translateX(2.5%);
     transform-origin: center;
+}
+
+/* Algorithmic Crafting's first panel: a photo stacked directly above its matching video,
+   reading as one tall rectangle instead of the usual single image/video figure. Column
+   layout is all this needs — .case-media's own padding/radius/background and the img/
+   .case-video-wrap width:100% rules above already apply to both children unchanged. */
+.case-media--stacked {
+    flex-direction: column;
+    gap: 1.4vw;
 }
 
 .case-video-pause {
@@ -827,6 +928,16 @@ html.case-open body {
         margin-top: calc(-24px * var(--mobile-scale, 1));
     }
 
+    /* Algorithmic Crafting's hero isn't an iPad/phone photo sitting beside the text (what
+       the generic .case-hero-media box above is tuned for) — it's the knot row's mobile
+       replacement, a plain square vector in normal flow above the title. None of that
+       box's negative-margin/min-height compensation applies here. */
+    .case[data-slug="algorithmic-crafting"] .case-hero-media {
+        min-height: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
     .case-ghost { display: none; }
     /* Matches the popup's own text sizes exactly (#popup-4 .project-text h2/h3/p in
        style.css) — not a bigger "final" size the way the rest of this page is a scaled-up
@@ -885,6 +996,10 @@ html.case-open body {
         box-shadow:
             0 0 0 7px rgba(255, 255, 255, 0.18),
             0 0 0 14px rgba(255, 255, 255, 0.09);
+    }
+
+    .case-media--stacked {
+        gap: 14px;
     }
 
     .case-copy,

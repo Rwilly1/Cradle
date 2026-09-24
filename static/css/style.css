@@ -789,6 +789,28 @@ html.case-pending .container {
     transform: scale(0.9);
 }
 
+/* Algorithmic Crafting's title sits above a full-width layout instead of beside a single
+   hero image (see .algorithmic-layout above), so unlike the other case-openable popups the
+   open-arrow can't float bottom-right — the box is already full (title+subtitle+paragraph
+   exactly fill it, no spare room) and it would land on top of the last line of text. Kept
+   inline next to the title instead. Mobile already gets this via the generic
+   .project-title-row rule in the max-width:767px block below, so this only needs to apply
+   on desktop. */
+@media (min-width: 768px) {
+    .algorithmic-layout .project-title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .algorithmic-layout .popup-open {
+        position: static;
+        width: 16px;
+        height: 16px;
+        opacity: 0.6;
+    }
+}
+
 /* Contact content overlay */
 .contact-content {
     position: absolute;
@@ -1145,12 +1167,12 @@ html.case-pending .container {
     #popup-3 .popup-box {
         background-color: #457a00;
     }
-    
+
     #popup-3 .algorithmic-layout {
         flex-direction: column;
         gap: calc(24px * var(--mobile-scale, 1));
     }
-    
+
     #popup-3 .algorithmic-knots {
         flex-wrap: wrap;
         gap: 0;
@@ -1160,18 +1182,18 @@ html.case-pending .container {
            vertically, which would otherwise reintroduce the same top-gap inconsistency. */
         align-items: flex-start;
     }
-    
+
     #popup-3 .algorithmic-knots .knots-square {
         display: block;
         width: 100%;
         max-width: calc(400px * var(--mobile-scale, 1));
         height: auto;
     }
-    
+
     #popup-3 .algorithmic-knots .knots-horizontal {
         display: none;
     }
-    
+
     /* Islanding NYC (blue) */
     #popup-4 .popup-box {
         background-color: #004e7a;
