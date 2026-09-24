@@ -725,7 +725,8 @@
             var box = arrow.closest('.popup-box');
             if (!box) return;
             var popupEl = arrow.closest('.popup[data-case]');
-            var wantsLabel = !(popupEl && popupEl.getAttribute('data-case') === 'algorithmic-crafting');
+            var isAlgorithmic = !!(popupEl && popupEl.getAttribute('data-case') === 'algorithmic-crafting');
+            var wantsLabel = !isAlgorithmic;
             var label = null;
             var split = null;
             if (wantsLabel) {
@@ -736,7 +737,14 @@
                 arrow.insertAdjacentElement('beforebegin', label);
                 split = SplitText.create(label, { type: 'chars' });
             }
-            var targets = label ? [arrow, label] : [arrow];
+            // Algorithmic Crafting has no "Explore" label to bounce alongside the arrow, so
+            // the title rides along with it instead — animating the shared .project-title-row
+            // (title + arrow are both its flex children, positioned inline via .algorithmic-
+            // layout .popup-open in style.css) moves both as one rigid block, guaranteeing
+            // pixel-identical motion instead of two separately-tweened elements that could
+            // drift apart and read as the title bumping into the arrow.
+            var titleRow = isAlgorithmic ? box.querySelector('.project-title-row') : null;
+            var targets = label ? [arrow, label] : (titleRow ? [titleRow] : [arrow]);
             var wave = null;
             var tapTl = null;
             var boxHovering = false;
@@ -755,13 +763,18 @@
             // Periodic "tap" nudge on top of the arrow/label's own steady hover offset
             // (translateX(3px), set by CSS), to keep pulling the eye back to it while the
             // pointer lingers. x:3 here matches that CSS offset so GSAP can take over the
-            // transform with no visible jump; clearProps hands it back to CSS.
+            // transform with no visible jump; clearProps hands it back to CSS. Algorithmic
+            // Crafting has no such CSS baseline on its .project-title-row (see case.css —
+            // its .popup-open is excluded from that rule since the row handles the whole
+            // hover offset itself), so it rests at 0 instead.
+            var restX = titleRow ? 0 : 3;
+            var tapX = titleRow ? 6 : 9;
             function startTap() {
                 if (tapTl) tapTl.kill();
-                gsap.set(targets, { x: 3, opacity: 1 });
+                gsap.set(targets, { x: restX, opacity: 1 });
                 tapTl = gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: 1.4 });
-                tapTl.to(targets, { x: 9, duration: 0.22, ease: 'power2.out' })
-                     .to(targets, { x: 3, duration: 0.28, ease: 'power2.in' });
+                tapTl.to(targets, { x: tapX, duration: 0.22, ease: 'power2.out' })
+                     .to(targets, { x: restX, duration: 0.28, ease: 'power2.in' });
             }
 
             function stopTap() {

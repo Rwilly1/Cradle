@@ -84,6 +84,13 @@ body.case-hint .container {
         transform: translateX(3px);
     }
 
+    /* Algorithmic Crafting's arrow moves with the title as one shared .project-title-row
+       unit instead (see case.js), so it must not also get the offset above on its own —
+       doing both would double up and pull it out of sync with the title. */
+    .popup[data-case] .popup-box:hover .algorithmic-layout .popup-open {
+        transform: none;
+    }
+
     .popup[data-case] .popup-box:hover .popup-read-more {
         opacity: 1;
         transform: translateX(3px);
