@@ -911,7 +911,7 @@ html.case-open body {
     }
 
     .case-label { color: #f2f0ef; font-size: 16px; margin-bottom: 14px; }
-    .case-copy p:not(.case-label) { font-size: 16px; line-height: 1.55; color: #f2f0ef; }
+    .case-copy p:not(.case-label) { font-size: 14px; line-height: 1.55; color: #f2f0ef; }
 
     /* Centered under the page, per the mobile design (desktop keeps bottom-right). */
     .case-top {
