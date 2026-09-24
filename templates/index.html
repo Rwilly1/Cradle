@@ -176,7 +176,7 @@
                         <h2>Algorithmic Crafting</h2>
                         <a class="popup-open" href="#algorithmic-crafting" aria-label="Open the Algorithmic Crafting case study"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></a>
                     </div>
-                    <h3>Human Centered Design</h3>
+                    <h3>Research Through Design</h3>
                     <p>{{ algorithmic_intro }}</p>
                 </div>
             </div>
@@ -380,7 +380,7 @@
     {% endcall %}
 
     {% call case_study(slug="algorithmic-crafting", popup=3, color="#457a00",
-                       title="Algorithmic Crafting", subtitle="Human Centered Design", intro=algorithmic_intro,
+                       title="Algorithmic Crafting", subtitle="Research Through Design", intro=algorithmic_intro,
                        hero_knots=[
                            {"src": "Algorithmic_Craft/horizontal/knot1.png", "alt": "Knot 1"},
                            {"src": "Algorithmic_Craft/horizontal/knot2.png", "alt": "Knot 2"},
@@ -403,37 +403,36 @@
             </figure>
             <div class="case-copy">
                 <p class="case-label">Knots in Pieces</p>
-                <p>While hand drawing knot diagrams for this research at Pace University, advised by Dr. Jonathan Williams, I noticed that knots could be broken into segments. I used this method to speed up my drawings of knot diagrams for the project.</p>
-                <p>The segments came from a figure 8 knot. I put them to the test, and they built a series of other standard knots. The research received a full year Research Experiences for Undergraduates grant from the Computer Research Association.</p>
-                <p>My first puzzle was physical. I designed, printed, and cut pieces from multicolored craft paper, then asked users to rebuild a knot from an image. It worked early on, but the layered paper was hard to handle and many shapes went unused, so I reduced the pieces and made them more modular.</p>
+                <p>While hand drawing knot diagrams for research advised by Dr. Jonathan Williams, I noticed that knots could be broken into segments. I initially used this method to speed up my drawings process. We put the pieces to the test, and they built a series of other standard knots. The research received a full year Research Experiences for Undergraduates grant from the Computer Research Association.</p>
+                <p>The first puzzle was physical. I designed, printed, and cut pieces from multicolored craft paper, then asked users to rebuild a knot from an image. It worked early on, but the layered paper was hard to handle and many shapes went unused, so I reduced the number of pieces.</p>
             </div>
         </section>
 
         {% call case_panel(side="image-right", label="Methodology", video="Algorithmic_Craft/Alorithmic_craft_project/2Video2GoogleslideTest.mp4", alt="Google Slides knot rebuilding prototype") %}
             <p>This research followed a research through design methodology, where making artifacts is the main way knowledge gets produced. The research is about both the product and the process of making it, so each prototype was also an experiment.</p>
-            <p>My second prototype simulated a digital interface in Google Slides. Users saw a completed knot on one slide, then rebuilt it on the next from stacked PNG pieces in an open work area. I ran the play tests over Zoom. The prototype showed real promise for a dedicated interface. The tests also let me reduce the set to only two modular shapes, which put the focus on recognizing and manipulating them.</p>
+            <p>My second prototype simulated a digital interface in Google Slides. Users saw a completed knot on one slide, then rebuilt it on the next from stacked PNG pieces in an open work area. I ran the play tests over Zoom. The prototype showed promise for a dedicated interface. The tests also let me reduce the set to only two modular shapes, which put the focus on recognizing and manipulating them.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="Drag, Rotate, Layer", video="Algorithmic_Craft/Alorithmic_craft_project/3CustomUITest.mp4", alt="Custom web interface for the knot puzzles") %}
-            <p>The third prototype became a real web interface. Flask handled the routing and served a single page. JavaScript carried the interaction logic, so users could drag pieces, rotate them with the keyboard, and change their layer order to make one strand cross over another.</p>
-            <p>After an instructions page, users worked through seven knot puzzles. I ran iterative user testing and analyzed the performance and interview data in an 11 page research paper.</p>
-            <p>Participants built the knots successfully. They learned the visual language through tracing, shape recognition, and manipulation, and tracing stood out to me as a universal cognitive tool. Users also reported more awareness of their spatial reasoning and felt the puzzles could help them tie real knots.</p>
+            <p>The third prototype became custom code. JavaScript carried the interaction logic, so users could drag pieces, rotate them with the keyboard, and change their layer order to make one strand cross over another.</p>
+            <p>The knots were a vehicle for the computational reasoning required to solve the puzzles. I ran iterative user testing and co-authored an 11-page research paper analyzing the performance and interview data.</p>
+            <p>Participants not only built the knots successfully. They learned the visual language through tracing, shape recognition, and manipulation, and tracing stood out to me as a universal cognitive tool.</p>
         {% endcall %}
 
         {% call case_panel(side="image-right", label="AI Crossings", video="Algorithmic_Craft/Alorithmic_craft_project/web/4adobe_3Dknot.mp4", alt="Adobe Illustrator beta AI attempting to rotate a knot vector into 3D") %}
-            <p>Once the puzzle worked in 2D, the project naturally needed to evolve into 3D. I tried turning my vector diagrams into 3D models in Adobe Illustrator. In 2025, Adobe introduced a Beta AI tool that could rotate vector drawings, and I was very excited to try it.</p>
-            <p>The program did not understand the crossings that defined a knot. Without knowing which part of the rope lies over or under, it was just another piece of loose rope. AI was advancing in a lot of areas, but it was not going to tie these knots for us.</p>
+            <p>Once the puzzle worked in 2D, the project naturally needed to evolve into 3D. I tried turning my vector diagrams into 3D models in Adobe Illustrator. In 2025, Adobe introduced a Beta AI tool that could rotate vector drawings, and I was excited to try it.</p>
+            <p>The program did not understand the crossings that defined a knot. Without knowing which part of the rope crossed, it was just another piece of loose rope. AI was advancing in a lot of areas, but it was not going to tie these knots for us.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="3D Ties", image="Algorithmic_Craft/Alorithmic_craft_project/5Knots_Blender.png", alt="3D knot models built from the wireframe drawings") %}
             <p>The Associate Dean of Seidenberg took an interest in our work and wanted to take it into virtual reality. The knots needed real 3D form for that, so I found open source 3D models that matched some of my existing diagrams.</p>
-            <p>Neither of the professors I worked with had experience in 3D modeling. I learned it on my own and shared what I learned along the way, while they guided the research with their years of experience. In weekly meetings they handed me wireframe drawings, and I replicated them in Unity.</p>
+            <p>I studied the knot models and reported back on what I had learned. Neither of my advisers had prior 3D modeling or Unity experience. We had weekly meetings where they guided my work with their years of research experience.</p>
         {% endcall %}
 
         {% call case_panel(side="image-right", label="Unity", video="Algorithmic_Craft/Alorithmic_craft_project/67FirstVRKnot.mp4", alt="A knot recognized inside the Unity VR environment") %}
-            <p>Holding my first knot in VR was a pivotal moment. I started this project with paper, and two years later I was holding a virtual knot in my kitchen.</p>
-            <p>I designed an interactive Unity XR environment with 25 modeled knots for an observational user study. I also trained a Teachable Machine image classification model on 1,500 images of 3 knot types. I integrated it with Python, JavaScript, and HTML, so the Meta Quest 3 camera could recognize each knot and automatically advance the instructions.</p>
-            <p>The model successfully detected the crossings that define each knot, the same crossings the Illustrator AI could not understand. Before this project I had never done formal research, and it led to multiple IRB approved studies.</p>
+            <p>Holding my first knot in VR was a pivotal moment. I started this project with paper, and two years later, I was holding a virtual knot.</p>
+            <p>I also trained a Teachable Machine image classification model on three knot types. I integrated it with Python, JavaScript, and HTML so the Meta Quest 3 camera could recognize each knot and automatically advance the instructions.</p>
+            <p>Before this project, I had never conducted formal research. This work led to multiple IRB-approved studies and guided my interest toward user research.</p>
         {% endcall %}
     {% endcall %}
 
