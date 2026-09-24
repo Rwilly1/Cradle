@@ -648,7 +648,7 @@ html.case-open body {
 /* Unity Tests panel: crops roughly 1 inch off the video's right edge by zooming in,
    anchored to the left edge so the left side of the frame stays put and only the
    excess pushed past the right edge gets clipped by .case-video-wrap's overflow:hidden. */
-.case-panel[data-nav="Unity Tests"] .case-video-wrap video {
+.case-panel[data-nav="Unity"] .case-video-wrap video {
     transform: scale(1.15);
     transform-origin: 0% 50%;
 }
