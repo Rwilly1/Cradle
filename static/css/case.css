@@ -839,6 +839,12 @@ html.case-open body {
     transform: translateY(-4px);
 }
 
+/* Algorithmic Crafting only: back-to-top arrow sits bottom-left instead of bottom-right. */
+.case[data-slug="algorithmic-crafting"] .case-top {
+    right: auto;
+    left: 2.5vw;
+}
+
 /* Phones and narrow windows: full-bleed, same as the desktop hero. Opening/closing never
    scales this layout at all (see case.js) — .case-bg's shape grows/shrinks between the
    popup's footprint and the full screen while this content sits on top of it in place, then
@@ -1103,6 +1109,16 @@ html.case-open body {
 
     .case-top:hover {
         transform: translateX(-50%) translateY(-4px);
+    }
+
+    /* Algorithmic Crafting only: bottom-left instead of centered on mobile too. */
+    .case[data-slug="algorithmic-crafting"] .case-top {
+        left: 16px;
+        transform: none;
+    }
+
+    .case[data-slug="algorithmic-crafting"] .case-top:hover {
+        transform: translateY(-4px);
     }
 }
 

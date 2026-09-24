@@ -715,25 +715,34 @@
     // cradle.js), replayed on every hover-in. Desktop only, and only for popups that
     // actually have an arrow (.popup[data-case] .popup-open) — future case studies get
     // this for free since it's wired here rather than hardcoded per popup. Algorithmic
-    // Crafting opts out by request — its arrow shows with no "Explore" label.
+    // Crafting opts out of the "Explore" label by request, but its arrow still gets the
+    // same periodic tap-bounce as every other case-openable popup's arrow.
     var hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 768px)').matches;
     if (hoverCapable && window.gsap && window.SplitText) {
         gsap.registerPlugin(SplitText);
         var rainbow = ['#7a0000', '#cc4e00', '#cca300', '#457a00', '#004e7a', '#401268'];
-        document.querySelectorAll('.popup[data-case]:not([data-case="algorithmic-crafting"]) .popup-open').forEach(function (arrow) {
+        document.querySelectorAll('.popup[data-case] .popup-open').forEach(function (arrow) {
             var box = arrow.closest('.popup-box');
             if (!box) return;
-            var label = document.createElement('span');
-            label.className = 'popup-read-more';
-            label.setAttribute('aria-hidden', 'true');
-            label.textContent = 'Explore';
-            arrow.insertAdjacentElement('beforebegin', label);
-            var split = SplitText.create(label, { type: 'chars' });
+            var popupEl = arrow.closest('.popup[data-case]');
+            var wantsLabel = !(popupEl && popupEl.getAttribute('data-case') === 'algorithmic-crafting');
+            var label = null;
+            var split = null;
+            if (wantsLabel) {
+                label = document.createElement('span');
+                label.className = 'popup-read-more';
+                label.setAttribute('aria-hidden', 'true');
+                label.textContent = 'Explore';
+                arrow.insertAdjacentElement('beforebegin', label);
+                split = SplitText.create(label, { type: 'chars' });
+            }
+            var targets = label ? [arrow, label] : [arrow];
             var wave = null;
             var tapTl = null;
             var boxHovering = false;
 
             function playWave() {
+                if (!split) return;
                 if (wave) wave.kill();
                 gsap.set(split.chars, { color: '#f2f0ef' });
                 wave = gsap.from(split.chars, {
@@ -749,10 +758,10 @@
             // transform with no visible jump; clearProps hands it back to CSS.
             function startTap() {
                 if (tapTl) tapTl.kill();
-                gsap.set([arrow, label], { x: 3, opacity: 1 });
+                gsap.set(targets, { x: 3, opacity: 1 });
                 tapTl = gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: 1.4 });
-                tapTl.to([arrow, label], { x: 9, duration: 0.22, ease: 'power2.out' })
-                     .to([arrow, label], { x: 3, duration: 0.28, ease: 'power2.in' });
+                tapTl.to(targets, { x: 9, duration: 0.22, ease: 'power2.out' })
+                     .to(targets, { x: 3, duration: 0.28, ease: 'power2.in' });
             }
 
             function stopTap() {
@@ -767,9 +776,9 @@
             box.addEventListener('mouseleave', function () {
                 boxHovering = false;
                 if (wave) wave.kill();
-                gsap.set(split.chars, { color: '#f2f0ef' });
+                if (split) gsap.set(split.chars, { color: '#f2f0ef' });
                 stopTap();
-                gsap.set([arrow, label], { clearProps: 'x,opacity' });
+                gsap.set(targets, { clearProps: 'x,opacity' });
             });
 
             // Hovering the X specifically should hide the arrow/label entirely (back to
@@ -780,16 +789,24 @@
             if (closeBtn) {
                 closeBtn.addEventListener('mouseenter', function () {
                     stopTap();
-                    gsap.to(arrow, { opacity: 0.6, x: 0, duration: 0.2, ease: 'sine.out' });
-                    gsap.to(label, { opacity: 0, x: 8, duration: 0.2, ease: 'sine.out' });
+                    gsap.to(arrow, {
+                        opacity: 0.6, x: 0, duration: 0.2, ease: 'sine.out',
+                        onComplete: label ? undefined : function () { }
+                    });
+                    if (label) gsap.to(label, { opacity: 0, x: 8, duration: 0.2, ease: 'sine.out' });
                 });
                 closeBtn.addEventListener('mouseleave', function () {
                     if (!boxHovering) return;
-                    gsap.to(arrow, { opacity: 1, x: 3, duration: 0.2, ease: 'sine.out' });
-                    gsap.to(label, {
+                    gsap.to(arrow, {
                         opacity: 1, x: 3, duration: 0.2, ease: 'sine.out',
-                        onComplete: function () { if (boxHovering) startTap(); }
+                        onComplete: label ? undefined : function () { if (boxHovering) startTap(); }
                     });
+                    if (label) {
+                        gsap.to(label, {
+                            opacity: 1, x: 3, duration: 0.2, ease: 'sine.out',
+                            onComplete: function () { if (boxHovering) startTap(); }
+                        });
+                    }
                 });
             }
         });
