@@ -1381,6 +1381,61 @@ textToggle.addEventListener('change', function() {
     });
     observer.observe(popup, { attributes: true, attributeFilter: ['class'] });
 
+    // The popup can already be 'active' at setup time (sessionStorage restores the open
+    // popup on refresh/deep-link before this script runs), which the observer above never
+    // sees since it only reacts to later class *changes* — so check the current state once.
+    if (popup.classList.contains('active')) video.play();
+    updateOverlay();
+})();
+
+// Encrypted Chat MP4 player (imac frame, 2x playback)
+(function() {
+    const popup = document.getElementById('popup-2');
+    const video = document.querySelector('.encrypted-video');
+    const overlay = document.querySelector('.encrypted-pause-overlay');
+    if (!popup || !video) return;
+
+    video.playbackRate = 2;
+
+    function updateOverlay() {
+        if (overlay) overlay.classList.toggle('paused', video.paused);
+    }
+
+    function toggleVideo() {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+
+    video.addEventListener('loadedmetadata', function() {
+        video.playbackRate = 2;
+    });
+    video.addEventListener('play', updateOverlay);
+    video.addEventListener('pause', updateOverlay);
+    video.addEventListener('click', toggleVideo);
+
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (popup.classList.contains('active')) {
+                    video.playbackRate = 2;
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+        });
+    });
+    observer.observe(popup, { attributes: true, attributeFilter: ['class'] });
+
+    // See the matching comment in the Islanding player above — the popup can already be
+    // 'active' before this script runs, which the observer never sees on its own.
+    if (popup.classList.contains('active')) {
+        video.playbackRate = 2;
+        video.play();
+    }
     updateOverlay();
 })();
 
@@ -1404,7 +1459,7 @@ textToggle.addEventListener('change', function() {
     // Shared pull angle: the DOM morph below and the real physics pin in cutToCradle()
     // both use this, so the picker's final frame and the live canvas's first frame match.
     const PULL_UX = 0.757, PULL_UY = -0.653;
-    const popupTitles = ['About', 'Prinsys', 'Encrypted Chat', 'Algorithmic Crafting', 'Islanding NYC', 'Contact'];
+    const popupTitles = ['About', 'Prinsys', 'Secure Chat', 'Algorithmic Crafting', 'Islanding NYC', 'Contact'];
     const swatchText = ['#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef', '#f2f0ef'];
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 

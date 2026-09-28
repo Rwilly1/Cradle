@@ -29,7 +29,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Prinsys/horizontal/web/iPhone-15-Pro.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='Encrypted_Chat/imac_wide.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/case.css') }}">
@@ -84,7 +84,7 @@
                 </label>
                 <button class="nav-label" data-popup="0">About</button>
                 <button class="nav-label" data-popup="1">Prinsys</button>
-                <button class="nav-label" data-popup="2">Encrypted Chat</button>
+                <button class="nav-label" data-popup="2">Secure Chat</button>
                 <button class="nav-label" data-popup="3">Algorithmic Crafting</button>
                 <button class="nav-label" data-popup="4">Islanding NYC</button>
                 <button class="nav-label" data-popup="5">Contact</button>
@@ -149,11 +149,20 @@
             <button class="popup-close">X</button>
             <div class="popup-project">
                 <div class="project-image">
-                    <img src="{{ url_for('static', filename='Encrypted_Chat/ChatApp.png') }}" alt="Encrypted Chat" class="encrypted-image">
+                    <div class="encrypted-frame">
+                        <img src="{{ url_for('static', filename='Encrypted_Chat/imac_wide.png') }}" alt="Secure Chat" class="encrypted-image">
+                        <div id="encrypted-video-overlay" class="encrypted-video-overlay" data-video-slot>
+                            <video class="encrypted-video" src="{{ url_for('static', filename='Encrypted_Chat/chatapp.mp4') }}" loop muted playsinline preload="metadata" poster="{{ url_for('static', filename='Encrypted_Chat/poster.jpg') }}" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
+                            <div class="encrypted-pause-overlay" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" class="encrypted-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                                <svg viewBox="0 0 24 24" class="encrypted-icon-play" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="project-text">
-                    <h2>Encrypted Chat</h2>
-                    <h3>Secure Instant Messaging</h3>
+                    <h2>Secure Chat</h2>
+                    <h3>Encrypted Instant Messaging</h3>
                     <p> A full-stack, real-time application built from the ground up using Flask, Socket.IO, and JavaScript, with client-side AES-256 encryption that keeps plaintext inaccessible to the server. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients, then validated the system’s performance and resilience through packet-level network analysis. </p>
                 </div>
             </div>

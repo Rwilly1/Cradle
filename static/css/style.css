@@ -608,9 +608,105 @@ html.case-pending .container {
     max-height: 95% !important;
 }
 
+/* .encrypted-frame is sized to the same 95% cap the old static screenshot used, and its
+   aspect-ratio is locked to imac_wide.png's own (3268x2309) so it always renders exactly
+   the image's bounds with no letterboxing — that's what lets .encrypted-video-overlay below
+   be positioned as plain percentages measured directly off the image's screen pixels instead
+   of eyeballed against the flex container. imac_wide.png is imac.png stretched 17.2%
+   horizontally (screen only 2646x1517 → 3102x1517, dialed back 10% from an initial 19.1%
+   stretch that matched chatapp.mp4's aspect ratio exactly) so the screen opening's aspect
+   ratio (2.088:1) is close to chatapp.mp4's own (2.078:1) — otherwise the video (wider than
+   the real iMac's screen) could only be shown uncropped with a big top/bottom letterbox bar
+   and zero side margin. The trade-off: the imac artwork itself (camera dot, Apple logo,
+   stand) is visibly stretched wider than a real iMac. */
+.encrypted-frame {
+    position: relative;
+    flex-shrink: 0;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 3268 / 2309;
+}
+
+/* .project-image is normally 45% of the card (style.css:563); Encrypted Chat's frame
+   needs a wider allocation to render larger without overlapping .project-text, since
+   .encrypted-frame fills 100% of whatever room this gives it. 46.575% = 45% * 1.15 * 0.9
+   (a 15% bump, then dialed back 10%). Desktop only — the mobile media query below sets
+   .project-image to width:100% in a column layout, and #popup-2's ID specificity would
+   otherwise win over that unconditionally. */
+@media (min-width: 768px) {
+    #popup-2 .project-image {
+        width: 46.575%;
+    }
+}
+
 .encrypted-image {
-    max-width: 95% !important;
-    max-height: 95% !important;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Now that the screen opening's aspect ratio matches chatapp.mp4's (see .encrypted-frame),
+   this only needs a small, equal-px inset from the screen edges on all 4 sides for a thin
+   frame-like rim — no more big top/bottom-only letterbox. object-fit: contain is still the
+   safety net for the ~2% aspect drift the equal-px (rather than equal-%) inset introduces. */
+.encrypted-video-overlay {
+    position: absolute;
+    left: 3.37%;
+    top: 5.33%;
+    width: 93.08%;
+    height: 63.1%;
+    overflow: hidden;
+    z-index: 2;
+    cursor: pointer;
+    background-color: #000;
+}
+
+.encrypted-video {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block;
+}
+
+.encrypted-pause-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 3;
+    transition: opacity 0.2s ease;
+}
+
+.encrypted-video-overlay:hover .encrypted-pause-overlay {
+    opacity: 1;
+}
+
+.encrypted-pause-overlay svg {
+    width: 36px;
+    height: 36px;
+    fill: rgba(255, 255, 255, 0.92);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.encrypted-pause-overlay .encrypted-icon-play {
+    display: none;
+}
+
+.encrypted-pause-overlay.paused .encrypted-icon-pause {
+    display: none;
+}
+
+.encrypted-pause-overlay.paused .encrypted-icon-play {
+    display: block;
 }
 
 .islanding-image {
@@ -743,8 +839,13 @@ html.case-pending .container {
     font-size: 12px;
 }
 
+/* Aligns the title's top edge with the very top of the black on the imac (the device's
+   top edge — there's no separate light bezel above the screen, the camera bump area is
+   black too, see .encrypted-frame's own notes) rather than vertically centering the text
+   block like every other card's .project-text. */
 #popup-2 .project-text {
-    transform: translateY(-21px);
+    justify-content: flex-start;
+    padding-top: 16px;
 }
 
 .algorithmic-layout {
@@ -1154,9 +1255,16 @@ html.case-pending .container {
         background-color: #cca300;
     }
     
-    #popup-2 .project-image img {
+    #popup-2 .encrypted-frame {
         max-width: 100% !important;
         max-height: calc(400px * var(--mobile-scale, 1)) !important;
+    }
+
+    /* Removes ~1/2 inch (48px) of empty space left below the imac by the generic
+       .popup-project .project-image min-height (300px, set above) when the frame's
+       actual rendered height (width-constrained by its aspect-ratio) falls short of it. */
+    #popup-2 .project-image {
+        margin-bottom: calc(-56px * var(--mobile-scale, 1));
     }
     
     #popup-2 .project-text {
