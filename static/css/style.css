@@ -395,25 +395,25 @@ html.case-pending .container {
 
 .contact-layer-1 {
     height: 35px;
-    background-color: rgba(242, 240, 239, 0.25);
+    background-color: #a28bb2;
     z-index: 3;
 }
 
 .contact-layer-2 {
     height: 65px;
-    background-color: rgba(242, 240, 239, 0.20);
+    background-color: #87699d;
     z-index: 2;
 }
 
 .contact-layer-3 {
     height: 95px;
-    background-color: rgba(242, 240, 239, 0.15);
+    background-color: #6b4689;
     z-index: 1;
 }
 
 .contact-layer-4 {
     height: 125px;
-    background-color: rgba(242, 240, 239, 0.10);
+    background-color: #542976;
     z-index: 0;
 }
 
@@ -941,7 +941,7 @@ html.case-pending .container {
 .contact-link {
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
 }
 
 .contact-link:hover .contact-label,
@@ -973,8 +973,83 @@ html.case-pending .container {
     transition: opacity 0.3s ease;
 }
 
+/* will-change pre-promotes each shelf to its own compositing layer at all times.
+   Without it, Chrome creates that layer only at the moment a hover transform first
+   applies, and a rounded-corner sliver of the shelf behind briefly fails to paint
+   during that promotion — visible as a gap of raw page background under the lifted
+   card instead of the next shelf's color peeking through. */
 .contact-layer {
-    transition: filter 0.3s ease;
+    transition: transform 0.28s cubic-bezier(.2,.8,.2,1), box-shadow 0.28s ease, height 0.28s cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+}
+
+/* Hover "peek" for the four Contact cards (mouse only, so touch never gets a stuck
+   hover). The shelves are stacked bottom:0 with layer-1 shortest/frontmost
+   (z-index 3, lightest, #a28bb2, under row 4 Download CV) and layer-4
+   tallest/furthest back (z-index 0, darkest, #542976, under row 1 Email) —
+   data-layer="N" pairs with contact-layer-(5-N), not contact-layer-N. z-index is
+   NEVER touched on hover: the lightest card stays permanently in front and the
+   tallest/darkest card stays permanently in back, so a hovered card can only slide
+   up within that fixed order and peek out further from wherever it already shows
+   through — it can never jump in front of, or flood over, the cards ahead of it.
+   The lift is a small 7px nudge (not the 14px picker-swatch reference) because
+   these rows sit only ~5px apart; the row's text moves the same 7px so the label
+   and its card read as one piece, without the text colliding with the row above.
+   overflow is switched to visible only while a row is hovered/focused, since the
+   top card (35px tall, ~2.5px from the content box's top edge) would otherwise clip
+   against .contact-content's overflow:hidden when it lifts. */
+@media (hover: hover) and (pointer: fine) {
+    .contact-content:has(.contact-link:hover) {
+        overflow: visible;
+    }
+
+    .contact-link:hover {
+        transform: translateY(-7px);
+    }
+
+    .contact-footer:has(.contact-link[data-layer="1"]:hover) .contact-layer-4,
+    .contact-footer:has(.contact-link[data-layer="2"]:hover) .contact-layer-3,
+    .contact-footer:has(.contact-link[data-layer="3"]:hover) .contact-layer-2 {
+        transform: translateY(-7px);
+        box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 10px 16px rgba(59, 52, 50, 0.16);
+    }
+
+    /* Download CV's card (.contact-layer-1) is the frontmost/shortest shelf, so
+       translating it up would always uncover a sliver of .contact-layer-2 behind
+       it. Growing its height instead — bottom stays pinned via the shared
+       bottom:0, only the top edge rises — keeps it flush with the popup's bottom
+       edge and lets its own lightest color fill the whole reveal, never showing
+       the shelf behind. */
+    .contact-footer:has(.contact-link[data-layer="4"]:hover) .contact-layer-1 {
+        height: 42px;
+        box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 10px 16px rgba(59, 52, 50, 0.16);
+    }
+}
+
+.contact-content:has(.contact-link:focus-visible) {
+    overflow: visible;
+}
+
+.contact-link:focus-visible {
+    transform: translateY(-7px);
+}
+
+.contact-footer:has(.contact-link[data-layer="1"]:focus-visible) .contact-layer-4,
+.contact-footer:has(.contact-link[data-layer="2"]:focus-visible) .contact-layer-3,
+.contact-footer:has(.contact-link[data-layer="3"]:focus-visible) .contact-layer-2 {
+    transform: translateY(-7px);
+    box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 10px 16px rgba(59, 52, 50, 0.16);
+}
+
+.contact-footer:has(.contact-link[data-layer="4"]:focus-visible) .contact-layer-1 {
+    height: 42px;
+    box-shadow: 0 1px 0 rgba(59, 52, 50, 0.06), 0 10px 16px rgba(59, 52, 50, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contact-link, .contact-layer {
+        transition: none;
+    }
 }
 
 @media (max-width: 1024px) {
