@@ -634,6 +634,14 @@ html.case-open body {
     font-size: 14px;
     display: flex;
     align-items: center;
+    /* .case-panel's grid column is shared by this row AND .case-copy's row below it — a
+       grid item's default min-width:auto still lets its content's min-content size (e.g. a
+       wide nowrap table via .case-figure) win over the track's own width, growing the whole
+       shared column past the viewport and dragging .case-copy's text along with it too (the
+       "tables AND paragraph both cut off on mobile" bug). min-width:0 lets this item — and
+       the column it's in — actually shrink to fit, so .case-table-scroll's own overflow-x:auto
+       is what scrolls the table instead of the whole card blowing out. */
+    min-width: 0;
 }
 
 .case-panel--image-left .case-media {
@@ -930,6 +938,11 @@ html.case-open body {
     padding: 0.56vw 0.97vw;
     text-align: left;
     white-space: nowrap;
+}
+
+.case-table th:last-child,
+.case-table td:last-child {
+    width: clamp(72px, 9vw, 96px);
 }
 
 .case-table thead th {
@@ -1473,10 +1486,86 @@ html.case-open body {
             0 0 0 14px rgba(255, 255, 255, 0.09);
     }
 
-    /* Tables scroll sideways instead of squashing their columns — see
-       .case-table-scroll's overflow-x above, already unconditional. Two stat tiles per
-       row instead of four so each one has room for its label without wrapping into the
-       next tile's column. */
+    /* Columns stay side by side (never stack into a card-per-row layout) but no longer
+       force a sideways scrollbar to see them all: white-space:normal lets multi-word
+       cells (Feature, Test scenario, Phase, ...) wrap between words instead of forcing
+       the column — and the whole table — wider than the card. table-layout stays auto
+       (not fixed) so each column still sizes to its own content: .num/.mono columns
+       (below) size to their one unbroken token, and the rest of the width goes to the
+       wrapping text columns. word-break/overflow-wrap explicitly "normal" (not the
+       default UA behavior on some engines) so a long single word never gets split
+       mid-word — it's allowed to overflow instead, since a whole word or number reading
+       correctly matters more here than never overflowing a column by a few px. */
+    .case-table th,
+    .case-table td {
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: normal;
+        padding: 6px 2px;
+        font-size: 9px;
+    }
+
+    /* Numbers and flag tokens (Packet, Time (s), Window (bytes), Elapsed, SYN/ACK/...)
+       are always a single unbroken token anyway — nowrap just guarantees the browser
+       never even tries to wrap them, so e.g. "65,535" or "+0.00008 s" always renders on
+       one line. Headers are exempt: their multi-word labels (e.g. "Window (bytes)") CAN
+       wrap onto two lines without hurting readability, and letting them do so instead of
+       forcing the whole column wide just to fit an unwrapped header is what actually
+       lets the data columns fit the card at all on a real phone width. */
+    .case-table td.num,
+    .case-table td.mono {
+        white-space: nowrap;
+    }
+
+    /* Desktop right-aligns .num columns (Packet, Time (s), Window (bytes), Elapsed) so
+       digits line up on their ones place — but at these narrow mobile column widths that
+       shoves each number flush against the START of the next (left-aligned) column
+       instead, with no gap, reading as one run-together column rather than several.
+       Left-aligning here instead puts every header directly above its own data's left
+       edge, like the rest of the table. */
+    .case-table th.num,
+    .case-table td.num {
+        text-align: left;
+    }
+
+    /* Time is the one column here still worth centering over its own data instead of
+       left-aligning like the rest (Packet/Window/Elapsed): left-aligned, "Time" reads as
+       part of the "Packet" header right next to it since Packet's column is so narrow,
+       with no gap to separate the two labels. Scoped to just this table
+       (case-table--transport, set in _table_transport.html) and just its 2nd column, so
+       every other column here and every column in the other tables keeps the left-align
+       above untouched. */
+    .case-table--transport th:nth-child(2),
+    .case-table--transport td:nth-child(2) {
+        text-align: center;
+    }
+
+    .case-table thead th {
+        font-size: 9px;
+    }
+
+    /* The Status column's fixed width (clamp() rule, unconditional above) is wider than
+       the "Pass" pill needs, so left-aligned it reads as stuck to the column's left edge
+       with a dead gap on the right. Centering both the header (.status, set in
+       _table_tests.html) and its pill cells splits that gap evenly on both sides instead
+       — scoped to just this column, not every table's last column, so it doesn't fight
+       the left-align rule above on the Congestion table's unrelated last column
+       (Elapsed, also happens to be :last-child there). */
+    .case-table th.status,
+    .case-table td:has(.case-pill) {
+        text-align: center;
+    }
+
+    /* "Time (s)" / "Window (bytes)" — the unit in parens is redundant with the data
+       itself (seconds, byte counts) and just eats header width on a real phone screen;
+       dropping it here (mobile only, see the span in _table_transport.html) is what the
+       header font-size/padding shrink above was tuned against, not a separate change. */
+    .case-table-unit {
+        display: none;
+    }
+
+    /* Two stat tiles per row instead of four so each one has room for its label without
+       wrapping into the next tile's column. */
     .case-stats {
         grid-template-columns: repeat(2, 1fr);
     }
