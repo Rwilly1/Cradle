@@ -35,3 +35,6 @@ dist/
 
 # Raw video source exports (re-encode to static/**/*.mp4 for delivery)
 static/**/*.mov
+
+# Local-only archive of unused/original assets pulled out of static/ (kept on disk, never pushed)
+_unused_originals/
