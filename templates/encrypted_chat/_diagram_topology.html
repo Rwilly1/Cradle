@@ -1,6 +1,6 @@
 <figure class="case-figure">
     <div class="case-figure-head">
-        <span class="case-figure-eyebrow">03 &middot; ROUTER / ROOM TOPOLOGY</span>
+        <span class="case-figure-eyebrow">ROUTER TOPOLOGY</span>
         <div class="case-legend">
             <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--client"></span>Client</span>
             <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--server"></span>Server</span>
@@ -14,9 +14,7 @@
                 <marker id="mk-topo-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7A0000"></path></marker>
             </defs>
             <rect class="clu" x="30" y="210" width="570" height="190" rx="10"></rect>
-            <text class="cl" x="46" y="234">ROOM &middot; CIT221</text>
             <rect class="clu" x="630" y="210" width="200" height="190" rx="10"></rect>
-            <text class="cl" x="646" y="234">ROOM &middot; DESIGN-TEAM</text>
 
             <path class="e eyn" data-from="router" data-to="alice" d="M430,78 C430,190 130,200 130,298"></path>
             <path class="e eyn" data-from="router" data-to="bob" d="M430,78 C430,190 315,200 315,298"></path>
@@ -26,32 +24,35 @@
             <path class="e ed" data-from="router" data-to="carol" marker-end="url(#mk-topo-d)" d="M562,56 C660,56 560,200 531,296"></path>
             <path class="e ed" data-from="router" data-to="alice" marker-end="url(#mk-topo-d)" d="M298,70 C220,80 170,200 161,296"></path>
 
+            <rect class="clbg" x="42" y="220" width="196" height="20"></rect><text class="cl" x="46" y="234">ROOM &middot; THE BREAKFAST CLUB</text>
+            <rect class="clbg" x="642" y="220" width="185" height="20"></rect><text class="cl" x="646" y="234">ROOM &middot;  OFFICE</text>
+
             <g class="dnode" data-id="router" tabindex="0">
                 <rect class="ns" x="300" y="30" width="260" height="48" rx="6"></rect>
                 <text class="t" x="430" y="50">Flask-SocketIO router</text><text class="t" x="430" y="66">active_users{} &middot; chat_rooms{}</text>
             </g>
             <g class="dnode" data-id="alice" tabindex="0">
                 <rect class="nc" x="60" y="300" width="140" height="48" rx="6"></rect>
-                <text class="tb" x="130" y="320">Alice</text><text class="t" x="130" y="336">sid 4f2a</text>
+                <text class="tb" x="130" y="320">Bender</text><text class="t" x="130" y="336">sid 4f2a</text>
             </g>
             <g class="dnode" data-id="bob" tabindex="0">
                 <rect class="nc" x="245" y="300" width="140" height="48" rx="6"></rect>
-                <text class="tb" x="315" y="320">Bob</text><text class="t" x="315" y="336">sid 91cd</text>
+                <text class="tb" x="315" y="320">Andrew</text><text class="t" x="315" y="336">sid 91cd</text>
             </g>
             <g class="dnode" data-id="carol" tabindex="0">
                 <rect class="nc" x="430" y="300" width="140" height="48" rx="6"></rect>
-                <text class="tb" x="500" y="320">Carol</text><text class="t" x="500" y="336">sid 7e10</text>
+                <text class="tb" x="500" y="320">Clare</text><text class="t" x="500" y="336">sid 7e10</text>
             </g>
             <g class="dnode" data-id="dave" tabindex="0">
-                <rect class="nc" x="660" y="300" width="140" height="48" rx="6"></rect>
-                <text class="tb" x="730" y="320">Dave</text><text class="t" x="730" y="336">sid 2b6f</text>
+                <rect class="nc" x="650" y="300" width="160" height="48" rx="6"></rect>
+                <text class="tb" x="730" y="320">Mr. Vernon</text><text class="t" x="730" y="336">sid 2b6f</text>
             </g>
 
             <rect class="lbg" x="293" y="113" width="274" height="15"></rect><text class="lb" x="430" y="124">broadcast &middot; send_message &rarr; receive_message</text>
-            <rect class="lbg" x="119" y="118" width="102" height="15"></rect><text class="lb" x="170" y="129">send_dm &rarr; carol</text>
+            <rect class="lbg" x="119" y="118" width="102" height="15"></rect><text class="lb" x="170" y="129">send_dm &rarr; clare</text>
             <rect class="lbg" x="564" y="150" width="72" height="15"></rect><text class="lb" x="600" y="161">receive_dm</text>
-            <rect class="lbg" x="122" y="198" width="116" height="15"></rect><text class="lb" x="180" y="209">receive_dm &middot; echo</text>
+            <rect class="lbg" x="146" y="174" width="116" height="15"></rect><text class="lb" x="204" y="185">receive_dm &middot; echo</text>
         </svg>
     </div>
-    <figcaption class="case-figure-caption">Room design-team never receives a CIT221 broadcast. That isolation comes from one room filter in app.py, not from any transport boundary.</figcaption>
+    <figcaption class="case-figure-caption">The Office never receives broadcasts sent to The Breakfast Club. That isolation comes from one room filter in app.py, not the transport layer.</figcaption>
 </figure>

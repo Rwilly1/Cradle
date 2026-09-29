@@ -837,7 +837,10 @@ html.case-open body {
 .case-diagram-svg .tb { font-size: 12px; fill: #241F1B; text-anchor: middle; font-weight: 500; }
 .case-diagram-svg .lb { font-size: 10.5px; fill: #6B635C; text-anchor: middle; }
 .case-diagram-svg .lbg { fill: #ffffff; opacity: 0.94; }
+.case-diagram-svg[data-diagram="architecture"] .lbg { fill: #E8E5E2; opacity: 1; }
+.case-diagram-svg[data-diagram="architecture"] .lbg-white { fill: #ffffff; opacity: 0.94; }
 .case-diagram-svg .clu { fill: #E8E5E2; stroke: #DAD5D0; stroke-width: 1px; }
+.case-diagram-svg .clbg { fill: #E8E5E2; }
 .case-diagram-svg .nc { fill: #E7EEDA; stroke: #457A00; stroke-width: 1.4px; }
 .case-diagram-svg .ns { fill: #DBE7EF; stroke: #004E7A; stroke-width: 1.4px; }
 .case-diagram-svg .nn { fill: #ffffff; stroke: #6B635C; stroke-width: 1.2px; stroke-dasharray: 4 3; }
