@@ -1,0 +1,138 @@
+<figure class="case-figure">
+    <div class="case-figure-head">
+        <span class="case-figure-eyebrow">04 &middot; CONGESTION WINDOW &middot; WIRESHARK ON lo0</span>
+        <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--slow"></span>Slow start</span>
+    </div>
+    <div class="case-table-body">
+        <div class="case-table-scroll">
+            <table class="case-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="num">Packet</th>
+                        <th scope="col" class="num">Time (s)</th>
+                        <th scope="col">Flags</th>
+                        <th scope="col" class="num">Window (bytes)</th>
+                        <th scope="col">Phase</th>
+                        <th scope="col" class="num">Elapsed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="num">1549</td>
+                        <td class="num">37.063134</td>
+                        <td class="mono">SYN</td>
+                        <td class="num">65,535</td>
+                        <td>Initial</td>
+                        <td class="num">0 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">1550</td>
+                        <td class="num">37.063215</td>
+                        <td class="mono">SYN-ACK</td>
+                        <td class="num">65,535</td>
+                        <td>Handshake</td>
+                        <td class="num">+0.00008 s</td>
+                    </tr>
+                    <tr class="case-row--highlight">
+                        <td class="num">1551</td>
+                        <td class="num">37.063231</td>
+                        <td class="mono">ACK</td>
+                        <td class="num">408,320</td>
+                        <td><strong>Slow start &middot; 6.2&times; growth</strong></td>
+                        <td class="num">+0.0001 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">1552</td>
+                        <td class="num">37.063243</td>
+                        <td class="mono">ACK</td>
+                        <td class="num">408,320</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+0.0001 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">1553</td>
+                        <td class="num">37.066011</td>
+                        <td class="mono">HTTP</td>
+                        <td class="num">408,320</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+0.003 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">1555</td>
+                        <td class="num">37.070160</td>
+                        <td class="mono">PSH-ACK</td>
+                        <td class="num">407,680</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+0.007 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">2089</td>
+                        <td class="num">42.461543</td>
+                        <td class="mono">PSH-ACK</td>
+                        <td class="num">407,552</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+5.4 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">4060</td>
+                        <td class="num">103.421413</td>
+                        <td class="mono">PSH-ACK</td>
+                        <td class="num">407,616</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+66.4 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">6277</td>
+                        <td class="num">171.830728</td>
+                        <td class="mono">ACK</td>
+                        <td class="num">407,872</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+134.8 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">7420</td>
+                        <td class="num">199.008157</td>
+                        <td class="mono">PSH-ACK</td>
+                        <td class="num">407,680</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+162 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">8488</td>
+                        <td class="num">226.723437</td>
+                        <td class="mono">PSH-ACK</td>
+                        <td class="num">407,424</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+189.7 s</td>
+                    </tr>
+                    <tr>
+                        <td class="num">9208</td>
+                        <td class="num">242.683106</td>
+                        <td class="mono">ACK</td>
+                        <td class="num">407,424</td>
+                        <td>Congestion avoidance</td>
+                        <td class="num">+205.6 s</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="case-stats">
+            <div class="case-stat">
+                <span class="case-stat-value">15&ndash;30 ms</span>
+                <span class="case-stat-label">Message latency, localhost</span>
+            </div>
+            <div class="case-stat">
+                <span class="case-stat-value">25 s</span>
+                <span class="case-stat-label">Heartbeat interval</span>
+            </div>
+            <div class="case-stat">
+                <span class="case-stat-value">1&ndash;3 s</span>
+                <span class="case-stat-label">Reconnection time</span>
+            </div>
+            <div class="case-stat">
+                <span class="case-stat-value">5 users</span>
+                <span class="case-stat-label">Concurrent, all features working</span>
+            </div>
+        </div>
+    </div>
+</figure>

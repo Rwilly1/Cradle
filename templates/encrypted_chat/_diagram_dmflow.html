@@ -1,0 +1,85 @@
+<figure class="case-figure">
+    <div class="case-figure-head">
+        <span class="case-figure-eyebrow">05 &middot; DIRECT-MESSAGE FLOW</span>
+        <div class="case-legend">
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--client"></span>Client step</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--wire"></span>WebSocket</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--dm"></span>Unicast by socket id</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--state"></span>Server state</span>
+        </div>
+    </div>
+    <div class="case-diagram-canvas">
+        <svg class="case-diagram-svg" data-diagram="dmflow" viewBox="0 0 860 440" role="img" aria-label="Direct message flow from sender through server lookup to recipient and sender echo">
+            <defs>
+                <marker id="mk-dm-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#457A00"></path></marker>
+                <marker id="mk-dm-y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#CCA300"></path></marker>
+                <marker id="mk-dm-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7A0000"></path></marker>
+                <marker id="mk-dm-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#401268"></path></marker>
+            </defs>
+            <text class="cl" x="20" y="26">CLIENT A &middot; SENDER</text>
+            <text class="cl" x="310" y="26">SERVER &middot; APP.PY</text>
+            <text class="cl" x="600" y="26">DELIVERY</text>
+
+            <path class="e eg" data-from="n1" data-to="n2" marker-end="url(#mk-dm-g)" d="M140,88 L140,138"></path>
+            <path class="e eg" data-from="n2" data-to="n3" marker-end="url(#mk-dm-g)" d="M140,188 L140,238"></path>
+            <path class="e ey" data-from="n3" data-to="n4" marker-end="url(#mk-dm-y)" d="M260,264 L308,264"></path>
+            <path class="e ep" data-from="n4" data-to="n5" marker-end="url(#mk-dm-p)" d="M430,288 L430,338"></path>
+            <path class="e ed" data-from="n5" data-to="n7" marker-end="url(#mk-dm-d)" d="M550,356 C578,356 572,64 598,64"></path>
+            <path class="e ed" data-from="n5" data-to="n8" marker-end="url(#mk-dm-d)" d="M550,372 C580,372 570,264 598,264"></path>
+            <path class="e ey" data-from="n7" data-to="n9" marker-end="url(#mk-dm-y)" d="M720,88 L720,138"></path>
+            <path class="e ey" data-from="n8" data-to="n10" marker-end="url(#mk-dm-y)" d="M720,288 L720,338"></path>
+
+            <g class="dnode" data-id="n1" tabindex="0">
+                <rect class="nc" x="20" y="40" width="240" height="48" rx="6"></rect>
+                <text class="t" x="140" y="60">User A types a message</text><text class="t" x="140" y="76">in the DM panel</text>
+            </g>
+            <g class="dnode" data-id="n2" tabindex="0">
+                <rect class="nc" x="20" y="140" width="240" height="48" rx="6"></rect>
+                <text class="t" x="140" y="160">encryptMessage()</text><text class="t" x="140" y="176">AES, shared room key</text>
+            </g>
+            <g class="dnode" data-id="n3" tabindex="0">
+                <rect class="nc" x="20" y="240" width="240" height="48" rx="6"></rect>
+                <text class="t" x="140" y="260">socket.emit('send_dm',</text><text class="t" x="140" y="276">{ recipient, encrypted })</text>
+            </g>
+
+            <rect class="nn" x="310" y="40" width="240" height="120" rx="6"></rect>
+            <text class="tb" x="430" y="72">Recipient offline?</text>
+            <text class="t" x="430" y="96">No receive_dm is sent.</text>
+            <text class="t" x="430" y="116">The sender still gets an</text>
+            <text class="t" x="430" y="136">echo and is never told.</text>
+
+            <g class="dnode" data-id="n4" tabindex="0">
+                <rect class="ns" x="310" y="240" width="240" height="48" rx="6"></rect>
+                <text class="t" x="430" y="260">handle_direct_message()</text><text class="t" x="430" y="276">sender = active_users[sid]</text>
+            </g>
+            <g class="dnode" data-id="n5" tabindex="0">
+                <rect class="ns" x="310" y="340" width="240" height="48" rx="6"></rect>
+                <text class="t" x="430" y="360">scan active_users for</text><text class="t" x="430" y="376">recipient in same room</text>
+            </g>
+
+            <g class="dnode" data-id="n7" tabindex="0">
+                <rect class="ns" x="600" y="40" width="240" height="48" rx="6"></rect>
+                <text class="t" x="720" y="60">emit('receive_dm')</text><text class="t" x="720" y="76">&rarr; recipient&rsquo;s socket</text>
+            </g>
+            <g class="dnode" data-id="n9" tabindex="0">
+                <rect class="nc" x="600" y="140" width="240" height="48" rx="6"></rect>
+                <text class="t" x="720" y="160">Recipient: decryptMessage()</text><text class="t" x="720" y="176">shown in their DM panel</text>
+            </g>
+            <g class="dnode" data-id="n8" tabindex="0">
+                <rect class="ns" x="600" y="240" width="240" height="48" rx="6"></rect>
+                <text class="t" x="720" y="260">emit('receive_dm')</text><text class="t" x="720" y="276">&rarr; sender&rsquo;s own socket</text>
+            </g>
+            <g class="dnode" data-id="n10" tabindex="0">
+                <rect class="nc" x="600" y="340" width="240" height="48" rx="6"></rect>
+                <text class="t" x="720" y="360">Sender: decryptMessage()</text><text class="t" x="720" y="376">shown as own message</text>
+            </g>
+
+            <rect class="lbg" x="262" y="243" width="46" height="15"></rect><text class="lb" x="285" y="254">wss://</text>
+            <rect class="lbg" x="511" y="205" width="128" height="15"></rect><text class="lb" x="575" y="216">if recipient online</text>
+            <rect class="lbg" x="552" y="311" width="46" height="15"></rect><text class="lb" x="575" y="322">always</text>
+            <rect class="lbg" x="697" y="106" width="46" height="15"></rect><text class="lb" x="720" y="117">wss://</text>
+            <rect class="lbg" x="697" y="306" width="46" height="15"></rect><text class="lb" x="720" y="317">wss://</text>
+        </svg>
+    </div>
+    <figcaption class="case-figure-caption">The server routes an encrypted blob it never decrypts, based only on who is attached to which room.</figcaption>
+</figure>

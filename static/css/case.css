@@ -360,6 +360,59 @@ html.case-open body {
     }
 }
 
+/* Secure Chat only: unlike Islanding/Prinsys's art (deliberately oversized, bleeding past
+   its 45% column via the generic .case-hero-media img rule below), the popup's own
+   .encrypted-frame is sized to FIT its column exactly (max-width/max-height: 100%,
+   aspect-ratio locked, style.css) — style.css already gives it everything it needs once
+   it's a centered flex child of .case-hero-media (also true of the popup's own
+   .project-image), so no extra positioning is added here at all. Matching the popup's own
+   46.575%-of-the-row column width (style.css: #popup-2 .project-image) keeps the frame the
+   same size relative to the title text in both places. Desktop only — mobile stacks the
+   media full-width above the text instead (see the max-width:767px block below), where
+   this same override would otherwise beat the generic .case-hero-media { width: 100% }
+   rule on specificity alone. */
+@media (min-width: 768px) {
+    .case[data-slug="encrypted-chat"] .case-hero-media {
+        width: 46.575%;
+    }
+
+    /* #popup-2 .project-text (style.css) top-aligns its text and adds 16px of top padding,
+       instead of the vertical centering every other popup's .project-text uses — see that
+       rule's own comment (the imac's screen starts flush with the card's top edge, unlike
+       a phone/iPad photo with empty margin above it). The generic .case-hero-text below is
+       still center-aligned, so without this override the title/subtitle/paragraph sit lower
+       in the open hero than they do on the closed popup — the instant the popup's real
+       content hands off to this one (case.js's shrunkOnto handoff), the text visibly drops
+       to its centered spot. Same fix category as .case-hero-media above: match the box to
+       the popup's own layout, not the generic one. */
+    .case[data-slug="encrypted-chat"] .case-hero-text {
+        justify-content: flex-start;
+        padding-top: calc(var(--u) * 16);
+    }
+}
+
+/* Overrides the generic ".case-hero-media img" rule above, which would otherwise also
+   catch this frame's own <img> (a descendant selector matches at any depth) and fight
+   the frame's own sizing with its own absolute position/width/transform. */
+.case-hero-media .encrypted-frame .encrypted-image {
+    position: static;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    transform: none;
+}
+
+/* Same "only show the pause icon while actually paused" treatment .islanding-pause-overlay
+   gets once moved into the hero (below) — the popup itself only reveals it on hover. */
+.case-hero-media .encrypted-pause-overlay {
+    opacity: 0;
+}
+
+.case-hero-media .encrypted-pause-overlay.paused {
+    opacity: 1;
+}
+
 /* The knot row (desktop) and its single-square mobile replacement (see hero_knots /
    hero_knots_square in _case.html) both land directly in .case-hero-media, so they'd
    otherwise inherit the single-hero-image rule above (absolute, fixed --u width, centred) —
@@ -624,7 +677,8 @@ html.case-open body {
     height: auto;
 }
 
-.case-media img {
+.case-media img,
+.case-figure {
     border-radius: 1.4vw;
     box-shadow:
         0 0 0 1vw rgba(255, 255, 255, 0.18),
@@ -640,6 +694,317 @@ html.case-open body {
     box-shadow:
         0 0 0 1vw rgba(255, 255, 255, 0.18),
         0 0 0 2vw rgba(255, 255, 255, 0.09);
+}
+
+/* ---- Diagram + table cards (Encrypt Then Send / Breaking Things / Rooms As Routers /
+   TCP Underneath / The Silent Drop) ----
+   Shared white "figure" chrome for both kinds of content: a numbered eyebrow header bar
+   (matching the diagrams' own "01 · ARCHITECTURE" style) and a bottom caption, framing
+   either a hand-drawn SVG diagram or a data table. Values are this design's own fixed
+   1440px-canvas numbers (see the reference mockup) converted to vw so they scale with
+   everything else on the page, at the same ratio .case-media's own padding/radius
+   already use. Only the two OUTWARD corners round — matching .case-media's own one-sided
+   radius exactly, like a nested rounded rectangle — so the straight edge sits flush
+   against the text column. */
+.case-figure {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #fff;
+    color: #241F1B;
+    overflow: hidden;
+}
+
+/* Desktop only — mobile flattens every card to one full-width column (see the
+   max-width:767px block below) with its own uniform radius, which a higher-specificity,
+   unscoped rule here would otherwise beat regardless of viewport. */
+@media (min-width: 768px) {
+    .case-panel--image-left .case-figure {
+        border-radius: 0 1.4vw 1.4vw 0;
+    }
+
+    .case-panel--image-right .case-figure {
+        border-radius: 1.4vw 0 0 1.4vw;
+    }
+}
+
+.case-figure-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.1vw;
+    height: 3.05vw;
+    min-height: 34px;
+    padding: 0 1.25vw;
+    background: #E8E5E2;
+    border-bottom: 1px solid #DAD5D0;
+}
+
+.case-figure-eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(9px, 0.8vw, 13px);
+    letter-spacing: 0.08em;
+    color: #6B635C;
+    white-space: nowrap;
+}
+
+.case-figure-meta {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(10px, 0.8vw, 13px);
+    color: #6B635C;
+    white-space: nowrap;
+}
+
+.case-figure-caption {
+    flex: none;
+    padding: 0.83vw 1.25vw;
+    border-top: 1px solid #DAD5D0;
+    background: #E8E5E2;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(10px, 0.87vw, 14px);
+    line-height: 1.45;
+    color: #6B635C;
+}
+
+/* ---- Legend chips (diagram headers only) ---- */
+
+.case-legend {
+    display: flex;
+    align-items: center;
+    gap: 1.1vw;
+}
+
+.case-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(9px, 0.8vw, 11.5px);
+    color: #6B635C;
+    white-space: nowrap;
+}
+
+.case-legend-swatch {
+    width: 0.83vw;
+    height: 0.83vw;
+    min-width: 8px;
+    min-height: 8px;
+    border-radius: 3px;
+    flex: none;
+}
+
+.case-legend-swatch--client { background: #E7EEDA; border: 1.5px solid #457A00; }
+.case-legend-swatch--server { background: #DBE7EF; border: 1.5px solid #004E7A; }
+.case-legend-swatch--slow   { background: #FBF4D9; border: 1px solid #CCA300; }
+
+.case-legend-line {
+    width: 1.53vw;
+    min-width: 14px;
+    border-top-width: 2px;
+    border-top-style: solid;
+    flex: none;
+}
+
+.case-legend-line--http  { border-color: #CC4E00; }
+.case-legend-line--wire  { border-color: #CCA300; border-top-style: dashed; }
+.case-legend-line--dm    { border-color: #7A0000; border-top-style: dotted; }
+.case-legend-line--state { border-color: #401268; border-top-style: dotted; }
+.case-legend-line--client{ border-color: #457A00; }
+
+/* ---- Diagrams: hand-drawn SVGs on a dot-grid canvas ---- */
+
+.case-diagram-canvas {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    background: radial-gradient(#DAD5D0 1px, transparent 1px) 0 0 / 22px 22px;
+}
+
+.case-diagram-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.case-diagram-svg text {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.case-diagram-svg .cl { font-size: 11px; letter-spacing: 0.06em; fill: #6B635C; }
+.case-diagram-svg .t  { font-size: 12px; fill: #241F1B; text-anchor: middle; }
+.case-diagram-svg .tb { font-size: 12px; fill: #241F1B; text-anchor: middle; font-weight: 500; }
+.case-diagram-svg .lb { font-size: 10.5px; fill: #6B635C; text-anchor: middle; }
+.case-diagram-svg .lbg { fill: #ffffff; opacity: 0.94; }
+.case-diagram-svg .clu { fill: #E8E5E2; stroke: #DAD5D0; stroke-width: 1px; }
+.case-diagram-svg .nc { fill: #E7EEDA; stroke: #457A00; stroke-width: 1.4px; }
+.case-diagram-svg .ns { fill: #DBE7EF; stroke: #004E7A; stroke-width: 1.4px; }
+.case-diagram-svg .nn { fill: #ffffff; stroke: #6B635C; stroke-width: 1.2px; stroke-dasharray: 4 3; }
+.case-diagram-svg .e { fill: none; stroke-width: 1.6px; }
+/* marker-end is set per-path (inline, in each diagram partial) rather than here: the three
+   diagrams render inline on the same page now (not isolated iframes), so their <marker>
+   ids must be unique per diagram — a shared class-based url(#mk-g) would resolve to
+   whichever diagram happens to define that id first in the document. */
+.case-diagram-svg .eg { stroke: #457A00; }
+.case-diagram-svg .eo { stroke: #CC4E00; }
+.case-diagram-svg .ey { stroke: #CCA300; stroke-dasharray: 5 3; }
+.case-diagram-svg .eyn { stroke: #CCA300; stroke-dasharray: 5 3; }
+.case-diagram-svg .ed { stroke: #7A0000; stroke-dasharray: 2 3; stroke-width: 1.8px; }
+.case-diagram-svg .ep { stroke: #401268; stroke-dasharray: 1 3; stroke-width: 2px; }
+
+/* ---- Hover interactivity (static/js/diagram-hover.js) ----
+   Hovering (or focusing) a node lights up every edge attached to it — same idea as the
+   source ChatAppDiagram's own dagre-d3 hover treatment, reapplied here since these are now
+   plain hand-authored SVGs instead of an auto-laid-out graph. */
+.case-diagram-svg .dnode {
+    cursor: pointer;
+}
+
+.case-diagram-svg .dnode rect {
+    transition: filter 0.15s ease;
+}
+
+.case-diagram-svg .dnode:hover rect,
+.case-diagram-svg .dnode:focus-visible rect {
+    filter: brightness(0.97);
+}
+
+.case-diagram-svg .dnode:focus-visible {
+    outline: none;
+}
+
+.case-diagram-svg .e {
+    transition: stroke-width 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.case-diagram-svg.has-lit .e:not(.lit) {
+    opacity: 0.28;
+}
+
+.case-diagram-svg .e.lit {
+    stroke-width: 2.6px;
+}
+
+.case-diagram-svg .eg.lit { filter: drop-shadow(0 0 4px #457A00); }
+.case-diagram-svg .eo.lit { filter: drop-shadow(0 0 4px #CC4E00); }
+.case-diagram-svg .ey.lit,
+.case-diagram-svg .eyn.lit { filter: drop-shadow(0 0 5px #CCA300); }
+.case-diagram-svg .ed.lit { filter: drop-shadow(0 0 5px #7A0000); }
+.case-diagram-svg .ep.lit { filter: drop-shadow(0 0 5px #401268); }
+
+/* ---- Data tables (Breaking Things / TCP Underneath) ---- */
+
+.case-table-body {
+    /* min-width: 0 overrides the flex-item default (min-width: auto), which otherwise
+       refuses to shrink this below the table's own nowrap content width — exactly the
+       "table blows out past the card edge instead of scrolling" bug this fixes. Without
+       it, .case-figure's overflow: hidden was silently clipping the table on narrow
+       screens rather than .case-table-scroll's overflow-x: auto ever getting a chance to
+       scroll it. */
+    flex: none;
+    min-width: 0;
+}
+
+.case-table-scroll {
+    overflow-x: auto;
+}
+
+.case-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(11px, 0.9vw, 13px);
+    color: #241F1B;
+}
+
+.case-table + .case-table {
+    border-top: 1px solid #DAD5D0;
+}
+
+.case-table th,
+.case-table td {
+    padding: 0.56vw 0.97vw;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.case-table thead th {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(9px, 0.76vw, 11px);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6B635C;
+    background: #F7F5F3;
+    border-bottom: 1px solid #DAD5D0;
+}
+
+.case-table tbody td {
+    border-bottom: 1px solid #ECE8E4;
+}
+
+.case-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.case-table td.num,
+.case-table th.num {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+    text-align: right;
+}
+
+.case-table .mono {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+}
+
+.case-row--highlight td {
+    background: #FBF4D9;
+}
+
+.case-pill {
+    display: inline-block;
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: #E7EEDA;
+    border: 1px solid #B9CD99;
+    color: #2F5500;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 500;
+    font-size: 0.85em;
+}
+
+.case-stats {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px solid #DAD5D0;
+    background: #F7F5F3;
+}
+
+.case-stat {
+    padding: 0.83vw 1.25vw;
+}
+
+.case-stat + .case-stat {
+    border-left: 1px solid #DAD5D0;
+}
+
+.case-stat-value {
+    display: block;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 500;
+    font-size: clamp(13px, 1.15vw, 20px);
+    color: #241F1B;
+}
+
+.case-stat-label {
+    display: block;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(9px, 0.7vw, 12px);
+    color: #6B635C;
 }
 
 /* Islanding's source render has a sliver of Blender's UI along its left edge; scale in and
@@ -1011,6 +1376,25 @@ html.case-open body {
         margin-top: calc(-24px * var(--mobile-scale, 1));
     }
 
+    /* Secure Chat: #popup-2 .project-image (style.css) only overrides margin-bottom —
+       the generic .popup-project .project-image mobile rule has no margin-top at all (0),
+       and min-height stays the shared 300px. The generic .case-hero-media below carries
+       Islanding's OWN explicit -38px margin-top/margin-bottom (#popup-4 .project-image,
+       style.css), which is Islanding-specific, not a true shared default — so both need
+       resetting here, not just margin-bottom, or the hero box sits 38px higher than the
+       real popup and clips the top of the iMac the instant the case opens. */
+    .case[data-slug="encrypted-chat"] .case-hero-media {
+        margin-top: 0;
+        margin-bottom: calc(-56px * var(--mobile-scale, 1));
+    }
+
+    /* Same popup-only height cap #popup-2 .encrypted-frame gets on mobile (style.css) —
+       .encrypted-frame's own max-width:100%/aspect-ratio (unconditional, same file) already
+       do the rest, same as they do in the popup. */
+    .case[data-slug="encrypted-chat"] .case-hero-media .encrypted-frame {
+        max-height: calc(400px * var(--mobile-scale, 1));
+    }
+
     /* Algorithmic Crafting's hero isn't an iPad/phone photo sitting beside the text (what
        the generic .case-hero-media box above is tuned for) — it's the knot row's mobile
        replacement, a plain square vector in normal flow above the title. None of that
@@ -1044,6 +1428,10 @@ html.case-open body {
     /* No room for it on a phone screen, and the page is a single plain scroll instead. */
     .case-nav { display: none; }
 
+    /* No room for the legend chips beside the eyebrow label either; the diagram and its
+       figcaption already carry the same information in plain language. */
+    .case-legend { display: none; }
+
     /* Each section becomes one card — image, label and text together — on the case-colour
        page: no more alternating left/right sides, no separate colour block behind the image. */
     .case-panel,
@@ -1074,11 +1462,33 @@ html.case-open body {
        itself is fixed px on mobile. Radius steps up the same way, 10 to 17 to 24, landing
        exactly on the card's own 24px radius for a seamless curve into the corner. */
     .case-media img,
-    .case-video-wrap {
+    .case-video-wrap,
+    .case-figure {
         border-radius: 10px;
         box-shadow:
             0 0 0 7px rgba(255, 255, 255, 0.18),
             0 0 0 14px rgba(255, 255, 255, 0.09);
+    }
+
+    /* Tables scroll sideways instead of squashing their columns — see
+       .case-table-scroll's overflow-x above, already unconditional. Two stat tiles per
+       row instead of four so each one has room for its label without wrapping into the
+       next tile's column. */
+    .case-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .case-stat:nth-child(2) {
+        border-left: 1px solid #DAD5D0;
+    }
+
+    .case-stat:nth-child(3) {
+        border-left: 0;
+        border-top: 1px solid #DAD5D0;
+    }
+
+    .case-stat:nth-child(4) {
+        border-top: 1px solid #DAD5D0;
     }
 
     .case-media--stacked {
