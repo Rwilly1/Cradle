@@ -1,7 +1,10 @@
 <figure class="case-figure">
     <div class="case-figure-head">
         <span class="case-figure-eyebrow">CONGESTION WINDOW</span>
-        <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--slow"></span>Slow start</span>
+        <span class="case-legend">
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--establish"></span> Connection Synchronization</span>
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--slow"></span>TCP Window Expansion</span>
+        </span>
     </div>
     <div class="case-table-body">
         <div class="case-table-scroll">
@@ -25,7 +28,7 @@
                         <td>Initial</td>
                         <td class="num">0 s</td>
                     </tr>
-                    <tr>
+                    <tr class="case-row--establish">
                         <td class="num">1550</td>
                         <td class="num">37.063215</td>
                         <td class="mono">SYN-ACK</td>

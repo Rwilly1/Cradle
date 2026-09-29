@@ -2,7 +2,7 @@
 {% set prinsys_intro = "A battery-free sensor system designed to detect and monitor water leaks across commercial properties. Our international team developed the product end to end, spanning research, service design, UX/UI, system architecture, hardware integration, and development. We delivered a working application and receiver prototype to Prinsys for continued development." %}
 {% set islanding_intro = "A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation." %}
 {% set algorithmic_intro = "A multi-year research study exploring how knots can be learned through a rule-based visual language. The work evolved from paper prototypes to digital puzzle interfaces and immersive XR experiments, combining prototyping with iterative user testing. I helped develop and evaluate systems that used modular rope segments to study shape grammar, spatial reasoning and computational thinking." %}
-{% set secure_chat_intro = "A full-stack, real-time application built from the ground up using Flask, Socket.IO, and JavaScript, with client-side AES-256 encryption that keeps plaintext inaccessible to the server. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients, then validated the system’s performance and resilience through packet-level network analysis." %}
+{% set secure_chat_intro = "A full-stack application built using Flask, Socket.IO, and JavaScript, with client-side AES-256 encryption that keeps plaintext inaccessible to the server. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients. Then I validated system performance through batch testing with students from The Breakfast Club and conducted packet-level network analysis using Wireshark." %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,7 +161,7 @@
                     <div class="encrypted-frame">
                         <img src="{{ url_for('static', filename='Encrypted_Chat/imac_wide.png') }}" alt="Secure Chat" class="encrypted-image">
                         <div id="encrypted-video-overlay" class="encrypted-video-overlay" data-video-slot>
-                            <video class="encrypted-video" src="{{ url_for('static', filename='Encrypted_Chat/chatapp.mp4') }}" loop muted playsinline preload="metadata" poster="{{ url_for('static', filename='Encrypted_Chat/poster.jpg') }}" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
+                            <video class="encrypted-video" src="{{ url_for('static', filename='Encrypted_Chat/ZoomChatApp.mp4') }}" loop muted playsinline preload="metadata" poster="{{ url_for('static', filename='Encrypted_Chat/poster.jpg') }}" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
                             <div class="encrypted-pause-overlay" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" class="encrypted-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
                                 <svg viewBox="0 0 24 24" class="encrypted-icon-play" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -279,7 +279,7 @@
     {% call case_study(slug="prinsys", popup=1, color="#cc4e00",
                        title="Prinsys", subtitle="Early Leakage Detection", intro=prinsys_intro,
                        hero_src="Prinsys/horizontal/web/iPhone-15-Pro.png",
-                       hero_src_mobile="Prinsys/vertical/web/iPhone-16-Pro-sharp.png",
+                       hero_src_mobile="Prinsys/vertical/web/iPhone-16-Pro-hq.png",
                        hero_alt="The Prinsys app on an iPhone") %}
         <section class="case-panel case-panel--image-left" data-nav="Going to Finland">
             <figure class="case-media">

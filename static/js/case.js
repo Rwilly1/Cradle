@@ -175,8 +175,15 @@
         var u = W / refW;       // one popup-pixel, in page pixels
         var s = r.width / refW; // one popup-pixel, on screen
         var y0 = HERO_DELTA * u; // top of the part of the page that lines up with the box
+        // Rounded to whole page-pixels: this is where the transform hands off to the popup's
+        // own static layout the instant the tween completes (finish() clears the transform
+        // and swaps which element is visible). A transformed element and a statically-laid-out
+        // one can round sub-pixel positions differently, so an unrounded fractional target
+        // here can land a hair off from where the popup box actually renders — visible as a
+        // brief whole-card pop right as it lands. Snapping to the same integer grid the static
+        // box will render on removes that gap.
         return {
-            x: r.left, y: r.top - HERO_DELTA * s, scale: k,
+            x: Math.round(r.left), y: Math.round(r.top - HERO_DELTA * s), scale: k,
             top: y0, right: 0, bottom: H - y0 - r.height / k, left: 0, rs: rs
         };
     }

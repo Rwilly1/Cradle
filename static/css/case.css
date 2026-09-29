@@ -805,6 +805,9 @@ html.case-open body {
 .case-legend-swatch--client { background: #E7EEDA; border: 1.5px solid #457A00; }
 .case-legend-swatch--server { background: #DBE7EF; border: 1.5px solid #004E7A; }
 .case-legend-swatch--slow   { background: #FBF4D9; border: 1px solid #CCA300; }
+.case-legend-swatch--medium { background: #DBE7EF; border: 1.5px solid #004E7A; }
+.case-legend-swatch--complex { background: #E9E1F2; border: 1.5px solid #401268; }
+.case-legend-swatch--establish { background: #E7EEDA; border: 1.5px solid #457A00; }
 
 .case-legend-line {
     width: 1.53vw;
@@ -978,6 +981,18 @@ html.case-open body {
 
 .case-row--highlight td {
     background: #FBF4D9;
+}
+
+.case-row--establish td {
+    background: #E7EEDA;
+}
+
+.case-row--medium td {
+    background: #DBE7EF;
+}
+
+.case-row--complex td {
+    background: #E9E1F2;
 }
 
 .case-pill {

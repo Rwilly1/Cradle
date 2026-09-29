@@ -693,6 +693,7 @@ body.dark-mode.play-mode .play-mode-message {
     top: 5.33%;
     width: 93.08%;
     height: 63.1%;
+    border-radius: 4px;
     overflow: hidden;
     z-index: 2;
     cursor: pointer;
