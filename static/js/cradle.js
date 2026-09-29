@@ -81,6 +81,12 @@ let greyBlendTargets = [0, 0, 0, 0, 0, 0];
 let currentPopup = null;
 let popupOpen = false;
 let currentPopupDirection = null;
+// Newton's Cradle Play Mode: hides whichever popup is open (and blocks opening a new
+// one) so the cradle can be swung/dragged unobstructed. Persists across reloads within
+// the same tab — read up front, before the popup-restore-on-refresh code further down
+// runs, so a persisted Play Mode correctly blocks that restore from reopening anything.
+let playModeOn = false;
+try { playModeOn = sessionStorage.getItem('playModeOn') === '1'; } catch (e) {}
 
 // Picker hand-off camera state. s/tx/ty are the live zoom transform (identity = no zoom
 // in progress), applied as a single CSS transform on #canvas-container (see
@@ -460,7 +466,7 @@ function updateNavLabels() {
 }
 
 function openPopup(ballIndex, direction) {
-    if (popupOpen) return;
+    if (popupOpen || playModeOn) return;
     
     popupOpen = true;
     currentPopupIndex = ballIndex;
@@ -863,11 +869,20 @@ document.querySelectorAll('.nav-label').forEach((label) => {
     }
 
     popup.classList.add('active');
-    gsap.set(popup, { x: '0%', opacity: 1 });
     updateNavLabels();
-    try {
-        enablePopupSwipe();
-    } catch (e) {}
+    if (playModeOn) {
+        // Remember it (state above already does) but never let it flash open over the
+        // strings on this refresh — land it directly in the same off-screen position
+        // setPlayMode(true) would have slid it to, so turning Play Mode off later slides
+        // this exact popup back in exactly as if it had never been hidden by a refresh.
+        const xHidden = currentPopupDirection === 'left' ? '-100%' : '100%';
+        gsap.set(popup, { x: xHidden, opacity: 0 });
+    } else {
+        gsap.set(popup, { x: '0%', opacity: 1 });
+        try {
+            enablePopupSwipe();
+        } catch (e) {}
+    }
 })();
 
 Events.on(engine, 'collisionStart', function(event) {
@@ -1271,19 +1286,179 @@ gsap.from('#canvas-container', {
 const invertOverlay = document.querySelector('.invert-overlay');
 const textToggle = document.getElementById('text-toggle');
 
-// Create per-popup inner overlays that mirror the main dark-mode sweep
-// while leaving images/video above them untouched.
-document.querySelectorAll('.popup-box').forEach(box => {
-    const popupOverlay = document.createElement('div');
-    popupOverlay.className = 'popup-invert-overlay';
-    box.appendChild(popupOverlay);
-});
-const popupInverts = document.querySelectorAll('.popup-invert-overlay');
+// Slides whichever popup is open off/on screen for Play Mode, in the same direction it
+// would normally enter/exit from (Newton's Cradle pull physics). Doesn't touch
+// popupOpen/currentPopup/session state — the popup is still "open," just visually
+// parked off-screen and unreachable, so turning Play Mode back off can slide the exact
+// same one back into place instead of reopening from scratch.
+const navLabelsInnerEl = document.querySelector('.nav-labels-inner');
+const playModeMessageEl = document.querySelector('.play-mode-message');
+
+let playModeShatterTimer = null;
+let playModeShatterChars = null;
+// Captured once, up front, from the element's own markup — the one source of truth
+// revertPlayModeSplit() restores back to, regardless of how many shatter cycles run.
+const playModeMessageText = playModeMessageEl ? playModeMessageEl.textContent : '';
+
+function clearPlayModeShatterTimer() {
+    if (playModeShatterTimer) {
+        clearTimeout(playModeShatterTimer);
+        playModeShatterTimer = null;
+    }
+}
+
+// Reverts a previous shatter's per-char spans back to the message's plain text, so the
+// next time Play Mode is entered it fades in intact instead of already broken apart.
+// Safe to call even if no shatter ever ran (playModeShatterChars stays null then).
+function revertPlayModeSplit() {
+    if (playModeShatterChars) {
+        playModeMessageEl.textContent = playModeMessageText;
+        playModeShatterChars = null;
+    }
+}
+
+// Fires 15s after the message finishes fading in (see the fade-in tween's onComplete
+// below) — splits it into characters (plain spans, no SplitText plugin — kept
+// dependency-free so this can't silently no-op if that plugin ever fails to load) and
+// drops/tumbles/fades them out individually, like the message shattering apart. Purely
+// a visual flourish on top of the message's own opacity (left at 1 the whole time; only
+// the chars go to 0), so the later fade-out tween on Play Mode exit still works
+// unchanged whether or not this has fired yet.
+function shatterPlayModeMessage() {
+    playModeShatterTimer = null;
+    if (!window.gsap || !playModeMessageEl) return;
+
+    const chars = [];
+    playModeMessageEl.textContent = '';
+    for (const ch of playModeMessageText) {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.style.display = 'inline-block';
+        // Without this, a space character sitting alone in its own inline-block span
+        // gets whitespace-collapsed to zero width right at layout time — every word
+        // snaps together into one solid block for a frame before the fall/fade even
+        // starts. 'pre' preserves it literally, exactly like the original single text
+        // node did.
+        span.style.whiteSpace = 'pre';
+        playModeMessageEl.appendChild(span);
+        chars.push(span);
+    }
+    playModeShatterChars = chars;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+        gsap.set(chars, { opacity: 0 });
+        return;
+    }
+    gsap.to(chars, {
+        y: () => 40 + Math.random() * 50,
+        x: () => (Math.random() - 0.5) * 50,
+        rotation: () => (Math.random() - 0.5) * 200,
+        opacity: 0,
+        duration: 0.7,
+        stagger: { each: 0.025, from: 'random' },
+        ease: 'power2.in'
+    });
+}
+
+function setPlayMode(on) {
+    playModeOn = on;
+    try { sessionStorage.setItem('playModeOn', on ? '1' : '0'); } catch (e) {}
+
+    if (!on) clearPlayModeShatterTimer();
+
+    // .play-mode-message's centered position (see body.dark-mode.play-mode in style.css)
+    // needs BOTH classes present — so on the way out, neither can be removed until the
+    // fade-out below finishes. Removing either early (even with the other still set)
+    // breaks that compound selector's match instantly, snapping the message back to its
+    // nav-bottom position while still visible, i.e. a jump mid-fade instead of a clean
+    // fade. Adding both immediately is safe: the message is still at opacity 0 at that
+    // point (fade-in hasn't started yet), so there's nothing visible to jump.
+    if (on) document.body.classList.add('dark-mode', 'play-mode');
+
+    // The buttons get wiped away by a clip-path sweep run at the exact same
+    // duration/ease/direction as invertOverlay's own sweep below (left-to-right on),
+    // so the labels read as being carried off by that same wipe rather than fading on
+    // their own separate timer. The message only ever fades (opacity), staged to start
+    // once the wipe finishes (on) or to finish before the wipe brings the labels back (off).
+    const reduceMotionText = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotionText) {
+        gsap.set(navLabelsInnerEl, { clipPath: on ? 'inset(0 0 0 100%)' : 'inset(0 0 0 0%)' });
+        gsap.set(playModeMessageEl, { opacity: on ? 1 : 0 });
+        if (!on) {
+            document.body.classList.remove('dark-mode', 'play-mode');
+            revertPlayModeSplit();
+        } else {
+            playModeShatterTimer = setTimeout(shatterPlayModeMessage, 10000);
+        }
+    } else if (on) {
+        gsap.fromTo(navLabelsInnerEl,
+            { clipPath: 'inset(0 0 0 0%)' },
+            { clipPath: 'inset(0 0 0 100%)', duration: 1.2, ease: 'power2.inOut' }
+        );
+        // delay + duration sums to 1.2s so this finishes at the exact same moment as
+        // the wipe and the switch knob's own 1.2s transform transition (style.css's
+        // .toggle-slider:before) — starting the fade slightly before the wipe's tail
+        // end (rather than only after) is what actually lines the finishes up.
+        gsap.fromTo(playModeMessageEl, { opacity: 0 }, {
+            opacity: 1,
+            duration: 0.4,
+            delay: 0.8,
+            ease: 'power1.inOut',
+            onComplete: function() { playModeShatterTimer = setTimeout(shatterPlayModeMessage, 8800); }
+        });
+    } else {
+        gsap.fromTo(playModeMessageEl, { opacity: 1 }, {
+            opacity: 0,
+            duration: 0.4,
+            ease: 'power1.inOut',
+            onComplete: function() {
+                document.body.classList.remove('dark-mode', 'play-mode');
+                revertPlayModeSplit();
+            }
+        });
+        gsap.fromTo(navLabelsInnerEl,
+            { clipPath: 'inset(0 0 0 100%)' },
+            { clipPath: 'inset(0 0 0 0%)', duration: 1.2, ease: 'power2.inOut' }
+        );
+    }
+
+    if (!currentPopup) return;
+    // openPopup's own entrance is a 2.5s elastic bounce that overshoots past 0% several
+    // times before settling — if the switch is hit that soon after opening (balls still
+    // swinging from the same hit is the common way this happens), that tween can still be
+    // mid-bounce. Killing it and snapping straight to the fully-open rest state first means
+    // the exit always starts clean, instead of redirecting from an arbitrary overshoot
+    // mid-flight, which read as a stutter/glitch right as the popup left.
+    gsap.killTweensOf(currentPopup);
+    if (on) gsap.set(currentPopup, { x: '0%', opacity: 1 });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const xTarget = on ? (currentPopupDirection === 'left' ? '-100%' : '100%') : '0%';
+    gsap.to(currentPopup, {
+        x: xTarget,
+        opacity: on ? 0 : 1,
+        duration: reduceMotion ? 0 : 0.5,
+        ease: on ? 'power2.in' : 'power2.out'
+    });
+}
+
+// Restore a persisted Play Mode instantly on load (no slide — nothing opened, since
+// playModeOn already blocked the popup-restore-on-refresh code above from reopening
+// anything) and keep it paired with the same dark-mode state it was set alongside.
+if (playModeOn) {
+    textEnabled = false;
+    textToggle.checked = false;
+    document.body.classList.add('dark-mode', 'play-mode');
+    gsap.set(invertOverlay, { opacity: 1, clipPath: 'inset(0 0% 0 0)' });
+    gsap.set(navLabelsInnerEl, { clipPath: 'inset(0 0 0 100%)' });
+    gsap.set(playModeMessageEl, { opacity: 1 });
+    playModeShatterTimer = setTimeout(shatterPlayModeMessage, 10000);
+}
 
 textToggle.addEventListener('change', function() {
     textEnabled = this.checked;
-    document.body.classList.toggle('dark-mode', !textEnabled);
-    
+    setPlayMode(!textEnabled);
+
     if (!textEnabled) {
         activeBall = null;
         // Sweep from left to right
@@ -1293,20 +1468,10 @@ textToggle.addEventListener('change', function() {
             duration: 1.2,
             ease: 'power2.inOut'
         });
-        gsap.to(popupInverts, {
-            clipPath: 'inset(0 0% 0 0)',
-            duration: 1.2,
-            ease: 'power2.inOut'
-        });
     } else {
         // Sweep from right to left
         gsap.to(invertOverlay, {
             opacity: 1,
-            clipPath: 'inset(0 100% 0 0)',
-            duration: 1.2,
-            ease: 'power2.inOut'
-        });
-        gsap.to(popupInverts, {
             clipPath: 'inset(0 100% 0 0)',
             duration: 1.2,
             ease: 'power2.inOut'
