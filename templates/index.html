@@ -412,11 +412,11 @@
             <p>On the client, CryptoJS runs AES 256 in CBC mode with the room's shared key. Each message gets a fresh random salt, so the same sentence sent twice never looks the same on the wire. The Flask server receives a base64 blob, and nothing on its message path calls decrypt. Every decrypted message is also HTML escaped before it reaches the page.</p>
         {% endcall %}
 
-        {% call case_panel(side="image-right", label="Batch Tests",
-                           media_template="encrypted_chat/_table_tests.html",
-                           alt="Functional and error test results table") %}
-            <p>Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
-            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges also fought back, but not as hard. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
+        {% call case_panel(side="image-right", label="TCP Underneath",
+                           media_template="encrypted_chat/_table_transport.html",
+                           alt="Congestion window and performance metrics table") %}
+            <p>To see what sits under Socket.IO, I captured packets of the app's traffic in Wireshark on the loopback interface. The first three rows in the table are the handshake that opens every connection. The client requests, the server accepts, the client confirms, and that final confirmation also expands the transfer window 6.2 times over, per the scale agreed on during the handshake.</p>
+            <p>The window holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds, and watching those pings scroll past in debug mode was when the protocol stack felt concrete.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="Rooms/Routers",
@@ -426,11 +426,11 @@
             <p>A message in The Breakfast Club reaches Claire, Bender, and Andrew at once, while Mr. Vernon in The Office never hears it. That isolation comes from one filter in app.py, not from anything in the transport. Direct messages bypass the filter entirely. The send_dm event skips the broadcast and unicasts to a single socket id, so two people can talk privately without leaving the main room.</p>
         {% endcall %}
 
-        {% call case_panel(side="image-right", label="TCP Underneath",
-                           media_template="encrypted_chat/_table_transport.html",
-                           alt="Congestion window and performance metrics table") %}
-            <p>To see what sits under Socket.IO, I captured packets of the app's traffic in Wireshark on the loopback interface. The first three rows in the table are the handshake that opens every connection. The client requests, the server accepts, the client confirms, and that final confirmation also expands the transfer window 6.2 times over, per the scale agreed on during the handshake.</p>
-            <p>The window holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds, and watching those pings scroll past in debug mode was when the protocol stack felt concrete.</p>
+        {% call case_panel(side="image-right", label="Batch Tests",
+                           media_template="encrypted_chat/_table_tests.html",
+                           alt="Functional and error test results table") %}
+            <p>Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
+            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges also fought back, but not as hard. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="Direct Messages",
