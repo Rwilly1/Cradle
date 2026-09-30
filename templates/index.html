@@ -415,8 +415,8 @@
         {% call case_panel(side="image-right", label="Batch Tests",
                            media_template="encrypted_chat/_table_tests.html",
                            alt="Functional and error test results table") %}
-            <p>I tested the app by trying to break it, and most of that time went to the encryption logic. Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
-            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges fought back harder. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
+            <p>Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
+            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges also fought back, but not as hard. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="Rooms/Routers",
@@ -429,15 +429,16 @@
         {% call case_panel(side="image-right", label="TCP Underneath",
                            media_template="encrypted_chat/_table_transport.html",
                            alt="Congestion window and performance metrics table") %}
-            <p>To see what sits under Socket.IO, I captured 9,208 packets of the app's traffic in Wireshark on the loopback interface. Every connection opens with a three way handshake that synchronizes both sides. The client sends a SYN, the server answers with a SYN ACK, and the client's final ACK confirms both are ready. That ACK also expands the window 6.2 times, from 65,535 bytes to about 408,000, because the handshake agreed on a window scale.</p>
-            <p>The window then holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds on top, and watching those pings scroll past in debug mode was when the protocol stack finally felt concrete.</p>
+            <p>To see what sits under Socket.IO, I captured packets of the app's traffic in Wireshark on the loopback interface. The first three rows in the table are the handshake that opens every connection. The client requests, the server accepts, the client confirms, and that final confirmation also expands the transfer window 6.2 times over, per the scale agreed on during the handshake.</p>
+            <p>The window holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds, and watching those pings scroll past in debug mode was when the protocol stack felt concrete.</p>
         {% endcall %}
 
         {% call case_panel(side="image-left", label="Direct Messages",
                            media_template="encrypted_chat/_diagram_dmflow.html",
                            alt="Direct-message flow diagram") %}
             <p>A direct message takes the longest path in the app. The client encrypts it and emits send_dm, then the server looks for the recipient in the same room. The sender always gets an echo, but an offline recipient means the message quietly goes nowhere.</p>
-            <p>The server never decrypts a message, but it does store each room's key to hand to new members. Messages live only in memory and logins are temporary. If I had more time to keep working on this project, I would add real key exchange, a database for message history and accounts, and stronger authentication for deployment.</p>
+            <p>The server never decrypts a message, but it does store each room's key to hand to new members. Messages live only in memory and logins are temporary.</p>
+            <p>If I had more time to keep working on this project, I would add real key exchange, a database for message history and accounts, and stronger authentication for deployment.</p>
         {% endcall %}
     {% endcall %}
 
