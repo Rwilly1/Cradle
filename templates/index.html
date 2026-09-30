@@ -2,6 +2,7 @@
 {% set prinsys_intro = "A battery-free sensor system designed to detect and monitor water leaks across commercial properties. Our international team developed the product end to end, spanning research, service design, UX/UI, system architecture, hardware integration, and development. We delivered a working application and receiver prototype to Prinsys for continued development." %}
 {% set islanding_intro = "A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation." %}
 {% set algorithmic_intro = "A multi-year research study exploring how knots can be learned through a rule-based visual language. The work evolved from paper prototypes to digital puzzle interfaces and immersive XR experiments, combining prototyping with iterative user testing. I helped develop and evaluate systems that used modular rope segments to study shape grammar, spatial reasoning and computational thinking." %}
+{% set secure_chat_intro = "A full stack application built with Flask, Socket.IO, and JavaScript, with client side AES 256 encryption so the server routes messages it never decrypts. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients. I then validated the system by logging in as characters from The Breakfast Club across several browser windows and analyzing the app's traffic in Wireshark." %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,10 +34,13 @@
     <link rel="preload" as="image" href="{{ url_for('static', filename='Islanding/iPad_shadow.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/case.css') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/Draggable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/SplitText.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
 </head>
 <body>
     <script>
@@ -149,7 +153,7 @@
         </div>
     </div>
 
-    <div id="popup-2" class="popup" data-bg-color="#cca300">
+    <div id="popup-2" class="popup" data-bg-color="#cca300" data-case="encrypted-chat">
         <div class="popup-box">
             <button class="popup-close">X</button>
             <div class="popup-project">
@@ -157,7 +161,7 @@
                     <div class="encrypted-frame">
                         <img src="{{ url_for('static', filename='Encrypted_Chat/imac_wide.png') }}" alt="Secure Chat" class="encrypted-image">
                         <div id="encrypted-video-overlay" class="encrypted-video-overlay" data-video-slot>
-                            <video class="encrypted-video" src="{{ url_for('static', filename='Encrypted_Chat/chatapp.mp4') }}" loop muted playsinline preload="metadata" poster="{{ url_for('static', filename='Encrypted_Chat/poster.jpg') }}" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
+                            <video class="encrypted-video" src="{{ url_for('static', filename='Encrypted_Chat/ZoomChatApp.mp4') }}" loop muted playsinline preload="metadata" poster="{{ url_for('static', filename='Encrypted_Chat/poster.jpg') }}" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;"></video>
                             <div class="encrypted-pause-overlay" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" class="encrypted-icon-pause" aria-hidden="true"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
                                 <svg viewBox="0 0 24 24" class="encrypted-icon-play" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -166,9 +170,12 @@
                     </div>
                 </div>
                 <div class="project-text">
-                    <h2>Secure Chat</h2>
+                    <div class="project-title-row">
+                        <h2>Secure Chat</h2>
+                        <a class="popup-open" href="#encrypted-chat" aria-label="Open the Secure Chat case study"><img src="{{ url_for('static', filename='arrow/arrow_circle_right.png') }}" alt=""></a>
+                    </div>
                     <h3>Encrypted Instant Messaging</h3>
-                    <p> A full-stack, real-time application built from the ground up using Flask, Socket.IO, and JavaScript, with client-side AES-256 encryption that keeps plaintext inaccessible to the server. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients, then validated the system’s performance and resilience through packet-level network analysis. </p>
+                    <p>{{ secure_chat_intro }}</p>
                 </div>
             </div>
         </div>
@@ -393,6 +400,47 @@
         </section>
     {% endcall %}
 
+    {% call case_study(slug="encrypted-chat", popup=2, color="#cca300",
+                       title="Secure Chat", subtitle="Encrypted Instant Messaging", intro=secure_chat_intro,
+                       hero_src="Encrypted_Chat/imac_wide.png", hero_frame=True,
+                       hero_alt="Secure Chat running on a desktop monitor") %}
+
+        {% call case_panel(side="image-left", label="Architecture",
+                           media_template="encrypted_chat/_diagram_architecture.html",
+                           alt="Architecture diagram") %}
+            <p>The first phase of any software project should be mapping out the system design, because poor architecture leads to code that cannot scale. Encryption was safest if message text only existed in the browser, so every message is encrypted before Socket.IO ever touches it.</p>
+            <p>On the client, CryptoJS runs AES 256 in CBC mode with the room's shared key. Each message gets a fresh random salt, so the same sentence sent twice never looks the same on the wire. The Flask server receives a base64 blob, and nothing on its message path calls decrypt. Every decrypted message is also HTML escaped before it reaches the page.</p>
+        {% endcall %}
+
+        {% call case_panel(side="image-right", label="Batch Tests",
+                           media_template="encrypted_chat/_table_tests.html",
+                           alt="Functional and error test results table") %}
+            <p>I tested the app by trying to break it, and most of that time went to the encryption logic. Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
+            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges fought back harder. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
+        {% endcall %}
+
+        {% call case_panel(side="image-left", label="Rooms/Routers",
+                           media_template="encrypted_chat/_diagram_topology.html",
+                           alt="Router and room topology diagram") %}
+            <p>The app has no network router, so the server's dictionaries do the routing. A dictionary called active_users maps each socket id to a username, room, and status. A public message goes only to sockets whose room matches the sender's, which turns every room into a multicast group.</p>
+            <p>A message in The Breakfast Club reaches Claire, Bender, and Andrew at once, while Mr. Vernon in The Office never hears it. That isolation comes from one filter in app.py, not from anything in the transport. Direct messages bypass the filter entirely. The send_dm event skips the broadcast and unicasts to a single socket id, so two people can talk privately without leaving the main room.</p>
+        {% endcall %}
+
+        {% call case_panel(side="image-right", label="TCP Underneath",
+                           media_template="encrypted_chat/_table_transport.html",
+                           alt="Congestion window and performance metrics table") %}
+            <p>To see what sits under Socket.IO, I captured 9,208 packets of the app's traffic in Wireshark on the loopback interface. Every connection opens with a three way handshake that synchronizes both sides. The client sends a SYN, the server answers with a SYN ACK, and the client's final ACK confirms both are ready. That ACK also expands the window 6.2 times, from 65,535 bytes to about 408,000, because the handshake agreed on a window scale.</p>
+            <p>The window then holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds on top, and watching those pings scroll past in debug mode was when the protocol stack finally felt concrete.</p>
+        {% endcall %}
+
+        {% call case_panel(side="image-left", label="Direct Messages",
+                           media_template="encrypted_chat/_diagram_dmflow.html",
+                           alt="Direct-message flow diagram") %}
+            <p>A direct message takes the longest path in the app. The client encrypts it and emits send_dm, then the server looks for the recipient in the same room. The sender always gets an echo, but an offline recipient means the message quietly goes nowhere.</p>
+            <p>The server never decrypts a message, but it does store each room's key to hand to new members. Messages live only in memory and logins are temporary. If I had more time to keep working on this project, I would add real key exchange, a database for message history and accounts, and stronger authentication for deployment.</p>
+        {% endcall %}
+    {% endcall %}
+
     {% call case_study(slug="algorithmic-crafting", popup=3, color="#457a00",
                        title="Algorithmic Crafting", subtitle="Research Through Design", intro=algorithmic_intro,
                        hero_knots=[
@@ -480,5 +528,6 @@
     <script src="{{ url_for('static', filename='js/cradle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/case.js') }}"></script>
     <script src="{{ url_for('static', filename='js/prinsys.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/diagram-hover.js') }}"></script>
 </body>
 </html>

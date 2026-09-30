@@ -28,7 +28,7 @@
   generic box fine (like Islanding's does), no override is needed at all.
 #}
 
-{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src=None, hero_src_mobile=None, hero_src_sharp=None, hero_alt="", hero_knots=None, hero_knots_square=None) %}
+{% macro case_study(slug, popup, color, title, subtitle, intro, hero_src=None, hero_src_mobile=None, hero_src_sharp=None, hero_alt="", hero_knots=None, hero_knots_square=None, hero_frame=False) %}
 <article class="case" id="case-{{ slug }}" data-slug="{{ slug }}" data-popup="{{ popup }}"
          style="--case-color: {{ color }}" role="dialog" aria-label="{{ title }} case study" tabindex="-1">
     {# Mobile only (see .case-bg in case.css): the card's colour/shape, grown and shrunk
@@ -57,6 +57,16 @@
             {% if hero_knots_square %}
             <img class="case-hero-knot-square" src="{{ url_for('static', filename=hero_knots_square) }}" alt="{{ hero_alt or title }}">
             {% endif %}
+            {% elif hero_frame %}
+            {# Secure Chat only: the popup's art isn't a bare photo but an image + a video
+               overlay nested inside .encrypted-frame (style.css), whose overlay is
+               positioned by percentages relative to that frame, not to .case-hero-media
+               directly. Reproducing the same .encrypted-frame wrapper here (case.js moves
+               the overlay into it, not into .case-hero-media) keeps those percentages
+               correct at any size — see the matching case.css override. #}
+            <div class="encrypted-frame">
+                <img src="{{ url_for('static', filename=hero_src) }}" alt="{{ hero_alt or title }}" class="encrypted-image">
+            </div>
             {% else %}
             <picture>
                 {% if hero_src_mobile %}
@@ -112,10 +122,12 @@
 </article>
 {% endmacro %}
 
-{% macro case_panel(side="image-left", label="", image=None, alt="", placeholder="Image", video=None, poster=None) %}
+{% macro case_panel(side="image-left", label="", image=None, alt="", placeholder="Image", video=None, poster=None, media_template=None) %}
 <section class="case-panel case-panel--{{ side }}"{% if label %} data-nav="{{ label }}"{% endif %}>
     <figure class="case-media">
-        {% if video %}
+        {% if media_template %}
+        {% include media_template %}
+        {% elif video %}
         <div class="case-video-wrap">
             <video src="{{ url_for('static', filename=video) }}" {% if poster %}poster="{{ poster }}" {% endif %}loop muted playsinline preload="metadata" disablePictureInPicture disableRemotePlayback oncontextmenu="return false;" aria-label="{{ alt }}"></video>
             <div class="case-video-pause" aria-hidden="true">

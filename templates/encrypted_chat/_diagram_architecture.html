@@ -1,0 +1,83 @@
+<figure class="case-figure">
+    <div class="case-figure-head">
+        <span class="case-figure-eyebrow">ARCHITECTURE FLOW</span>
+        <div class="case-legend">
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--client"></span>Plaintext zone</span>
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--server"></span>Ciphertext only</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--http"></span>HTTP</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--wire"></span>WebSocket</span>
+            <span class="case-legend-item"><span class="case-legend-line case-legend-line--state"></span>Server state</span>
+        </div>
+    </div>
+    <div class="case-diagram-canvas">
+        <svg class="case-diagram-svg" data-diagram="architecture" viewBox="0 0 860 440" role="img" aria-label="Architecture diagram: browser components hold plaintext, Flask server components only handle ciphertext">
+            <defs>
+                <marker id="mk-arch-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#457A00"></path></marker>
+                <marker id="mk-arch-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#CC4E00"></path></marker>
+                <marker id="mk-arch-y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#CCA300"></path></marker>
+                <marker id="mk-arch-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#401268"></path></marker>
+            </defs>
+            <rect class="clu" x="16" y="36" width="424" height="388" rx="10"></rect>
+            <text class="cl" x="32" y="60">BROWSER &middot; PLAINTEXT EXISTS HERE</text>
+            <rect class="clu" x="476" y="36" width="368" height="388" rx="10"></rect>
+
+            <path class="e eo" data-from="routes" data-to="ui" marker-end="url(#mk-arch-o)" d="M584,90 C584,18 115,18 115,198"></path>
+            <path class="e eg" data-from="ui" data-to="appjs" marker-end="url(#mk-arch-g)" d="M190,212 C222,212 214,114 242,114"></path>
+            <path class="e eg" data-from="appjs" data-to="cryptojs" marker-end="url(#mk-arch-g)" d="M334,138 L334,208"></path>
+            <path class="e eg" data-from="cryptojs" data-to="sioclient" marker-end="url(#mk-arch-g)" d="M334,258 L334,328"></path>
+            <path class="e eg" data-from="cryptojs" data-to="ui" marker-end="url(#mk-arch-g)" d="M244,236 L192,236"></path>
+            <path class="e ey" data-from="sioclient" data-to="handlers" marker-end="url(#mk-arch-y)" d="M424,342 L488,342"></path>
+            <path class="e ey" data-from="handlers" data-to="sioclient" marker-end="url(#mk-arch-y)" d="M490,360 L426,360"></path>
+            <path class="e eo" data-from="routes" data-to="cryptoutil" marker-end="url(#mk-arch-o)" d="M666,104 L690,104"></path>
+            <path class="e eo" data-from="cryptoutil" data-to="routes" marker-end="url(#mk-arch-o)" d="M692,122 L668,122"></path>
+            <path class="e ep" data-from="handlers" data-to="state" marker-end="url(#mk-arch-p)" d="M696,333 L714,333"></path>
+
+            <g class="dnode" data-id="ui" tabindex="0">
+                <rect class="nc" x="40" y="200" width="150" height="48" rx="6"></rect>
+                <text class="t" x="115" y="220">index.html</text><text class="t" x="115" y="236">login + chat UI</text>
+            </g>
+            <g class="dnode" data-id="appjs" tabindex="0">
+                <rect class="nc" x="244" y="90" width="180" height="48" rx="6"></rect>
+                <text class="t" x="334" y="110">app.js</text><text class="t" x="334" y="126">socket + DOM handlers</text>
+            </g>
+            <g class="dnode" data-id="cryptojs" tabindex="0">
+                <rect class="nc" x="244" y="210" width="180" height="48" rx="6"></rect>
+                <text class="t" x="334" y="230">CryptoJS</text><text class="t" x="334" y="246">AES-256 en/decrypt</text>
+            </g>
+            <g class="dnode" data-id="sioclient" tabindex="0">
+                <rect class="nc" x="244" y="330" width="180" height="40" rx="6"></rect>
+                <text class="t" x="334" y="355">Socket.IO client</text>
+            </g>
+
+            <g class="dnode" data-id="routes" tabindex="0">
+                <rect class="ns" x="496" y="90" width="170" height="48" rx="6"></rect>
+                <text class="t" x="581" y="110">Flask routes</text><text class="t" x="581" y="126">GET / &middot; /generate-key</text>
+            </g>
+            <g class="dnode" data-id="cryptoutil" tabindex="0">
+                <rect class="ns" x="692" y="90" width="140" height="48" rx="6"></rect>
+                <text class="t" x="762" y="110">crypto_utils.py</text><text class="t" x="762" y="126">generate_key()</text>
+            </g>
+            <g class="dnode" data-id="handlers" tabindex="0">
+                <rect class="ns" x="490" y="300" width="206" height="66" rx="6"></rect>
+                <text class="t" x="593" y="320">Flask-SocketIO handlers</text><text class="t" x="593" y="336">join_chat &middot; send_message</text><text class="t" x="593" y="352">send_dm &middot; typing &middot; status</text>
+            </g>
+            <g class="dnode" data-id="state" tabindex="0">
+                <rect class="ns" x="716" y="300" width="120" height="66" rx="6"></rect>
+                <text class="t" x="776" y="320">In-memory</text><text class="t" x="776" y="336">active_users{}</text><text class="t" x="776" y="352">chat_rooms{}</text>
+            </g>
+
+            <rect class="clbg" x="488" y="45" width="226" height="21"></rect><text class="cl" x="492" y="60">FLASK SERVER &middot; CIPHERTEXT ONLY</text>
+
+            <rect class="lbg" x="289" y="38" width="122" height="15"></rect><text class="lb" x="350" y="49">GET / &rarr; index.html</text>
+            <rect class="lbg" x="178" y="152" width="72" height="15"></rect><text class="lb" x="214" y="164">DOM events</text>
+            <rect class="lbg" x="273" y="166" width="122" height="15"></rect><text class="lb" x="334" y="177">encrypt(text, key)</text>
+            <rect class="lbg" x="298" y="286" width="72" height="15"></rect><text class="lb" x="334" y="297">ciphertext</text>
+            <rect class="lbg" x="162" y="270" width="110" height="15"></rect><text class="lb" x="217" y="281">decrypt &rarr; render</text>
+            <rect class="lbg" x="377" y="311" width="63" height="15"></rect><rect class="lbg-white" x="440" y="311" width="36" height="15"></rect><rect class="lbg" x="476" y="311" width="11" height="15"></rect><text class="lb" x="432" y="322">emit(ciphertext)</text>
+            <rect class="lbg" x="365" y="385" width="75" height="15"></rect><rect class="lbg-white" x="440" y="385" width="36" height="15"></rect><rect class="lbg" x="476" y="385" width="73" height="15"></rect><text class="lb" x="457" y="396">receive_message / receive_dm</text>
+            <rect class="lbg" x="602" y="72" width="154" height="15"></rect><text class="lb" x="679" y="83">/generate-key &hArr; { key }</text>
+            <rect class="lbg" x="664" y="381" width="84" height="15"></rect><text class="lb" x="706" y="392">read / write</text>
+        </svg>
+    </div>
+    <figcaption class="case-figure-caption">Message text only exists in the green nodes. Everything right of the wire routes the same bytes without ever decrypting them.</figcaption>
+</figure>

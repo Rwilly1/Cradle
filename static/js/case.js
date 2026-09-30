@@ -175,8 +175,15 @@
         var u = W / refW;       // one popup-pixel, in page pixels
         var s = r.width / refW; // one popup-pixel, on screen
         var y0 = HERO_DELTA * u; // top of the part of the page that lines up with the box
+        // Rounded to whole page-pixels: this is where the transform hands off to the popup's
+        // own static layout the instant the tween completes (finish() clears the transform
+        // and swaps which element is visible). A transformed element and a statically-laid-out
+        // one can round sub-pixel positions differently, so an unrounded fractional target
+        // here can land a hair off from where the popup box actually renders — visible as a
+        // brief whole-card pop right as it lands. Snapping to the same integer grid the static
+        // box will render on removes that gap.
         return {
-            x: r.left, y: r.top - HERO_DELTA * s, scale: k,
+            x: Math.round(r.left), y: Math.round(r.top - HERO_DELTA * s), scale: k,
             top: y0, right: 0, bottom: H - y0 - r.height / k, left: 0, rs: rs
         };
     }
@@ -222,7 +229,12 @@
         var overlay = box && box.querySelector('[data-video-slot]');
         var media = el.querySelector('.case-hero-media');
         if (!overlay || !media) return;
-        media.appendChild(overlay);
+        // Secure Chat: the overlay's own percentages (style.css) are relative to
+        // .encrypted-frame, not .case-hero-media directly — nest it back inside that
+        // same frame here (case_study renders one, see hero_frame in _case.html) rather
+        // than dropping it straight into .case-hero-media as every other case does.
+        var frame = media.querySelector('.encrypted-frame');
+        (frame || media).appendChild(overlay);
     }
 
     function moveVideoToPopup(slug, el) {
@@ -230,7 +242,8 @@
         var overlay = el.querySelector('[data-video-slot]');
         var slot = box && box.querySelector('.project-image');
         if (!overlay || !slot) return;
-        slot.appendChild(overlay);
+        var frame = slot.querySelector('.encrypted-frame');
+        (frame || slot).appendChild(overlay);
     }
 
     // While the hero is open, pause its video when scrolled out of view and resume it when
@@ -325,6 +338,11 @@
         document.body.classList.remove('case-hint');
         root.classList.add('case-open');
         el.scrollTop = 0;
+        // Tables (Secure Chat) sideways-scroll instead of squashing their columns on
+        // narrow screens (see .case-table-scroll in case.css) — reset to the left edge
+        // (Feature column first) each time the case opens, same reasoning as el.scrollTop
+        // above, so a table never opens already scrolled off to one side.
+        el.querySelectorAll('.case-table-scroll').forEach(function (s) { s.scrollLeft = 0; });
         el.classList.add('is-open');
         if (el._markActive) el._markActive();
         moveVideoToHero(slug, el);
@@ -833,7 +851,7 @@
         if (!popup || !box) return;
 
         // Elements inside the box that keep their own behaviour.
-        var OWN = '.popup-close, .islanding-video-overlay';
+        var OWN = '.popup-close, .islanding-video-overlay, .encrypted-video-overlay';
         var downX = 0, downY = 0;
 
         box.addEventListener('pointerdown', function (e) { downX = e.clientX; downY = e.clientY; });

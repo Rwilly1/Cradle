@@ -1,0 +1,105 @@
+<figure class="case-figure">
+    <div class="case-figure-head">
+        <span class="case-figure-eyebrow">Functional Verification &amp; Error Handling</span>
+        <span class="case-legend">
+            <span class="case-figure-meta">Complexity:</span>
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--medium"></span>Medium</span>
+            <span class="case-legend-item"><span class="case-legend-swatch case-legend-swatch--complex"></span>Higher</span>
+        </span>
+    </div>
+    <div class="case-table-body">
+        <div class="case-table-scroll">
+            <table class="case-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Test scenario</th>
+                        <th scope="col">Result</th>
+                        <th scope="col" class="status">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Public messaging</td>
+                        <td>Send message to room</td>
+                        <td>All users received and decrypted</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr class="case-row--medium">
+                        <td>Message encryption</td>
+                        <td>Send plaintext message</td>
+                        <td>AES-256 encryption applied</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Direct messaging</td>
+                        <td>Click username and send DM</td>
+                        <td>DM delivered to recipient only</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>DM notification</td>
+                        <td>Receive DM while not viewing panel</td>
+                        <td>Red pulsing badge displayed</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr class="case-row--medium">
+                        <td>Multiple DM badges</td>
+                        <td>Receive DMs from 2+ users</td>
+                        <td>All badges visible with counts</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Status change</td>
+                        <td>Set status to busy / away</td>
+                        <td>All users see updated status</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>User disconnect</td>
+                        <td>User leaves room</td>
+                        <td>User list updated correctly</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Connection loss</td>
+                        <td>Simulate network failure</td>
+                        <td>Socket.IO reconnected successfully</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="case-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Error scenario</th>
+                        <th scope="col">System response</th>
+                        <th scope="col" class="status">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Empty form fields</td>
+                        <td>Alert displayed, submission blocked</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr class="case-row--complex">
+                        <td>Invalid encryption key</td>
+                        <td>Shows <span class="mono">[Decryption Failed]</span></td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>User disconnect mid-session</td>
+                        <td>Session cleaned up, user list updated</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                    <tr class="case-row--complex">
+                        <td>Malformed encrypted data</td>
+                        <td>Error message shown, no crash</td>
+                        <td><span class="case-pill">Pass</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</figure>

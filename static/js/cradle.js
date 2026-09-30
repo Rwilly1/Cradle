@@ -1553,14 +1553,24 @@ textToggle.addEventListener('change', function() {
     updateOverlay();
 })();
 
-// Encrypted Chat MP4 player (imac frame, 2x playback)
+// Encrypted Chat MP4 player (imac frame, normal-speed playback, with a
+// slight slowdown from 13s-53s of the clip where it otherwise feels fast).
 (function() {
     const popup = document.getElementById('popup-2');
     const video = document.querySelector('.encrypted-video');
     const overlay = document.querySelector('.encrypted-pause-overlay');
     if (!popup || !video) return;
 
-    video.playbackRate = 2;
+    const BASE_RATE = 1;
+    const SLOW_RATE = BASE_RATE * 0.85;
+    const SLOW_START = 13;
+    const SLOW_END = 53;
+
+    function updatePlaybackRate() {
+        const t = video.currentTime;
+        const target = (t >= SLOW_START && t < SLOW_END) ? SLOW_RATE : BASE_RATE;
+        if (video.playbackRate !== target) video.playbackRate = target;
+    }
 
     function updateOverlay() {
         if (overlay) overlay.classList.toggle('paused', video.paused);
@@ -1574,9 +1584,9 @@ textToggle.addEventListener('change', function() {
         }
     }
 
-    video.addEventListener('loadedmetadata', function() {
-        video.playbackRate = 2;
-    });
+    updatePlaybackRate();
+    video.addEventListener('loadedmetadata', updatePlaybackRate);
+    video.addEventListener('timeupdate', updatePlaybackRate);
     video.addEventListener('play', updateOverlay);
     video.addEventListener('pause', updateOverlay);
     video.addEventListener('click', toggleVideo);
@@ -1585,7 +1595,7 @@ textToggle.addEventListener('change', function() {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                 if (popup.classList.contains('active')) {
-                    video.playbackRate = 2;
+                    updatePlaybackRate();
                     video.play();
                 } else {
                     video.pause();
@@ -1598,7 +1608,7 @@ textToggle.addEventListener('change', function() {
     // See the matching comment in the Islanding player above — the popup can already be
     // 'active' before this script runs, which the observer never sees on its own.
     if (popup.classList.contains('active')) {
-        video.playbackRate = 2;
+        updatePlaybackRate();
         video.play();
     }
     updateOverlay();
