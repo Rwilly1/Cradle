@@ -2,7 +2,7 @@
 {% set prinsys_intro = "A battery-free sensor system designed to detect and monitor water leaks across commercial properties. Our international team developed the product end to end, spanning research, service design, UX/UI, system architecture, hardware integration, and development. We delivered a working application and receiver prototype to Prinsys for continued development." %}
 {% set islanding_intro = "A visualization of New York sinking beneath water, created in response to the Lower Manhattan Coastal Resiliency Project and growing flood risk. Using Blender, I built the water simulation and a custom shader with animated caustics that recreate light movement through water. The final 90-second animation was rendered and composited in After Effects for an event hosted by the Mellon Foundation." %}
 {% set algorithmic_intro = "A multi-year research study exploring how knots can be learned through a rule-based visual language. The work evolved from paper prototypes to digital puzzle interfaces and immersive XR experiments, combining prototyping with iterative user testing. I helped develop and evaluate systems that used modular rope segments to study shape grammar, spatial reasoning and computational thinking." %}
-{% set secure_chat_intro = "A full-stack application built using Flask, Socket.IO, and JavaScript, with client-side AES-256 encryption that keeps plaintext inaccessible to the server. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients. Then I validated system performance through batch testing with students from The Breakfast Club and conducted packet-level network analysis using Wireshark." %}
+{% set secure_chat_intro = "A full stack application built with Flask, Socket.IO, and JavaScript, with client side AES 256 encryption so the server routes messages it never decrypts. I engineered the messaging architecture, presence tracking, state synchronization, and connection recovery across multiple clients. I then validated the system by logging in as characters from The Breakfast Club across several browser windows and analyzing the app's traffic in Wireshark." %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -405,44 +405,39 @@
                        hero_src="Encrypted_Chat/imac_wide.png", hero_frame=True,
                        hero_alt="Secure Chat running on a desktop monitor") %}
 
-        {% call case_panel(side="image-left", label="Encrypt Then Send",
+        {% call case_panel(side="image-left", label="Architecture",
                            media_template="encrypted_chat/_diagram_architecture.html",
                            alt="Architecture diagram") %}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In suscipit ultrices orci, vel viverra eros suscipit et. Sed accumsan dui eget ullamcorper semper.</p>
-            <p>Nulla tincidunt, lacus sed tincidunt ornare, nunc ligula lobortis enim, eget porta enim est quis quam. Sed ac imperdiet massa, a sodales leo.</p>
-            <p>Sed a velit non felis varius ultricies. Mauris convallis tincidunt imperdiet. Nunc aliquam odio sed ligula sodales.</p>
+            <p>The first phase of any software project should be mapping out the system design, because poor architecture leads to code that cannot scale. Encryption was safest if message text only existed in the browser, so every message is encrypted before Socket.IO ever touches it.</p>
+            <p>On the client, CryptoJS runs AES 256 in CBC mode with the room's shared key. Each message gets a fresh random salt, so the same sentence sent twice never looks the same on the wire. The Flask server receives a base64 blob, and nothing on its message path calls decrypt. Every decrypted message is also HTML escaped before it reaches the page.</p>
         {% endcall %}
 
-        {% call case_panel(side="image-right", label="Breaking Things",
+        {% call case_panel(side="image-right", label="Batch Tests",
                            media_template="encrypted_chat/_table_tests.html",
                            alt="Functional and error test results table") %}
-            <p>Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae. Proin at quam eget dui malesuada tempor.</p>
-            <p>Aliquam erat volutpat. Donec sodales, nunc eget congue tincidunt, sem sapien fermentum arcu, sit amet dictum ligula justo at risus.</p>
-            <p>Curabitur non nisi ac tortor congue placerat. Etiam blandit, lorem sed feugiat tristique, nibh nunc pulvinar mi, nec dictum est.</p>
+            <p>I tested the app by trying to break it, and most of that time went to the encryption logic. Logged in as members of the Brat Pack across several browser windows, I fed the client a wrong room key, a truncated base64 payload, a hand edited ciphertext, and an empty message. Each one failed gracefully with a [Decryption Failed] notice or an error message, and empty messages never left the form.</p>
+            <p>I also watched WebSocket frames in DevTools, throttled the network, and cut connections mid session. Socket.IO reconnected within one to three seconds. The direct message badges fought back harder. Unread counts live on each client, so I logged every state change until each badge appeared and cleared on cue. I update badges in place so the user list never jumps.</p>
         {% endcall %}
 
-        {% call case_panel(side="image-left", label="Rooms As Routers",
+        {% call case_panel(side="image-left", label="Rooms/Routers",
                            media_template="encrypted_chat/_diagram_topology.html",
                            alt="Router and room topology diagram") %}
-            <p>Phasellus ultricies, nibh at cursus feugiat, arcu erat porttitor sapien, sed pharetra libero tortor sed nisi. Cras id justo quis.</p>
-            <p>In hac habitasse platea dictumst. Vivamus a magna id lacus tincidunt fermentum. Suspendisse potenti. Duis vel arcu at nunc lacinia.</p>
-            <p>Maecenas ut sapien vitae sem consequat gravida. Nullam eu ligula eu turpis vehicula convallis sit amet at metus.</p>
+            <p>The app has no network router, so the server's dictionaries do the routing. A dictionary called active_users maps each socket id to a username, room, and status. A public message goes only to sockets whose room matches the sender's, which turns every room into a multicast group.</p>
+            <p>A message in The Breakfast Club reaches Claire, Bender, and Andrew at once, while Mr. Vernon in The Office never hears it. That isolation comes from one filter in app.py, not from anything in the transport. Direct messages bypass the filter entirely. The send_dm event skips the broadcast and unicasts to a single socket id, so two people can talk privately without leaving the main room.</p>
         {% endcall %}
 
         {% call case_panel(side="image-right", label="TCP Underneath",
                            media_template="encrypted_chat/_table_transport.html",
                            alt="Congestion window and performance metrics table") %}
-            <p>Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-            <p>Cras mattis consectetur purus sit amet fermentum. Donec ullamcorper nulla non metus auctor fringilla. Etiam porta sem malesuada magna.</p>
-            <p>Vestibulum id ligula porta felis euismod semper. Nullam quis risus eget urna mollis ornare vel eu leo.</p>
+            <p>To see what sits under Socket.IO, I captured 9,208 packets of the app's traffic in Wireshark on the loopback interface. Every connection opens with a three way handshake that synchronizes both sides. The client sends a SYN, the server answers with a SYN ACK, and the client's final ACK confirms both are ready. That ACK also expands the window 6.2 times, from 65,535 bytes to about 408,000, because the handshake agreed on a window scale.</p>
+            <p>The window then holds near 408 KB for over 200 seconds with no retransmissions. A steady window means the receiver never fell behind, so data kept flowing without either side slowing down. Socket.IO layers heartbeats every 25 seconds on top, and watching those pings scroll past in debug mode was when the protocol stack finally felt concrete.</p>
         {% endcall %}
 
-        {% call case_panel(side="image-left", label="The Silent Drop",
+        {% call case_panel(side="image-left", label="Direct Messages",
                            media_template="encrypted_chat/_diagram_dmflow.html",
                            alt="Direct-message flow diagram") %}
-            <p>Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.</p>
-            <p>Donec id elit non mi porta gravida at eget metus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
-            <p>Sed posuere consectetur est at lobortis. Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel scelerisque.</p>
+            <p>A direct message takes the longest path in the app. The client encrypts it and emits send_dm, then the server looks for the recipient in the same room. The sender always gets an echo, but an offline recipient means the message quietly goes nowhere.</p>
+            <p>The server never decrypts a message, but it does store each room's key to hand to new members. Messages live only in memory and logins are temporary. If I had more time to keep working on this project, I would add real key exchange, a database for message history and accounts, and stronger authentication for deployment.</p>
         {% endcall %}
     {% endcall %}
 
