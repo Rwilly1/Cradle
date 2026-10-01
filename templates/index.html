@@ -68,9 +68,15 @@
     </script>
     <div id="picker-overlay">
         <main class="picker-page" id="picker-pick">
-            <div class="picker-name">Remington Williams</div>
+            {# Invisible but still laid out: reserves the exact same height + gap the
+               visible name used to occupy here, so moving it under the h1 below doesn't
+               shift the heading's position or shrink the swatch cards. #}
+            <div class="picker-name picker-name--spacer" aria-hidden="true">Remington Williams · Creative Technologist</div>
             <div class="picker-main">
-                <h1 class="text">What is your favorite color?</h1>
+                <div class="picker-heading">
+                    <h1 class="text">What is your favorite color?</h1>
+                    <div class="picker-name picker-name--sub">Remington Williams · Creative Technologist</div>
+                </div>
                 <div class="picker-swatches" id="picker-swatches" role="group" aria-label="Choose your favorite color"></div>
             </div>
         </main>

@@ -1553,6 +1553,12 @@ html.picker-skip #picker-overlay { display: none !important; }
     /* The one spacing value cards use for everything: the gap between them, and their
        distance from the left/right/bottom edges of the screen, are all this. */
     --picker-gap: clamp(14px, 1.6vw, 24px);
+    /* Shared with .picker-heading's row-gap and .picker-name--sub's font-size below,
+       so the reduced top gap here can subtract exactly what moving the name under
+       the h1 added there — same total height above the swatches either way, so the
+       cards never resize; the heading block just sits that much higher instead. */
+    --picker-subname-gap: clamp(2px, 0.5vw, 8px);
+    --picker-subname-size: clamp(19px, 2.6vw, 34px);
     position: relative;
     max-width: 1800px;
     margin-inline: auto;
@@ -1564,19 +1570,9 @@ html.picker-skip #picker-overlay { display: none !important; }
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 2in;
+    gap: calc(2in - var(--picker-subname-gap) - (var(--picker-subname-size) * 1.1));
     font-family: 'Museo Moderno', sans-serif;
     color: #3b3430;
-}
-
-.picker-name {
-    margin: 0;
-    flex: 0 0 auto;
-    font-size: clamp(22px, 2.6vw, 30px);
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    line-height: 1.1;
-    transition: opacity 0.3s ease;
 }
 
 /* flex:1 with min-height:0 (not justify-content:center) is what lets .picker-swatches
@@ -1590,9 +1586,15 @@ html.picker-skip #picker-overlay { display: none !important; }
     gap: var(--picker-gap);
 }
 
+.picker-heading {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--picker-subname-gap);
+}
+
 .picker-main h1 {
     margin: 0;
-    flex: 0 0 auto;
     max-width: 12ch;
     font-size: clamp(44px, 9vw, 112px);
     line-height: 1;
@@ -1600,6 +1602,34 @@ html.picker-skip #picker-overlay { display: none !important; }
     letter-spacing: -0.01em;
     text-wrap: balance;
     transition: opacity 0.3s ease;
+}
+
+.picker-name {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    transition: opacity 0.3s ease;
+}
+
+/* Still sized and laid out (the page's gap above is calc'd around this exact
+   height), just never painted or exposed to AT — it's what keeps the swatches
+   from inheriting the space freed by moving the real name under the h1. */
+.picker-name--spacer {
+    visibility: hidden;
+}
+
+/* The copy that actually reads to visitors, directly under the h1. The "W" in the
+   h1 above has a lot of visual inset built into its own glyph shape, so its ink
+   starts a few px right of the box edge both boxes share — this nudges "R" over
+   to meet it, since otherwise this line reads as starting further left than "What". */
+.picker-name--sub {
+    margin-left: 0.15em;
+    font-size: var(--picker-subname-size);
+    font-weight: 700;
+    letter-spacing: normal;
 }
 
 .picker-swatches {
